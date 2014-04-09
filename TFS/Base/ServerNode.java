@@ -1,4 +1,4 @@
-//Ben Tan is a wank
+//Ben Tan loves flatizzas
 public class ServerNode {
 
 } 
