@@ -1,0 +1,7 @@
+
+public class MasterNode : public ServerNode{
+	 public static void main(String argv[]) throws Exception
+	 {
+	 
+	 }
+}
