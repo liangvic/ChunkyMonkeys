@@ -9,6 +9,9 @@ public class MasterServerNode extends ServerNode{
     {
        String clientSentence;
        String capitalizedSentence;
+       Properties prop = new Properties();
+       prop.load(new FileInputStream("config/config.properties"));
+       System.out.println(prop.getProperty("IP1"));
        ServerSocket welcomeSocket = new ServerSocket(6666);
 
        while(true)
