@@ -23,7 +23,8 @@ public class MasterServerNode extends ServerNode{
 	        ) {
 	            String inputLine;
 	            while ((inputLine = in.readLine()) != null) {
-	                out.println(inputLine);
+	                //out.println(inputLine);
+	            	DealWithMessage(inputLine); //separate message to deal with input
 	            }
 	        } catch (IOException e) {
 	            System.out.println("Exception caught when trying to listen on port "
@@ -54,4 +55,16 @@ public class MasterServerNode extends ServerNode{
 	public class NamespaceNode{
 		
 	}
+	
+	public static void DealWithMessage(String line)
+	{
+		
+	}
+	
+	public void MDeleteDirectory()
+	{
+		
+	}
+	
+	
 }
