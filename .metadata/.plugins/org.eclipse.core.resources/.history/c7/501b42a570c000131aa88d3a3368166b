@@ -1,0 +1,8 @@
+package Interface;
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 81d7010ec13cbe83f9a37c14b42b68b919179b96
+public class Client {
+}

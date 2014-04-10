@@ -1,11 +1,8 @@
 package base;
-
 import java.io.*;
 import java.net.*;
 
-public class ChunkServerNode extends ServerNode{
-
-	
+public class ClientServerNode extends ServerNode{
 	public static void main(String argv[]) throws Exception
     {
        String clientSentence;

@@ -1,3 +1,5 @@
+package Base;
+
 import Base.ServerNode;
 public class ClientServerNode extends ServerNode{
 	

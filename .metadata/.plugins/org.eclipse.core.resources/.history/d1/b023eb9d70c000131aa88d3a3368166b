@@ -1,9 +1,17 @@
 package base;
+
+<<<<<<< HEAD:TFS/src/base/ChunkServerNode.java
 import java.io.*;
 import java.net.*;
 
-import base.ServerNode;
-public class ClientServerNode extends ServerNode{
+public class ChunkServerNode extends ServerNode{
+
+=======
+public class ChunkServerNodeNode extends ServerNode{
+	
+//protected:
+>>>>>>> 81d7010ec13cbe83f9a37c14b42b68b919179b96:TFS/src/base/ChunkServerNodeNode.java
+	
 	public static void main(String argv[]) throws Exception
     {
        String clientSentence;

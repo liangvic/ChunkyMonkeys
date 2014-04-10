@@ -3,6 +3,7 @@ import java.io.*;
 import java.net.*;
 
 import base.ServerNode;
+>>>>>>> 81d7010ec13cbe83f9a37c14b42b68b919179b96
 public class ClientServerNode extends ServerNode{
 	public static void main(String argv[]) throws Exception
     {
