@@ -1,7 +1,9 @@
+package Base;
 
-public class ChunkServerNodeNode extends ServerNode{
+
+public class ChunkServerNode extends ServerNode{
 	
-protected:
+//protected:
 	
 /*	public static void main(String argv[]) throws Exception
     {
