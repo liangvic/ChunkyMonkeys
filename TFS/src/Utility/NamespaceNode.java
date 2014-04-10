@@ -3,8 +3,9 @@ package Utility;
 import java.util.List;
 
 public class NamespaceNode {
-	NamespaceNode parent;
-	List<NamespaceNode> children;
-	String filename;
+	public NamespaceNode parent;
+	public List<NamespaceNode> children;
+	public String filename;
+	
 	//file access permissions?
 }
