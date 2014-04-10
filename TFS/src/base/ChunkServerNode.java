@@ -1,10 +1,12 @@
 package base;
 
-public class ChunkServerNodeNode extends ServerNode{
+import java.io.*;
+import java.net.*;
+
+public class ChunkServerNode extends ServerNode{
+
 	
-protected:
-	
-/*	public static void main(String argv[]) throws Exception
+	public static void main(String argv[]) throws Exception
     {
        String clientSentence;
        String capitalizedSentence;
@@ -21,5 +23,5 @@ protected:
           capitalizedSentence = clientSentence.toUpperCase() + '\n';
           outToClient.writeBytes(capitalizedSentence);
        }
-    }*/
+    }
 }
