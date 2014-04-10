@@ -1,5 +1,8 @@
 
 public class ClientServerNode extends ServerNode{
+	
+protected:
+	
 	public static void main(String argv[]) throws Exception
     {
        String clientSentence;

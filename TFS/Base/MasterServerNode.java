@@ -1,5 +1,9 @@
 
 public class MasterServerNode extends ServerNode{
+	
+protected:
+	
+		
 	public static void main(String argv[]) throws Exception
     {
        String clientSentence;
@@ -18,4 +22,8 @@ public class MasterServerNode extends ServerNode{
           outToClient.writeBytes(capitalizedSentence);
        }
     }
+	
+	public class NamespaceNode{
+		
+	}
 }
