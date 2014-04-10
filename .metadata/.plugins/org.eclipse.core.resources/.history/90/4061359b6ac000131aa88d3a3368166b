@@ -4,6 +4,9 @@ import java.util.*;
 import Base.*;
 public class MasterServerNode extends ServerNode{
 
+	public class NamespaceNode{
+		
+	}
 	
 	public static void main(String argv[]) throws Exception
     {
@@ -23,9 +26,4 @@ public class MasterServerNode extends ServerNode{
           outToClient.writeBytes(capitalizedSentence);
        }
     }
-	
-
-	public class NamespaceNode{
-		
-	}
 }
