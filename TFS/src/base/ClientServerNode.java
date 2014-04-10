@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 
 import Utility.Message;
+import Utility.Message.msgType;
 import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
@@ -139,7 +140,7 @@ public class ClientServerNode extends ServerNode {
 			sock = new Socket(myIP, myPortNumber);
 			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 			for(int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(/*PARAM*/);
+				Message message = new Message(msgType.CREATEDIRECTORY);
 				out.writeObject(message);
 			}
 			out.close();
