@@ -1,0 +1,15 @@
+package base;
+
+import java.io.*;
+import base.*;
+public class launch {
+
+	public static void main(String args[]) throws Exception {
+		System.out.println("1: Launch Master Server\n2: Launch Client Server\n");
+		
+		if ()
+		ClientServerNode client = new ClientServerNode(); 
+		client.TestInterface();
+	}
+
+}
