@@ -1,3 +1,6 @@
+import java.io.FileInputStream;
+import java.util.Properties;
+
 
 public class MasterServerNode extends ServerNode{
 	
@@ -8,6 +11,9 @@ protected:
     {
        String clientSentence;
        String capitalizedSentence;
+       Properties prop = new Properties();
+       prop.load(new FileInputStream("config/config.properties"));
+       //use prop.getProperty("IP1") etc to get values from config file
        ServerSocket welcomeSocket = new ServerSocket(6789);
 
        while(true)
