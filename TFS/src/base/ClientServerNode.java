@@ -39,6 +39,26 @@ public class ClientServerNode extends ServerNode {
 	            System.exit(1);
 	        }
 	}
+	public void test1(Integer numOfDir) // creates the specified num of directories
+	{
+		Socket sock;
+		try {
+			sock = new Socket(myIP, myPortNumber);
+			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
+			for(int i = 0; i < numOfDir; ++i) {
+				Message message = new Message(/*PARAM*/);
+				out.writeObject(message);
+			}
+			out.close();
+			sock.close();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public void test5(String filePath, String localPath){
 		//Step 1 connect to the master

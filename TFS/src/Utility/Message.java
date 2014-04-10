@@ -18,5 +18,4 @@ public class Message implements Serializable{
 	int startByte;
 	int byteLength;
 	ChunkMetadata chunkClass;
-	
 }
