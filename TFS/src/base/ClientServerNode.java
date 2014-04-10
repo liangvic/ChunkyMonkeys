@@ -100,24 +100,14 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 		System.out.println(prop.getProperty("IP1"));
-		try (
+		try {
 			Socket masterSocket = new Socket(prop.getProperty("IP1"), Integer.parseInt(prop.getProperty("PORT1")));
-			//code from above to talk to the Master
-			//ONLY CHANGE THE WHILE LOOP
-			PrintWriter out =
-					new PrintWriter(masterSocket.getOutputStream(), true);
-			BufferedReader in =
-					new BufferedReader(
-							new InputStreamReader(masterSocket.getInputStream()));
-			BufferedReader stdIn =
-					new BufferedReader(
-							new InputStreamReader(System.in))
-			) {
-		String userInput;
-		while ((userInput = stdIn.readLine()) != null) {
-			out.println(userInput);
-			System.out.println(filepath); //ONLY CHANGED THIS
-		}} catch (NumberFormatException e) {
+			ObjectOutputStream out = new ObjectOutputStream(masterSocket.getOutputStream());
+			Message message = new Message(msgType.DELETEDIRECTORY);
+			out.writeObject(message);
+			out.close();
+			masterSocket.close();
+		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
