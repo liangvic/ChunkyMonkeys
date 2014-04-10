@@ -1,0 +1,9 @@
+package Interface;
+<<<<<<< HEAD
+public abstract class Client {
+=======
+
+public class Client {
+	
+>>>>>>> 888872351af95ca2d5b973af9867dcfb23a6a22f
+}
