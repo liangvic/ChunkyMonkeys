@@ -1,0 +1,11 @@
+package base;
+
+import base.*;
+public class launch {
+
+	public static void main(String args[]) throws Exception {
+		
+		TestInterface();
+	}
+
+}

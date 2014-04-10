@@ -1,0 +1,19 @@
+package base;
+
+import java.io.*;
+import java.util.Scanner;
+
+import base.*;
+public class launch {
+
+	public static void main(String args[]) throws Exception {
+		System.out.println("1: Launch Master Server\n2: Launch Client Server\n");
+		Scanner a = new Scanner(System.in);
+		int input = 2;
+		if ((input = a.nextInt()) == 0 || (input = a.nextInt()) == 1 ){
+		ClientServerNode client = new ClientServerNode(); 
+		client.TestInterface();
+		}
+	}
+
+}
