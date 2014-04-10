@@ -5,15 +5,38 @@ import java.util.*;
 
 public class MasterServerNode extends ServerNode{
 	
-	public static void main(String argv[]) throws Exception
+	//private static ServerSocket welcomeSocket;
+
+
+	public static void main(String args[]) throws Exception
     {
-       String clientSentence;
+	        int portNumber = 8111;
+	        
+	        try (
+	            ServerSocket serverSocket =
+	                new ServerSocket(portNumber);
+	            Socket clientSocket = serverSocket.accept();     
+	            PrintWriter out =
+	                new PrintWriter(clientSocket.getOutputStream(), true);                   
+	            BufferedReader in = new BufferedReader(
+	                new InputStreamReader(clientSocket.getInputStream()));
+	        ) {
+	            String inputLine;
+	            while ((inputLine = in.readLine()) != null) {
+	                out.println(inputLine);
+	            }
+	        } catch (IOException e) {
+	            System.out.println("Exception caught when trying to listen on port "
+	                + portNumber + " or listening for a connection");
+	            System.out.println(e.getMessage());
+	        }
+       /*String clientSentence;
        String capitalizedSentence;
        Properties prop = new Properties();
        prop.load(new FileInputStream("config/config.properties"));
        System.out.println(prop.getProperty("IP1"));
-       ServerSocket welcomeSocket = new ServerSocket(6666);
-
+       welcomeSocket = new ServerSocket(9090);
+       
        while(true)
        {
           Socket connectionSocket = welcomeSocket.accept();
@@ -24,7 +47,7 @@ public class MasterServerNode extends ServerNode{
           System.out.println("Received: " + clientSentence);
           capitalizedSentence = clientSentence.toUpperCase() + '\n';
           outToClient.writeBytes(capitalizedSentence);
-       }
+       }*/
     }
 	
 
