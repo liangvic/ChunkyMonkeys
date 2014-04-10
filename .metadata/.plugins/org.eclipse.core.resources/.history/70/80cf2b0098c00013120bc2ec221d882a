@@ -199,7 +199,7 @@ public class ClientServerNode extends ServerNode {
 		}
 
 		// Step 2 Create a message
-		//Message m = new Message(filePath);
+		Message m = new Message();
 		// Step 3 Write to the master server
 		// Step 4 recieves the master message
 		// Step 5 send a request to the chunkserver

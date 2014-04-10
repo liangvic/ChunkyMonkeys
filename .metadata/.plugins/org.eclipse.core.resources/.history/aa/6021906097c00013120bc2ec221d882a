@@ -15,11 +15,6 @@ public class Message implements Serializable{
 		type = msgT;
 	}
 	
-	public Message(msgType msgT, String fp){
-		filePath = fp;
-		type = msgT;
-	}
-	
 //	List<Character> filePath = new ArrayList<Character>();
 	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE};
 	public msgType type;

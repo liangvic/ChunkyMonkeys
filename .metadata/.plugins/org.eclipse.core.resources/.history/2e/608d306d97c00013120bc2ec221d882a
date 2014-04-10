@@ -97,7 +97,7 @@ public class ClientServerNode extends ServerNode {
 			ObjectOutputStream out = new ObjectOutputStream(
 					sock.getOutputStream());
 			for (int i = 0; i < nFiles; ++i) {
-				Message message = new Message(msgType.CREATEFILE, filepath);
+				Message message = new Message(filepath, msgType.CREATEFILE);
 				out.writeObject(message);
 			}
 			out.close();
@@ -127,7 +127,23 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 		System.out.println(prop.getProperty("IP1"));
-
+<<<<<<< HEAD
+		try (Socket masterSocket = new Socket(prop.getProperty("IP1"),
+				Integer.parseInt(prop.getProperty("PORT1")));
+				// code from above to talk to the Master
+				// ONLY CHANGE THE WHILE LOOP
+				PrintWriter out = new PrintWriter(
+						masterSocket.getOutputStream(), true);
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						masterSocket.getInputStream()));
+				BufferedReader stdIn = new BufferedReader(
+						new InputStreamReader(System.in))) {
+			String userInput;
+			while ((userInput = stdIn.readLine()) != null) {
+				out.println(userInput);
+				System.out.println(filepath); // ONLY CHANGED THIS
+			}
+=======
 		try {
 			Socket masterSocket = new Socket(prop.getProperty("IP1"), Integer.parseInt(prop.getProperty("PORT1")));
 			ObjectOutputStream out = new ObjectOutputStream(masterSocket.getOutputStream());
@@ -135,6 +151,7 @@ public class ClientServerNode extends ServerNode {
 			out.writeObject(message);
 			out.close();
 			masterSocket.close();
+>>>>>>> 50c092c810cf2421f94656e998c881d386857171
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -154,10 +171,16 @@ public class ClientServerNode extends ServerNode {
 		Socket sock;
 		try {
 			sock = new Socket(myIP, myPortNumber);
-
+<<<<<<< HEAD
+			ObjectOutputStream out = new ObjectOutputStream(
+					sock.getOutputStream());
+			for (int i = 0; i < numOfDir; ++i) {
+				Message message = new Message(/* PARAM */);
+=======
 			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 			for(int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(msgType.CREATEDIRECTORY);				
+				Message message = new Message(msgType.CREATEDIRECTORY);
+>>>>>>> 50c092c810cf2421f94656e998c881d386857171
 				out.writeObject(message);
 			}
 			out.close();
@@ -199,7 +222,7 @@ public class ClientServerNode extends ServerNode {
 		}
 
 		// Step 2 Create a message
-		//Message m = new Message(filePath);
+		Message m = new Message(filePath);
 		// Step 3 Write to the master server
 		// Step 4 recieves the master message
 		// Step 5 send a request to the chunkserver
