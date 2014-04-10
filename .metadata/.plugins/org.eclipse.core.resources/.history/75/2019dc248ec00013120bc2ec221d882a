@@ -1,0 +1,11 @@
+//Ben Tan loves flaizzas
+package base;
+public abstract class ServerNode {
+	
+protected static
+	String myIP;
+	int myPortNumber;  
+	//int targetPortNumber;	
+
+}
+

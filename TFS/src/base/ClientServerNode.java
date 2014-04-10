@@ -5,33 +5,38 @@ import java.net.*;
 import java.util.*;
 
 import Utility.Message;
+import Utility.Message.msgType;
 import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
-	public static void main(String args[]) throws Exception {
 
-		TestInterface();
-	}
-
-	protected static void TestInterface() throws Exception {
-		String userInput;
-		BufferedReader stdIn = new BufferedReader (new InputStreamReader(System.in));
-		while ((userInput = stdIn.readLine()) != null) {
+	protected void TestInterface() throws Exception {
+		Scanner a = new Scanner(System.in);
+		String input;
+		do {
+			System.out.print("Please Enter the Test you want to run (Enter X to exit)\n");
+			System.out.print("Enter parameters separated by a space\n");
+			System.out.print("Example: Test1 7\n");
+			input = a.nextLine();
+			
+			String delim = "[ ]+";
+			String[] tokens = input.split(delim);
 			try {
-				System.out
-						.print("Please Enter the Test you want to run (Enter X to exit)");
-				System.out.print("Enter parameters separated by a space");
-				System.out.print("Example: Test1 7");
-				String input = System.in.toString();
-				String delim = "[ ]+";
-				String[] tokens = input.split(delim);
 				switch (tokens[0]) {
 				case ("Test1"):
+					if (tokens.length == 2)
+						test1(Integer.parseInt(tokens[1]));
+					else
+						throw new Exception();
 					break;
 				case ("Test2"):
+					if (tokens.length == 3)
+						test2(tokens[1],Integer.parseInt(tokens[2]));
+					else
+						throw new Exception();					
 					break;
 				case ("Test3"):
 					break;
@@ -49,9 +54,9 @@ public class ClientServerNode extends ServerNode {
 					throw new Exception();
 				}
 			} catch (Exception e) {
-				System.out.println("That test doesn't exist; please try again");
+				System.out.println("Invalid OP or Parameters. \n");
 			}
-		}
+		} while (input != "X" || input != "x");
 
 	}
 
@@ -75,19 +80,42 @@ public class ClientServerNode extends ServerNode {
 			System.exit(1);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("Couldn't get I/O for the connection to " +
-					hostName);
+			System.err.println("Couldn't get I/O for the connection to "
+					+ hostName);
 			System.exit(1);
 		}
 	}
-	public void test3(String filepath)
-	{
+	
+	public void test2(String filepath, int nFiles) {
+		// Create N files in a directory and its subdirectories until the leaf
+		// subdirectories.
+		// Each file in a directory is named File1, File2, ..., FileN
+
+		Socket sock;
+		try {
+			sock = new Socket(hostName, portNumber);
+			ObjectOutputStream out = new ObjectOutputStream(
+					sock.getOutputStream());
+			for (int i = 0; i < nFiles; ++i) {
+				Message message = new Message(msgType.CREATEFILE, filepath);
+				out.writeObject(message);
+			}
+			out.close();
+			sock.close();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void test3(String filepath) {
 		CDeleteDirectory(filepath);
 	}
 
-	public void CDeleteDirectory(String filepath)
-	{
-		//SENDING FILEPATH TO THE MASTER
+	public void CDeleteDirectory(String filepath) {
+		// SENDING FILEPATH TO THE MASTER
 		Properties prop = new Properties();
 		try {
 			prop.load(new FileInputStream("config/config.properties"));
@@ -99,24 +127,15 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 		System.out.println(prop.getProperty("IP1"));
-		try (
+
+		try {
 			Socket masterSocket = new Socket(prop.getProperty("IP1"), Integer.parseInt(prop.getProperty("PORT1")));
-			//code from above to talk to the Master
-			//ONLY CHANGE THE WHILE LOOP
-			PrintWriter out =
-					new PrintWriter(masterSocket.getOutputStream(), true);
-			BufferedReader in =
-					new BufferedReader(
-							new InputStreamReader(masterSocket.getInputStream()));
-			BufferedReader stdIn =
-					new BufferedReader(
-							new InputStreamReader(System.in))
-			) {
-		String userInput;
-		while ((userInput = stdIn.readLine()) != null) {
-			out.println(userInput);
-			System.out.println(filepath); //ONLY CHANGED THIS
-		}} catch (NumberFormatException e) {
+			ObjectOutputStream out = new ObjectOutputStream(masterSocket.getOutputStream());
+			Message message = new Message(msgType.DELETEDIRECTORY);
+			out.writeObject(message);
+			out.close();
+			masterSocket.close();
+		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
@@ -127,19 +146,18 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 
-		
-		
-
-
 	}
-	public void test1(Integer numOfDir) // creates the specified num of directories
+
+	public static void test1(Integer numOfDir) // creates the specified num of
+										// directories
 	{
 		Socket sock;
 		try {
 			sock = new Socket(myIP, myPortNumber);
+
 			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 			for(int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(/*PARAM*/);
+				Message message = new Message(msgType.CREATEDIRECTORY);				
 				out.writeObject(message);
 			}
 			out.close();
@@ -187,17 +205,16 @@ public class ClientServerNode extends ServerNode {
 		 	String masterIP = "68.181.174.149";
 	        int masterPort = 8111;
 	 
-	        try (
+	        try {
 	            Socket masterSocket = new Socket(masterIP, masterPort);
-	            PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
+	        	ObjectOutputStream objOut = new ObjectOutputStream(masterSocket.getOutputStream());
+//	            PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
 	           // BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-	            BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in))
-	        ){
-	            String userInput;
-//	            while ((userInput = stdIn.readLine()) != null) {
-//	                out.println(userInput);
-//	                System.out.println("echo: " + in.readLine());
-//	            }
+	            BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in));
+	          //Step 2 Create a message
+		        Message m = new Message(msgType.READFILE ,filePath);
+		      //Step 3 Write to the master server
+		        objOut.writeObject(m);
 	        } catch (UnknownHostException e) {
 	            System.err.println("Don't know about host " + masterIP);
 	            System.exit(1);
@@ -208,9 +225,8 @@ public class ClientServerNode extends ServerNode {
 	            System.exit(1);
 	        }
 	        
-	    //Step 2 Create a message
-	        Message m = new Message(filePath);
-	    //Step 3 Write to the master server
+	    
+	    
 	   //Step 4 recieves the master message
 	        //Step 5 send a request to the chunkserver
 	}

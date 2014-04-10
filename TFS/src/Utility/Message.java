@@ -6,15 +6,24 @@ import java.io.*;
 
 public class Message implements Serializable{
 	
-	public Message(){
-		
+	public Message(msgType msgT){
+		type = msgT;
 	}
 	//This is for test5
-	public Message(String fp){
+	public Message(String fp, msgType msgT){
 		filePath = fp;
+		type = msgT;
 	}
+	
+	public Message(msgType msgT, String fp){
+		filePath = fp;
+		type = msgT;
+	}
+	
 //	List<Character> filePath = new ArrayList<Character>();
-	String filePath;
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE};
+	public msgType type;
+	public String filePath;
 	int startByte;
 	int byteLength;
 	ChunkMetadata chunkClass;
