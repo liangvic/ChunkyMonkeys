@@ -3,11 +3,18 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import base.MasterServerNode.NamespaceNode;
+import Utility.ChunkMetadata;
+import Utility.Message;
+import Utility.Message.MessageType;
+
 public class MasterServerNode extends ServerNode{
 	
 	//private static ServerSocket welcomeSocket;
 
-
+	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
+	static LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
+	
 	public static void main(String args[]) throws Exception
     {
 	        int portNumber = 8111;
@@ -16,16 +23,20 @@ public class MasterServerNode extends ServerNode{
 	            ServerSocket serverSocket =
 	                new ServerSocket(portNumber);
 	            Socket clientSocket = serverSocket.accept();     
-	            PrintWriter out =
+	            /*PrintWriter out =
 	                new PrintWriter(clientSocket.getOutputStream(), true);                   
 	            BufferedReader in = new BufferedReader(
-	                new InputStreamReader(clientSocket.getInputStream()));
+	                new InputStreamReader(clientSocket.getInputStream()));*/
+	        		ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 	        ) {
-	            String inputLine;
+	           /* String inputLine;
 	            while ((inputLine = in.readLine()) != null) {
 	                //out.println(inputLine);
 	            	DealWithMessage(inputLine); //separate message to deal with input
-	            }
+	            }*/
+	        	
+	        	Message receivedMessage = (Message) in.readObject();
+	        	DealWithMessage(receivedMessage);
 	        } catch (IOException e) {
 	            System.out.println("Exception caught when trying to listen on port "
 	                + portNumber + " or listening for a connection");
@@ -56,14 +67,24 @@ public class MasterServerNode extends ServerNode{
 		
 	}
 	
-	public static void DealWithMessage(String line)
+	public static void DealWithMessage(Message inputMessage)
 	{
-		
+		if(inputMessage.type == MessageType.deleteDir)
+		{
+			MDeleteDirectory(inputMessage.filePath);
+		}
 	}
 	
-	public void MDeleteDirectory()
+	public static void MDeleteDirectory(String filePath)
 	{
-		
+		if(NamespaceTree.contains(filePath))
+		{
+			
+		}
+		else
+		{
+			
+		}
 	}
 	
 	

@@ -13,9 +13,12 @@ public class Message implements Serializable{
 	public Message(String fp){
 		filePath = fp;
 	}
+	
 //	List<Character> filePath = new ArrayList<Character>();
-	String filePath;
+	public String filePath;
 	int startByte;
 	int byteLength;
 	ChunkMetadata chunkClass;
+	public enum MessageType{deleteDir};
+	public MessageType type;
 }
