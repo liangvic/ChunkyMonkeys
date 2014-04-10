@@ -2,7 +2,7 @@ package base;
 
 public class ChunkServerNodeNode extends ServerNode{
 	
-protected:
+//protected:
 	
 /*	public static void main(String argv[]) throws Exception
     {
