@@ -1,5 +1,5 @@
 package base;
-import Base.ServerNode;
+import base.ServerNode;
 public class ClientServerNode extends ServerNode{
 	
 	
