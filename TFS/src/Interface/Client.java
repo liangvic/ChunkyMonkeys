@@ -1,3 +1,3 @@
 package Interface;
-public class Client {
+public abstract class Client {
 }
