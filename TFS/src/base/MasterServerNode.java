@@ -3,10 +3,10 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-import base.MasterServerNode.NamespaceNode;
 import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.Message.msgType;
+import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode{
 	
@@ -62,11 +62,6 @@ public class MasterServerNode extends ServerNode{
        }*/
     }
 	
-
-	public class NamespaceNode{
-		
-	}
-	
 	public static void DealWithMessage(Message inputMessage)
 	{
 		if(inputMessage.type == msgType.DELETEDIRECTORY)
@@ -79,9 +74,24 @@ public class MasterServerNode extends ServerNode{
 	{
 		if(NamespaceTree.contains(filePath))
 		{
+			String[] tokens = filePath.split(File.pathSeparator);
+			NamespaceNode nextNode = (NamespaceNode)NamespaceTree.get(0);
 			
+			if(tokens[0] == nextNode.filename)
+			{
+				for(int i = 0; i<nextNode.children.size();i++)
+				{
+					for (String directoryName : tokens)
+					{
+						if(directoryName == nextNode.filename)
+						{
+							
+						}
+					}
+				}
+			}
 		}
-		else
+		else //the filepath is not in the directory
 		{
 			
 		}
