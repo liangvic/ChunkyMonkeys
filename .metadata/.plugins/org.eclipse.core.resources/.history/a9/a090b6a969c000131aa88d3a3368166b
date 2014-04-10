@@ -1,0 +1,11 @@
+//Ben Tan loves flaizzas
+import java.io.*;
+import java.util.*;
+public abstract class ServerNode {
+	
+protected:
+	int myPortNumber;  
+	int targetPortNumber;	
+
+}
+
