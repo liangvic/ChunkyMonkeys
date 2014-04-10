@@ -137,14 +137,16 @@ public class ClientServerNode extends ServerNode {
 	{
 		Socket sock;
 		try {
-			sock = new Socket(myIP, myPortNumber);
+			Properties prop = new Properties();
+			prop.load(new FileInputStream("config/config.properties"));
+			sock = new Socket(prop.getProperty("MASTERIP"), Integer.parseInt(prop.getProperty("MASTERPORT")));
 			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 			for(int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(msgType.CREATEDIRECTORY);
+				Message message = new Message(Integer.toString(i+1), msgType.CREATEDIRECTORY);
 				out.writeObject(message);
 			}
-			out.close();
-			sock.close();
+			//out.close();
+			//sock.close();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

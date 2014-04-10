@@ -3,10 +3,13 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Utility.ChunkMetadata;
+import Utility.Message;
+import Utility.Message.msgType;
+
 public class MasterServerNode extends ServerNode{
 	
-	//private static ServerSocket welcomeSocket;
-
+	//private ServerSocket serverSocket = null;
 
 	public static void main(String args[]) throws Exception
     {
@@ -64,6 +67,37 @@ public class MasterServerNode extends ServerNode{
 	public void MDeleteDirectory()
 	{
 		
+	}
+	
+	public void CreateDirectory(Message message)
+	{
+		ServerSocket serverSocket;
+		try {
+			serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
+			File file = new File(message.filePath);
+			Message responseMsg;
+			if(!file.exists()) {
+				file.mkdir();
+				//TODO: insert into map
+				//TODO: assign chunk and replicas to chunk servers
+				ChunkMetadata chunkData = new ChunkMetadata();
+				//TODO: set chunkData data
+				responseMsg = new Message(msgType.SUCCESS, chunkData);
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				out.writeObject(responseMsg);
+				//TODO: message chunk servers
+			}
+			else {
+				responseMsg = new Message(msgType.ERROR);
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				out.writeObject(responseMsg);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
