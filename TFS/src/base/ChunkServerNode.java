@@ -246,7 +246,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
-		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
+		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		//STRUCTURE///
 		//KEY VERSION# SIZEOF_LOCATIONLIST 
 		//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
@@ -271,6 +271,8 @@ public class ChunkServerNode extends ServerNode {
 			out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
 			out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
+			out.close();
+			fstream.close();
 		}
 		catch (IOException e)
 		{
