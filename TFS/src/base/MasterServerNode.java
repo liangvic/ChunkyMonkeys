@@ -269,25 +269,26 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public void CreateDirectory(String filepath) throws Exception {
+	public void CreateDirectory(String filepath) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			String delim = "\\+";
-			String[] tokens = filepath.split(delim);
-			if (tokens.length >= 1)
-			{
-				String supposedParent = tokens[0];
-				if (tokens.length >= 2){
-					for (int i = 1; i < tokens.length - 1 ; i++){			
-						supposedParent += "\\" + tokens[i]; 
-					}
-				}				
-				if(NamespaceMap.containsKey(supposedParent)) 
-				{
-					NamespaceMap.get(supposedParent).children.add(filepath);
-				}
-				else
-					throw new Exception();
+			File path = new File(filepath);
+			File parentPath = path.getParentFile();
+			String parent;
+			if(parentPath == null) {
+				parent = filepath;
 			}
+			else {
+				parent = parentPath.toString();
+			}
+			if(!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
+				SendErrorMessageToClient();
+				return;
+			}
+			else if(NamespaceMap.containsKey(parent)) 
+			{
+				NamespaceMap.get(parent).children.add(filepath);
+			}
+			
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
 			SendSuccessMessageToClient();
