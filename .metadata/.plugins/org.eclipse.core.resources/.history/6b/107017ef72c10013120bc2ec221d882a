@@ -26,6 +26,10 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
+<<<<<<< HEAD
+=======
+//		NamespaceMap.put("1", new NamespaceNode());
+>>>>>>> 8f549afeeae6cdf4501d41eeff87e9f9260dafa4
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -468,8 +472,12 @@ public class MasterServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
+<<<<<<< HEAD
+				//CHANGEDnewMetaData.chunkHash = Integer.parseInt(n_tempHash);
+=======
 //				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
 				newMetaData.chunkHash = n_fileName+n_index;
+>>>>>>> 8f549afeeae6cdf4501d41eeff87e9f9260dafa4
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
