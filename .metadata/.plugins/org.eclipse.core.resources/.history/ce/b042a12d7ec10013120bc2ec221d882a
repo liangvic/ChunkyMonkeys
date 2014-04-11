@@ -93,25 +93,11 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Successfully created directory "+message.filePath);
 			}
 			else {
-				System.out.println("Failed to create directory "+message.filePath);
-			}
-		}
-		else if (message.type == msgType.CREATEFILE) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created file "+message.filePath);
-			}
-			else {
-				System.out.println("Failed to create file "+message.filePath);
+				System.out.println("Failed to create directory");
 			}
 		}
 		else if(message.type == msgType.READFILE)
 		{
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				
-			}
-			else {
-				System.out.println("Read failed. Could not find file.");
-			}
 			// Supposedly going to cache it. Implementation will be completed
 			// later.lol
 			// uses the location to contact the chunkserver
@@ -195,7 +181,7 @@ public class ClientServerNode extends ServerNode {
 					test2helper(childs.get(a), nFiles);
 				}
 			}
-		}
+		} 
 
 		for (int i = 1; i <= nFiles; i++) {
 			try {
@@ -205,14 +191,14 @@ public class ClientServerNode extends ServerNode {
 			}
 		}
 
-		/*
-		 * System.out.println(master.NamespaceMap.size()); Iterator it =
-		 * master.NamespaceMap.entrySet().iterator(); while (it.hasNext()) {
-		 * Map.Entry pairs = (Map.Entry) it.next();
-		 * System.out.println(pairs.getKey() + " = " +
-		 * master.NamespaceMap.get(pairs.getKey()).children.size());
-		 * it.remove(); // avoids a ConcurrentModificationException }
-		 */
+		/*System.out.println(master.NamespaceMap.size());
+		Iterator it = master.NamespaceMap.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry) it.next();
+			System.out.println(pairs.getKey() + " = " + master.NamespaceMap.get(pairs.getKey()).children.size());
+			it.remove(); // avoids a ConcurrentModificationException
+		}*/
+		
 
 	}
 
