@@ -27,7 +27,7 @@ public class launch {
 		chunkServer.master = master;
 		chunkServer.client = client;
 		
-		Timer timer = new Timer();
+		/*Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
 			  @Override
 			  public void run() {
@@ -40,7 +40,7 @@ public class launch {
 					  master.WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 				  }
 			  }
-			}, 10000, 10000);
+			}, 10000, 10000);*/
 		
 		client.TestInterface();
 		
