@@ -154,6 +154,25 @@ public class MasterServerNode extends ServerNode {
 				// files/directories below
 				deleteAllChildNodes(filePath);
 			}
+			
+			String[] tokens = filePath.split(File.pathSeparator);
+			String parentPath = tokens[0];
+			for(int i=1;i<tokens.length-1;i++)
+			{
+				parentPath = parentPath + "\\" + tokens[i]; 
+			}
+			
+			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+			  {
+				for(int i=0;i<entry.getValue().children.size();i++)
+				{
+					if(entry.getValue().children.get(i).contains(parentPath))
+					{
+						entry.getValue().children.remove(i);
+					}
+				}
+			  }
+			
 			// finally delete directory wanted to delete
 			NamespaceMap.remove(filePath);
 
@@ -211,6 +230,8 @@ public class MasterServerNode extends ServerNode {
 				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children
 						.get(i));
 			}
+			NamespaceMap.get(startingNodeFilePath).children.clear();
+			NamespaceMap.remove(startingNodeFilePath);
 		}
 	}
 	
@@ -339,7 +360,7 @@ public class MasterServerNode extends ServerNode {
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
 	{
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
-		File file = new File("dataStorage/File" + chunkmd.filenumber);
+		File file = new File("dataStorage/MData_ChunkServerMap.txt");
 		//STRUCTURE///
 		//KEY VERSION# SIZEOF_LOCATIONLIST 
 		//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
@@ -559,7 +580,7 @@ public class MasterServerNode extends ServerNode {
 			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); //true tells to append data.
 		    out = new BufferedWriter(fstream);
 		    System.out.println("Writing out to file");
-		    out.write(" ");
+		    out.write("");
 		    out.close();
 		}
 		catch (IOException e)

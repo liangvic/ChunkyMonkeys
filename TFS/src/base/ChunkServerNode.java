@@ -260,7 +260,7 @@ public class ChunkServerNode extends ServerNode {
 		BufferedWriter out = null;
 		try  
 		{
-			File file = new File("dataStorage/MData_ChunkServerMap.txt");
+			File file = new File("dataStorage/SData_ChunkMap.txt");
 			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 			out = new BufferedWriter(fstream);
 			out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
