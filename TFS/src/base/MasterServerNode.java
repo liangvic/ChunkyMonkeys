@@ -16,8 +16,8 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
-	LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
-
+	Map<String,NamespaceNode> NamespaceMap = new HashMap<String,NamespaceNode>();
+	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
 		int portNumber = 8111;
@@ -70,7 +70,7 @@ public class MasterServerNode extends ServerNode {
 			MDeleteDirectory(inputMessage.filePath);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY
 				&& inputMessage.sender == serverType.CHUNKSERVER) {
-			if (inputMessage.success == msgSuccess.SUCCESS) {
+			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 				SendSuccessMessageToClient();
 			} else {
 				SendErrorMessageToClient();
@@ -84,92 +84,55 @@ public class MasterServerNode extends ServerNode {
 
 	public void SendSuccessMessageToClient() {
 		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.SUCCESS;
+		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
 	public void SendErrorMessageToClient() {
 		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.ERROR;
+		successMessage.success = msgSuccess.REQUESTERROR;
 		client.DealWithMessage(successMessage);
 	}
 
 	public void MDeleteDirectory(String filePath) {
-		if (NamespaceTree.contains(filePath)) {
-			String[] tokens = filePath.split(File.pathSeparator);
-			NamespaceNode currentNode = (NamespaceNode) NamespaceTree.get(0);
-
-			// want to iterate through the NamespaceTree to make sure
-			// all directories in path exist
-			String fullFilePath = null;
-			// assuming that root directory exists already so start at 1
-			for (int i = 1; i < tokens.length; i++) {
-				fullFilePath = "";
-				// Need to concatenate the directories in token to a path
-				for (int tokenIndex = 0; tokenIndex < i; tokenIndex++) {
-					fullFilePath = fullFilePath + File.pathSeparator
-							+ tokens[tokenIndex];
-				}
-
-				// iterate through all children
-				for (int j = 0; j < currentNode.children.size(); j++) {
-					// if a child's filename = the next filename in path
-					if (fullFilePath
-							.equals(currentNode.children.get(j).filepath)) {
-						currentNode = currentNode.children.get(j);
-						break;
-					}
-					// could not find the next directory in path name
-					if (j == currentNode.children.size() - 1) {
-						// output an error message
-						System.out
-								.println("A directory in the path does not exist! No deletions done.");
-						Message errorMessageToClient = new Message(
-								msgType.DELETEDIRECTORY);
-						errorMessageToClient.success = msgSuccess.SUCCESS;
-						return;
-					}
-				}
-			}
+		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
-			if (currentNode.children.size() > 0) {
+			if (NamespaceMap.get(filePath).children.size() > 0) {
 				// recursively going through the tree and deleting all
 				// files/directories below
-				deleteAllChildNodes(NamespaceTree, currentNode);
+				deleteAllChildNodes(filePath);
 			}
-
 			// finally delete directory wanted to delete
-			NamespaceTree.remove(currentNode);
-		} else // the filepath is not in the directory. Send error!
+			NamespaceMap.remove(filePath);
+			
+		} 
+		else // the filepath is not in the directory. Send error!
 		{
 			System.out
 					.println("Error! That filepath is not in the directory! Aborting deletion...");
 			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-			errorMessageToClient.success = msgSuccess.SUCCESS;
-			// need to send out
-
+			errorMessageToClient.success = msgSuccess.REQUESTSUCCESS;
+			client.DealWithMessage(errorMessageToClient);
 			return;
 		}
-
 	}
 
-	public void deleteAllChildNodes(LinkedList<NamespaceNode> nsTree,
-			NamespaceNode startingNode) {
-		if (startingNode.children.size() == 0) {
-			nsTree.remove(startingNode);
+	public void deleteAllChildNodes(String startingNodeFilePath) {
+		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
+			NamespaceMap.remove(startingNodeFilePath);
+			
 			// Send message to client server to erase data
 			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-			clientMessage.chunkClass = startingNode.metaData; // does NS tree
+			clientMessage.chunkClass = chunkServerMap.get(startingNodeFilePath); // does NS tree
 																// hold this?
-
 			// sending protocol
 			chunkServer.DealWithMessage(clientMessage);
-
 			return;
-		} else {
-			for (int i = 0; i < startingNode.children.size(); i++) {
-				deleteAllChildNodes(nsTree, startingNode.children.get(i));
+		} 
+		else {
+			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children.size(); i++) {
+				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children.get(i));
 			}
 		}
 	}

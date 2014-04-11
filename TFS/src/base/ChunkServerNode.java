@@ -72,7 +72,7 @@ public class ChunkServerNode extends ServerNode{
     	{
     		files.remove(chunkToDelete);
     		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
-    		successMessageToMaster.success = msgSuccess.SUCCESS;
+    		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
     	}
     }

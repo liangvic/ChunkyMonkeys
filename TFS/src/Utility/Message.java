@@ -26,7 +26,7 @@ public class Message implements Serializable{
 //	List<Character> filePath = new ArrayList<Character>();
 	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE};
 	public msgType type;
-	public static enum msgSuccess {SUCCESS, ERROR};
+	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
 	public msgSuccess success;
 	public static enum serverType {MASTER,CLIENT,CHUNKSERVER};
 	public serverType addressedTo;
