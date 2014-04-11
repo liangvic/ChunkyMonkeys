@@ -11,6 +11,7 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.NamespaceNode;
+import Utility.chunkLocation;
 
 public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -21,6 +22,12 @@ public class MasterServerNode extends ServerNode {
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	TFSLogger tfsLogger = new TFSLogger();
+	
+	public MasterServerNode()
+	{
+		LoadChunkServerMap();
+		LoadNamespaceMap();
+	}
 	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
@@ -130,12 +137,20 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			NamespaceMap.remove(startingNodeFilePath);
 			
-			// Send message to client server to erase data
-			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-			clientMessage.chunkClass = chunkServerMap.get(startingNodeFilePath); // does NS tree
-																// hold this?
-			// sending protocol
-			chunkServer.DealWithMessage(clientMessage);
+			int chunkIndex = 1;
+			String hashPath = startingNodeFilePath+chunkIndex;
+			while(chunkServerMap.containsKey(hashPath.hashCode()))
+			{
+				// Send message to client server to erase data
+				Message clientMessage = new Message(msgType.DELETEDIRECTORY);
+				
+				clientMessage.chunkClass = chunkServerMap.get(hashPath.hashCode()); // does NS tree
+													
+				// sending protocol
+				chunkServer.DealWithMessage(clientMessage);
+				chunkIndex++;
+				hashPath = startingNodeFilePath + chunkIndex;
+			}
 			return;
 		} 
 		else {
@@ -211,5 +226,95 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+	}
+
+	public void LoadChunkServerMap()
+	{
+		String path = "dataStorage/MData_ChunkServerMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY VERSION# SIZEOF_LOCATIONLIST 
+				//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+				//CHUNKHASH
+				//REFERENCECOUNT
+				String[] data = textLine.split("\t");
+				
+				String key;
+				key = data[0];
+				
+				int version = Integer.parseInt(data[1]);
+				
+				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				int locationSize = locations.size();
+				
+				for(int i=3; i<3+(locationSize/2); i=i+2)
+				{
+					locations.add(new chunkLocation(data[i],Integer.parseInt(data[i+1])));
+				}
+				
+				List<Integer> hash = new ArrayList<Integer>();
+				String tempHash = data[3+(locationSize/2)];
+				for(int i=0;i<tempHash.length();i++)
+				{
+					hash.add(Character.getNumericValue(tempHash.charAt(i)));//adds at end
+				}
+				tempHash = hash.toString();
+				int count = Integer.parseInt(data[data.length-1]);
+				
+				ChunkMetadata newMetaData = new ChunkMetadata(version,locations,Integer.parseInt(tempHash),count);
+				
+				chunkServerMap.put(key, newMetaData);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void LoadNamespaceMap()
+	{
+		String path = "dataStorage/MData_NamespaceMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY CHILD CHILD CHILD ...//
+				String[] data = textLine.split("\t");
+				String key;
+				List<String> children = new ArrayList<String>();
+				key = data[0];
+				for(int i= 1; i< data.length;i++)
+				{
+					children.add(data[i]);
+				}
+				
+				NamespaceNode addingNode = new NamespaceNode();
+				addingNode.children = children;
+				
+				NamespaceMap.put(key, addingNode);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

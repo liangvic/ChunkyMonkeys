@@ -24,12 +24,11 @@ public class ChunkServerNode extends ServerNode{
 		int spaceLeft;
 		byte[] data;
 	}
-	
+
 	List<File> file_list = new ArrayList<File>();
 			
 	//hash to data
 	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
-	   
     
     /* public static void main(String argv[]) throws Exception
     {

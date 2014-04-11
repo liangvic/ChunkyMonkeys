@@ -3,8 +3,11 @@ package Utility;
 import java.util.*;
 
 public class ChunkMetadata{
-	public ChunkMetadata(){
-		
+	public ChunkMetadata(int version,List<chunkLocation> chList,int hash, int count){
+		versionNumber = version;
+		listOfLocations = chList;
+		chunkHash = hash;
+		referenceCount = count;
 	}
 	public ChunkMetadata(String filename, int ind, int v, int refCount){
 		versionNumber = v;
@@ -22,15 +25,7 @@ public class ChunkMetadata{
 	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
 	public int chunkHash;
 	int referenceCount;
-	public class chunkLocation{
-		String chunkIP;
-		int chunkPort;
-		
-		public chunkLocation(String ip, int port){
-			chunkIP = ip;
-			chunkPort = port;
-		}
-	}
+
 	
 	
 }
