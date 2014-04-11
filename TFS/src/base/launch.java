@@ -11,7 +11,6 @@ public class launch {
 		MasterServerNode master = new MasterServerNode();
 		ClientServerNode client = new ClientServerNode();
 		ChunkServerNode chunkServer = new ChunkServerNode();
-		TFSLogger tfsLogger = new TFSLogger();
 		
 		master.client = client;
 		master.chunkServer = chunkServer;

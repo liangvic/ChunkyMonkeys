@@ -66,7 +66,7 @@ public class ChunkServerNode extends ServerNode{
     
     public void DeleteChunk(ChunkMetadata metadata)
     {
-    	listMetaData chunkToDelete = null;
+    	/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
     	for(listMetaData lmd: files)
     	{
@@ -82,6 +82,6 @@ public class ChunkServerNode extends ServerNode{
     		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
     		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
-    	}
+    	}*/
     }
 }

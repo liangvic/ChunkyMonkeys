@@ -194,6 +194,7 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateDirectory(String filepath)
 	{
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
+		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
 	

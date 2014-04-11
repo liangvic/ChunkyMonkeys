@@ -6,6 +6,7 @@ import java.util.*;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
@@ -19,6 +20,7 @@ public class MasterServerNode extends ServerNode {
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	TFSLogger tfsLogger = new TFSLogger();
 	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
@@ -171,6 +173,7 @@ public class MasterServerNode extends ServerNode {
 			File file = new File(filepath);
 			file.mkdirs();
 			SendSuccessMessageToClient();
+			tfsLogger.LogMsg("Created directory "+filepath);
 		}
 		else // directory already exists
 		{
