@@ -35,7 +35,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 	//hash to data
 
-	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();	
+	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
 
 
 
@@ -104,7 +104,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public void AddNewBlankChunk(ChunkMetadata metadata){
 		//TODO: have to create new Chunkmetadata and copy over metadata
-		chunkMap.put(metadata.filename, metadata);
+		chunkMap.put(metadata.chunkHash, metadata);
 		File current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = 0;
@@ -206,12 +206,11 @@ public class ChunkServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-//				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
-				newMetaData.chunkHash = n_fileName+n_index;
+				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
-				chunkMap.put(key, newMetaData);
+				chunkMap.put(Integer.parseInt(key), newMetaData);
 			}
 			textReader.close();
 		} catch (FileNotFoundException e) {
@@ -223,7 +222,7 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
-	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
+	public void WritePersistentServerNodeMap(int chunkHash, ChunkMetadata chunkmd)
 	{
 		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		//STRUCTURE///
@@ -241,7 +240,7 @@ public class ChunkServerNode extends ServerNode {
 		{
 			FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
 			out = new BufferedWriter(fstream);
-			out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+			out.write(chunkHash+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 			for(int i=0;i<chunkmd.listOfLocations.size();i++)
 			{
 				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");

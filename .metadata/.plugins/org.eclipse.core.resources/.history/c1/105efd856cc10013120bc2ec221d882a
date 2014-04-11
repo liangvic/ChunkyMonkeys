@@ -12,6 +12,7 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.NamespaceNode;
+import Utility.ChunkLocation;
 
 public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -26,7 +27,7 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
-//		NamespaceMap.put("1", new NamespaceNode());
+		NamespaceMap.put("1", new NamespaceNode());
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -86,32 +87,15 @@ public class MasterServerNode extends ServerNode {
 			} else {
 				SendErrorMessageToClient();
 			}
-		}
-		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
-		{
-			if(inputMessage.sender == serverType.CLIENT)
-			{
-				try {
-					
-					CreateDirectory(inputMessage.filePath);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		} else if (inputMessage.type == msgType.CREATEDIRECTORY
+				&& inputMessage.sender == serverType.CLIENT) {
+			try {
+				CreateDirectory(inputMessage.filePath);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			else if(inputMessage.sender == serverType.CHUNKSERVER)
-			{
-				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-					System.out.println("Directory " + " creation successful");
-				}
-				else if (inputMessage.success == msgSuccess.REQUESTERROR) {
-					System.out.println("Directory " + " creation failed");
-			
-				}
-			}
-		}
-		else if (inputMessage.type == msgType.CREATEFILE)
-		{			
+		} else if (inputMessage.type == msgType.CREATEFILE) {
 			if (inputMessage.sender == serverType.CLIENT)
 				CreateFile(inputMessage.filePath, inputMessage.fileName,
 						inputMessage.chunkindex);
@@ -232,8 +216,9 @@ public class MasterServerNode extends ServerNode {
 	public void CreateFile(String filepath, String filename, int index){
 
 		String hashstring = filepath + "\\" + filename + Integer.toString(index);
+		int hash = hashstring.hashCode();
 		//if folder doesn't exist or file already exists
-		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null){
+		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hash) != null){
 
 			SendErrorMessageToClient();
 		} else {
@@ -268,30 +253,25 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public void CreateDirectory(String filepath) {
+	public void CreateDirectory(String filepath) throws Exception {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			String delim = "\\+";
 			String[] tokens = filepath.split(delim);
-			
-			if (tokens.length >= 1)
+			if (tokens.length > 1)
 			{
 				String supposedParent = tokens[0];
-				if (tokens.length >= 2){
+				if (tokens.length > 2){
 					for (int i = 1; i < tokens.length - 1 ; i++){			
 						supposedParent += "\\" + tokens[i]; 
 					}
 				}				
 				if(NamespaceMap.containsKey(supposedParent)) 
 				{
-					
 					NamespaceMap.get(supposedParent).children.add(filepath);
 				}
-				else{
-					
-//					throw new Exception();
-				}
+				else
+					throw new Exception();
 			}
-
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
 			SendSuccessMessageToClient();
@@ -449,8 +429,7 @@ public class MasterServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-//				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
-				newMetaData.chunkHash = n_fileName+n_index;
+				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
