@@ -15,10 +15,16 @@ public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
 	public ChunkServerNode chunkServer;
 
+<<<<<<< HEAD
 	// private static ServerSocket welcomeSocket;
-
+	
+	public Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
+	public LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
+	public Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+=======
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String,NamespaceNode> NamespaceMap = new HashMap<String,NamespaceNode>();
+>>>>>>> 747224eb2e571ec05c4cf06aeff1804b88361a37
 	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
@@ -82,10 +88,6 @@ public class MasterServerNode extends ServerNode {
 		{
 			CreateDirectory();
 		}
-		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
-		{
-			CreateFile(inputMessage.filePath, inputMessage.fileName);
-		}
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -140,22 +142,6 @@ public class MasterServerNode extends ServerNode {
 			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children.size(); i++) {
 				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children.get(i));
 			}
-		}
-	}
-	
-	public void CreateFile(String filepath, String filename){
-		if (NamespaceMap.get(filepath) != null){
-			SendErrorMessageToClient();
-		}
-		else
-		{
-			String newName = filepath + "\";" + filename;
-			NamespaceMap.get(filepath).children.add(newName);
-			NamespaceMap.put(newName, new NamespaceNode());
-			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));
-			
-			newMessage.
-			chunkServer.DealWithMessage(newMessage);
 		}
 	}
 	public void CreateDirectory()

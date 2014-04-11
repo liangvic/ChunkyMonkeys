@@ -6,20 +6,16 @@ public class ChunkMetadata{
 	public ChunkMetadata(){
 		
 	}
-	public ChunkMetadata(String filename, int v, int refCount){
-		versionNumber = v;
-		chunkHash = filename.hashCode();
-		referenceCount = refCount;
+	public ChunkMetadata(int v, List<Character> hash, int refCount){
+		
 	}
-	String filename;
 	int versionNumber;
 	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
-	public int chunkHash;
+	public List<Character> chunkHash = new ArrayList<Character>();
 	int referenceCount;
 	public class chunkLocation{
 		String chunkIP;
 		int chunkPort;
-		
 		public chunkLocation(String ip, int port){
 			chunkIP = ip;
 			chunkPort = port;

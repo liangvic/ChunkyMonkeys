@@ -14,7 +14,7 @@ public class ChunkMetadata{
 	String filename;
 	int versionNumber;
 	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
-	public int chunkHash;
+	int chunkHash;
 	int referenceCount;
 	public class chunkLocation{
 		String chunkIP;

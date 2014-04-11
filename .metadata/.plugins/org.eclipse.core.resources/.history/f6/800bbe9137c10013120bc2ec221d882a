@@ -119,9 +119,8 @@ public class ClientServerNode extends ServerNode {
 			CCreateFile(filepath, filename + i);
 		}
 		if (master.NamespaceMap.get(filepath).children.size() > 0){			
-			List<String> childs = master.NamespaceMap.get(filepath).children;
-			for (int a = 0; a < childs.size(); a++){			
-				test2(filepath + "\";" + childs.get(a), nFiles); 
+			for (int a = 0; a < master.NamespaceMap.get(filepath).children.size(); a++){
+				test2(filepath + "\" + master.NamespaceMap.get(filepath).children.at[a])
 			}
 		}
 	}

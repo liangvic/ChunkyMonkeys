@@ -152,10 +152,8 @@ public class MasterServerNode extends ServerNode {
 			String newName = filepath + "\";" + filename;
 			NamespaceMap.get(filepath).children.add(newName);
 			NamespaceMap.put(newName, new NamespaceNode());
-			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));
+			chunkServerMap.put(newName, new ChunkMetadata());
 			
-			newMessage.
-			chunkServer.DealWithMessage(newMessage);
 		}
 	}
 	public void CreateDirectory()

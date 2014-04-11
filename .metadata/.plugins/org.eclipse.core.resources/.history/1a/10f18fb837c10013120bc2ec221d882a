@@ -121,7 +121,7 @@ public class ClientServerNode extends ServerNode {
 		if (master.NamespaceMap.get(filepath).children.size() > 0){			
 			List<String> childs = master.NamespaceMap.get(filepath).children;
 			for (int a = 0; a < childs.size(); a++){			
-				test2(filepath + "\";" + childs.get(a), nFiles); 
+				test2(childs.get{a) + "\" + master.NamespaceMap.get(filepath).children.at[a])
 			}
 		}
 	}
