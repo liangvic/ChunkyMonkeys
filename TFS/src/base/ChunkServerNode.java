@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
@@ -18,24 +19,16 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
-	public class ChunkMetaData{
-		int version;
-		int filenumber;
-		int byteoffset;
-		int size;
-	}
-	
 	public class File{
 		int fileNumber;
-		int spaceLeft;
+		int spaceOccupied;
 		byte[] data;
 	}
-	
+
 	List<File> file_list = new ArrayList<File>();
 			
 	//hash to data
-	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	
-	   
+	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
     
     /* public static void main(String argv[]) throws Exception
     {
@@ -61,11 +54,29 @@ public class ChunkServerNode extends ServerNode{
     	{
     		DeleteChunk(message.chunkClass);
     	}
+    	else if (message.type == msgType.CREATEFILE)
+    	{
+    		AddNewBlankChunk(message.chunkClass);
+    	}
 	}
+    public void AddNewBlankChunk(ChunkMetadata metadata){
+    	//TODO: have to create new Chunkmetadata and copy over metadata
+    	chunkMap.put(metadata.chunkHash, metadata);
+    	File current = file_list.get(metadata.filenumber);
+    	metadata.byteoffset = current.spaceOccupied;
+    	metadata.size = 0;
+    	current.data[current.spaceOccupied] = 0;
+    	current.data[current.spaceOccupied+1] = 0;
+    	current.spaceOccupied+= 8;
+    	
+    	Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
+    	newMessage.success = msgSuccess.REQUESTSUCCESS;
+    	master.DealWithMessage(newMessage);
+    }
     
     public void DeleteChunk(ChunkMetadata metadata)
     {
-    	listMetaData chunkToDelete = null;
+    	/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
     	for(listMetaData lmd: files)
     	{
@@ -81,6 +92,6 @@ public class ChunkServerNode extends ServerNode{
     		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
     		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
-    	}
+    	}*/
     }
 }

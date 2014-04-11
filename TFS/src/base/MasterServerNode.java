@@ -6,10 +6,12 @@ import java.util.*;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.NamespaceNode;
+import Utility.chunkLocation;
 
 public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -19,6 +21,13 @@ public class MasterServerNode extends ServerNode {
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	TFSLogger tfsLogger = new TFSLogger();
+	
+	public MasterServerNode()
+	{
+		LoadChunkServerMap();
+		LoadNamespaceMap();
+	}
 	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
@@ -82,10 +91,18 @@ public class MasterServerNode extends ServerNode {
 		{
 			CreateDirectory(inputMessage.filePath);
 		}
-		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
-		{
-			CreateFile(inputMessage.filePath, inputMessage.fileName);
+		else if (inputMessage.type == msgType.CREATEFILE)
+		{			
+			if (inputMessage.sender == serverType.CLIENT)
+				CreateFile(inputMessage.filePath, inputMessage.fileName,  inputMessage.chunkClass.index);
+			else if (inputMessage.sender == serverType.CHUNKSERVER){
+				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
+					System.out.println("File " + inputMessage.chunkClass.filename + " creation successful");
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+			}
 		}
+		
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -128,12 +145,20 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			NamespaceMap.remove(startingNodeFilePath);
 			
-			// Send message to client server to erase data
-			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-			clientMessage.chunkClass = chunkServerMap.get(startingNodeFilePath); // does NS tree
-																// hold this?
-			// sending protocol
-			chunkServer.DealWithMessage(clientMessage);
+			int chunkIndex = 1;
+			String hashPath = startingNodeFilePath+chunkIndex;
+			while(chunkServerMap.containsKey(hashPath.hashCode()))
+			{
+				// Send message to client server to erase data
+				Message clientMessage = new Message(msgType.DELETEDIRECTORY);
+				
+				clientMessage.chunkClass = chunkServerMap.get(hashPath.hashCode()); // does NS tree
+													
+				// sending protocol
+				chunkServer.DealWithMessage(clientMessage);
+				chunkIndex++;
+				hashPath = startingNodeFilePath + chunkIndex;
+			}
 			return;
 		} 
 		else {
@@ -143,18 +168,25 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public void CreateFile(String filepath, String filename){
-		if (NamespaceMap.get(filepath) != null){
+	public void CreateFile(String filepath, String filename, int index){
+		String hashstring = filepath + "\\" + filename + index;
+		int hash = hashstring.hashCode();
+		//if folder doesn't exist or file already exists
+		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hash) != null){
 			SendErrorMessageToClient();
 		}
 		else
 		{
-			String newName = filepath + "\";" + filename;
+			String newName = filepath + "\\" + filename;
 			NamespaceMap.get(filepath).children.add(newName);
 			NamespaceMap.put(newName, new NamespaceNode());
-			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));
+			ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 1); 
 			
-			newMessage.
+	    	Random rand = new Random();	
+			newChunk.filenumber = rand.nextInt(5);
+			chunkServerMap.put(newName, newChunk);			
+			
+			Message newMessage = new Message(msgType.CREATEFILE,newChunk);
 			chunkServer.DealWithMessage(newMessage);
 		}
 	}
@@ -164,11 +196,10 @@ public class MasterServerNode extends ServerNode {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
-			// TODO: set chunkData data
-			// TODO: message chunk servers
 			File file = new File(filepath);
 			file.mkdirs();
 			SendSuccessMessageToClient();
+			tfsLogger.LogMsg("Created directory "+filepath);
 		}
 		else // directory already exists
 		{
@@ -206,5 +237,181 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+	}
+
+	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
+	{
+		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
+		//STRUCTURE///
+		//KEY VERSION# SIZEOF_LOCATIONLIST 
+		//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+		//CHUNKHASH
+		//REFERENCECOUNT
+		//FILENAME
+		//FILENUMBER
+		//BYTEOFFSET
+		//INDEX
+		//SIZE
+		BufferedWriter out = null;
+		try  
+		{
+		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+		    out = new BufferedWriter(fstream);
+		    out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
+		    {
+		    	out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
+		    }
+		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
+		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
+		    out.newLine();
+		}
+		catch (IOException e)
+		{
+		    System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void WritePersistentNamespaceMap(String key,NamespaceNode nsNode)
+	{
+		String fileToWriteTo = "dataStorage/MData_NamespaceMap.txt";
+		//STRUCTURE///
+		//KEY CHILD CHILD CHILD ...//
+		BufferedWriter out = null;
+		try  
+		{
+		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+		    out = new BufferedWriter(fstream);
+		    out.write(key+"\t");
+		    for(int i=0;i<nsNode.children.size();i++)
+		    {
+		    	out.write(nsNode.children.get(i)+ "\t");
+		    }
+		    out.newLine();
+		}
+		catch (IOException e)
+		{
+		    System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void LoadChunkServerMap()
+	{
+		String path = "dataStorage/MData_ChunkServerMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY VERSION# SIZEOF_LOCATIONLIST 
+				//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+				//CHUNKHASH
+				//REFERENCECOUNT
+				//FILENAME
+				//FILENUMBER
+				//BYTEOFFSET
+				//INDEX
+				//SIZE
+				String[] data = textLine.split("\t");
+				
+				//key
+				String key;
+				key = data[0];
+				
+				//version
+				int n_version = Integer.parseInt(data[1]);
+				
+				//location
+				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				int locationSize = locations.size();
+				int newIndexCounter = 3 + (locationSize/2);
+				for(int i=3; i<newIndexCounter; i=i+2)
+				{
+					locations.add(new chunkLocation(data[i],Integer.parseInt(data[i+1])));
+				}
+				
+				//hash
+				List<Integer> hash = new ArrayList<Integer>();
+				String n_tempHash = data[newIndexCounter++];
+				for(int i=0;i<n_tempHash.length();i++)
+				{
+					hash.add(Character.getNumericValue(n_tempHash.charAt(i)));//adds at end
+				}
+				n_tempHash = hash.toString();
+				
+				//count
+				int n_count = Integer.parseInt(data[newIndexCounter++]);
+				
+				//filename
+				String n_fileName = data[newIndexCounter++];
+				
+				//fileNumber
+				int n_fileNumber = Integer.parseInt(data[newIndexCounter++]);
+				
+				//byteoffset
+				int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
+				
+				//index
+				int n_index = Integer.parseInt(data[newIndexCounter++]);
+				
+				//size
+				int n_size = Integer.parseInt(data[newIndexCounter++]);
+
+				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
+				newMetaData.listOfLocations = locations;
+				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.filenumber = n_fileNumber;
+				newMetaData.byteoffset = n_byteOffset;
+				newMetaData.size = n_size;
+				chunkServerMap.put(key, newMetaData);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void LoadNamespaceMap()
+	{
+		String path = "dataStorage/MData_NamespaceMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY CHILD CHILD CHILD ...//
+				String[] data = textLine.split("\t");
+				String key;
+				List<String> children = new ArrayList<String>();
+				key = data[0];
+				for(int i= 1; i< data.length;i++)
+				{
+					children.add(data[i]);
+				}
+				
+				NamespaceNode addingNode = new NamespaceNode();
+				addingNode.children = children;
+				
+				NamespaceMap.put(key, addingNode);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

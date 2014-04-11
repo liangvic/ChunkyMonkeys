@@ -121,7 +121,7 @@ public class ClientServerNode extends ServerNode {
 		if (master.NamespaceMap.get(filepath).children.size() > 0){			
 			List<String> childs = master.NamespaceMap.get(filepath).children;
 			for (int a = 0; a < childs.size(); a++){			
-				test2(filepath + "\";" + childs.get(a), nFiles); 
+				test2(filepath + "\\" + childs.get(a), nFiles); 
 			}
 		}
 	}
@@ -129,6 +129,7 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateFile(String folderFilepath, String fileName){
 		Message message = new Message (msgType.CREATEFILE, folderFilepath);
 		message.fileName = fileName;
+		message.chunkClass.index = 1;
 		message.addressedTo = serverType.MASTER;
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
@@ -194,6 +195,7 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateDirectory(String filepath)
 	{
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
+		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
 	
@@ -213,7 +215,7 @@ public class ClientServerNode extends ServerNode {
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
 		if (folderName <= NumMaxFolders)
 		{
-			String newfilepath = parentfilepath + File.pathSeparator + folderName;
+			String newfilepath = parentfilepath + "\\" + folderName;
 			CCreateDirectory(newfilepath);
 			helper (newfilepath, folderName*2, NumMaxFolders);
 			helper (newfilepath, folderName*2 + 1, NumMaxFolders);

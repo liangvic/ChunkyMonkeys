@@ -3,28 +3,23 @@ package Utility;
 import java.util.*;
 
 public class ChunkMetadata{
-	public ChunkMetadata(){
-		
-	}
-	public ChunkMetadata(String filename, int v, int refCount){
-		versionNumber = v;
-		chunkHash = filename.hashCode();
+	public ChunkMetadata(String filename, int chunkindex, int versionnumber, int refCount){
+		versionNumber = versionnumber;
+		index = chunkindex;
+		chunkHash = ((String)(filename + index)).hashCode();
 		referenceCount = refCount;
 	}
-	String filename;
-	int versionNumber;
-	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
+	public int versionNumber;
+	public List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
 	public int chunkHash;
-	int referenceCount;
-	public class chunkLocation{
-		String chunkIP;
-		int chunkPort;
-		
-		public chunkLocation(String ip, int port){
-			chunkIP = ip;
-			chunkPort = port;
-		}
-	}
+	public int referenceCount;
+	public String filename;
+	public int filenumber;
+	public int byteoffset;
+	public int index;
+	public int size;	
+
+
 	
 	
 }
