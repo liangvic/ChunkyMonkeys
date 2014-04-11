@@ -35,7 +35,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 	//hash to data
 
-	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();	
+	Map<String, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
 
 
 
