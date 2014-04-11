@@ -1,9 +1,14 @@
 package base;
 
+import Utility.ChunkMetadata;
+
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
@@ -14,26 +19,22 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
-	String clientSentence;
-    String capitalizedSentence;
+	public class File{
+		int fileNumber;
+		int spaceLeft;
+		byte[] data;
+	}
 	
-    public class listMetaData{
-    	int checksum; //??
-    	int chunkVersion;
-    	String location;
-    	List<Character> chunkHash = new ArrayList<Character>();
-    	List<Character> data = new ArrayList<Character>();
-    }
+	List<File> file_list = new ArrayList<File>();
+			
+	//hash to data
+	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
+	   
     
-    //TODO: check if we are using a list as data structure
-    //Map<ChunkMetadata,char[]> chunkMap = new HashMap<ChunkMetadata,char[]>();
-    List<listMetaData> files = new ArrayList<listMetaData>();
-    
-    
-    public static void main(String argv[]) throws Exception
+    /* public static void main(String argv[]) throws Exception
     {
        
-       /*ServerSocket welcomeSocket = new ServerSocket(6789);
+       ServerSocket welcomeSocket = new ServerSocket(6789);
 
        while(true)
        {
@@ -45,8 +46,8 @@ public class ChunkServerNode extends ServerNode{
           System.out.println("Received: " + clientSentence);
           capitalizedSentence = clientSentence.toUpperCase() + '\n';
           outToClient.writeBytes(capitalizedSentence);
-       }*/
-    }
+       }
+    }*/
     
     public void DealWithMessage(Message message)
 	{
@@ -54,7 +55,14 @@ public class ChunkServerNode extends ServerNode{
     	{
     		DeleteChunk(message.chunkClass);
     	}
+    	else if (message.type == msgType.CREATEFILE)
+    	{
+    		AddNewBlankChunk(message.chunkClass);
+    	}
 	}
+    public void AddNewBlankChunk(ChunkMetadata metadata){
+    	chunkMap.put(metadata.chunkHash, metadata);
+    }
     
     public void DeleteChunk(ChunkMetadata metadata)
     {

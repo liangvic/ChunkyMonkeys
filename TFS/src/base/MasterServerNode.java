@@ -15,6 +15,8 @@ public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
 	public ChunkServerNode chunkServer;
 
+	// private static ServerSocket welcomeSocket;
+
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	
@@ -80,6 +82,10 @@ public class MasterServerNode extends ServerNode {
 		{
 			CreateDirectory(inputMessage.filePath);
 		}
+		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
+		{
+			CreateFile(inputMessage.filePath, inputMessage.fileName);
+		}
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -134,6 +140,25 @@ public class MasterServerNode extends ServerNode {
 			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children.size(); i++) {
 				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children.get(i));
 			}
+		}
+	}
+	public void CreateFile(String filepath, String filename){
+		if (NamespaceMap.get(filepath) != null){
+			SendErrorMessageToClient();
+		}
+		else
+		{
+			String newName = filepath + "\";" + filename;
+			NamespaceMap.get(filepath).children.add(newName);
+			NamespaceMap.put(newName, new NamespaceNode());
+			ChunkMetadata newChunk = new ChunkMetadata(newName, 1, 3); 
+			
+	    	Random rand = new Random();	
+			newChunk.filenumber = rand.nextInt(5);
+			chunkServerMap.put(newName, newChunk);			
+			
+			Message newMessage = new Message(msgType.CREATEFILE,newChunk);
+			chunkServer.DealWithMessage(newMessage);
 		}
 	}
 	public void CreateDirectory(String filepath)

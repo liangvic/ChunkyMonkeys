@@ -1,0 +1,12 @@
+package Utility;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class NamespaceNode {
+	public NamespaceNode parent;
+	public ArrayList<String> children;
+	public String filepath;
+	
+	//file access permissions?
+}
