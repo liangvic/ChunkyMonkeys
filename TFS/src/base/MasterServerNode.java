@@ -168,8 +168,8 @@ public class MasterServerNode extends ServerNode {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
-			File file = new File(filepath);
-			file.mkdirs();
+			/*File file = new File(filepath);
+			file.mkdirs();*/
 			SendSuccessMessageToClient();
 			tfsLogger.LogMsg("Created directory "+filepath);
 		}
