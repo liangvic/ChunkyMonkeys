@@ -283,6 +283,8 @@ public class ClientServerNode extends ServerNode {
 		 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
 		 */
 		Message message = new Message(msgType.DELETEDIRECTORY);
+		message.filePath = filepath;
+		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 
 	}
