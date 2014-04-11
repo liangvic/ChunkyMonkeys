@@ -51,6 +51,10 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 				break;
 				case ("Test3"):
+					if (tokens.length == 2)
+						test3(tokens[1]);
+					else
+						throw new Exception();
 					break;
 				case ("Test4"):
 					break;
