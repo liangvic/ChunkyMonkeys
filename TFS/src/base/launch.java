@@ -7,7 +7,20 @@ import base.*;
 public class launch {
 
 	public static void main(String args[]) throws Exception {
-		System.out.println("1: Launch Master Server\n2: Launch Client Server\n");
+		MasterServerNode master = new MasterServerNode();
+		ClientServerNode client = new ClientServerNode();
+		ChunkServerNode chunkServer = new ChunkServerNode();
+		
+		master.client = client;
+		master.chunkServer = chunkServer;
+		client.master = master;
+		client.chunkServer = chunkServer;
+		chunkServer.master = master;
+		chunkServer.client = client;
+		
+		client.TestInterface();
+		
+		/*System.out.println("1: Launch Master Server\n2: Launch Client Server\n");
 		Scanner a = new Scanner(System.in);
 		int input = a.nextInt();
 		
@@ -20,7 +33,7 @@ public class launch {
 		}
 		else{
 			System.out.println("Invalid Selection");
-		}
+		}*/
 	}
 
 }

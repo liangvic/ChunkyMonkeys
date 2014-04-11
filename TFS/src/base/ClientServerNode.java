@@ -5,10 +5,14 @@ import java.net.*;
 import java.util.*;
 
 import Utility.Message;
+import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
+	public MasterServerNode master;
+	public ChunkServerNode chunkServer;
+	
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -60,6 +64,21 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	public void DealWithMessage(Message message)
+	{
+		if(message.type == msgType.DELETEDIRECTORY)
+		{
+			if(message.success == msgSuccess.SUCCESS)
+			{
+				System.out.println("Deleted directory sucessfully!");
+			}
+			else
+			{
+				System.out.println("Error! Couldn't delete directory...");
+			}
+		}
+	}
+	
 	public void msgEcho() {
 
 		try (Socket echoSocket = new Socket(hostName, portNumber);
@@ -116,7 +135,7 @@ public class ClientServerNode extends ServerNode {
 
 	public void CDeleteDirectory(String filepath) {
 		// SENDING FILEPATH TO THE MASTER
-		Properties prop = new Properties();
+		/*Properties prop = new Properties();
 		try {
 			prop.load(new FileInputStream("config/config.properties"));
 		} catch (FileNotFoundException e) {
@@ -144,7 +163,9 @@ public class ClientServerNode extends ServerNode {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
+		Message message = new Message(msgType.DELETEDIRECTORY);
+		master.DealWithMessage(message);
 
 	}
 

@@ -5,18 +5,21 @@ import java.util.*;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
-
+import Utility.Message.serverType;
 import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode{
+	public ClientServerNode client;
+	public ChunkServerNode chunkServer;
 	
 	//private static ServerSocket welcomeSocket;
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	static LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
 
-	public static void main(String args[]) throws Exception
+	public void main(String args[]) throws Exception
     {
 	        int portNumber = 8111;
 	        
@@ -63,15 +66,39 @@ public class MasterServerNode extends ServerNode{
        }*/
     }
 	
-	public static void DealWithMessage(Message inputMessage)
+	public void DealWithMessage(Message inputMessage)
 	{
-		if(inputMessage.type == msgType.DELETEDIRECTORY)
+		if(inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT)
 		{
 			MDeleteDirectory(inputMessage.filePath);
 		}
+		else if(inputMessage.type == msgType.DELETEFROMSERVER && inputMessage.sender == serverType.CHUNKSERVER)
+		{
+			if(inputMessage.success == msgSuccess.SUCCESS)
+			{
+				SendSuccessMessageToClient();
+			}
+			else
+			{
+				SendErrorMessageToClient();
+			}
+		}
+	}
+	public void SendSuccessMessageToClient()
+	{
+		Message successMessage = new Message(msgType.CREATEDIRECTORY);
+		successMessage.success = msgSuccess.SUCCESS;
+		client.DealWithMessage(successMessage);
 	}
 	
-	public static void MDeleteDirectory(String filePath)
+	public void SendErrorMessageToClient()
+	{
+		Message successMessage = new Message(msgType.CREATEDIRECTORY);
+		successMessage.success = msgSuccess.ERROR;
+		client.DealWithMessage(successMessage);
+	}
+	
+	public void MDeleteDirectory(String filePath)
 	{
 		if(NamespaceTree.contains(filePath))
 		{
@@ -105,6 +132,8 @@ public class MasterServerNode extends ServerNode{
 					{
 						//output an error message
 						System.out.println("A directory in the path does not exist! No deletions done.");
+						Message errorMessageToClient = new Message(msgType.DELETEFROMSERVER);
+						errorMessageToClient.success = msgSuccess.SUCCESS;
 						return;
 					}
 				}
@@ -122,12 +151,16 @@ public class MasterServerNode extends ServerNode{
 		else //the filepath is not in the directory. Send error!
 		{
 			System.out.println("Error! That filepath is not in the directory! Aborting deletion...");
+			Message errorMessageToClient = new Message(msgType.DELETEFROMSERVER);
+			errorMessageToClient.success = msgSuccess.SUCCESS;
+			//need to send out
+			
 			return;
 		}
 		
 	}
 	
-	public static void deleteAllChildNodes(LinkedList<NamespaceNode> nsTree,NamespaceNode startingNode)
+	public void deleteAllChildNodes(LinkedList<NamespaceNode> nsTree,NamespaceNode startingNode)
 	{
 		if(startingNode.children.size()==0)
 		{
@@ -135,6 +168,10 @@ public class MasterServerNode extends ServerNode{
 			//Send message to client server to erase data
 			Message clientMessage = new Message(msgType.DELETEFROMSERVER);
 			clientMessage.chunkClass = startingNode.metaData; //does NS tree hold this?
+			
+			//sending protocol
+			chunkServer.DealWithMessage(clientMessage);
+			
 			return;
 		}
 		else
@@ -160,13 +197,15 @@ public class MasterServerNode extends ServerNode{
 				//TODO: assign chunk and replicas to chunk servers
 				ChunkMetadata chunkData = new ChunkMetadata();
 				//TODO: set chunkData data
-				responseMsg = new Message(msgType.SUCCESS, chunkData);
+				responseMsg = new Message(msgType.CREATEDIRECTORY, chunkData);
+				responseMsg.success = msgSuccess.SUCCESS;
 				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				out.writeObject(responseMsg);
 				//TODO: message chunk servers
 			}
 			else {
-				responseMsg = new Message(msgType.ERROR);
+				responseMsg = new Message(msgType.CREATEDIRECTORY);
+				responseMsg.success = msgSuccess.ERROR;
 				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				out.writeObject(responseMsg);
 			}

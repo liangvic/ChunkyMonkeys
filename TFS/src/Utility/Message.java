@@ -24,8 +24,13 @@ public class Message implements Serializable{
 		chunkClass = chunkData;
 	}
 //	List<Character> filePath = new ArrayList<Character>();
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE, DELETEFROMSERVER,SUCCESS, ERROR};
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE, DELETEFROMSERVER};
 	public msgType type;
+	public static enum msgSuccess {SUCCESS, ERROR};
+	public msgSuccess success;
+	public static enum serverType {MASTER,CLIENT,CHUNKSERVER};
+	public serverType addressedTo;
+	public serverType sender;
 	public String filePath;
 	int startByte;
 	int byteLength;
