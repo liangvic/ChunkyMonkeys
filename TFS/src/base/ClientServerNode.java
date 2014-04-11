@@ -15,15 +15,21 @@ public class ClientServerNode extends ServerNode {
 	public MasterServerNode master;
 	public ChunkServerNode chunkServer;
 
+	int chunkCountToExpect = 99;
+	int chunkReadsRecieved = 0;
+	List<Byte> readFileData = new ArrayList<Byte>();
+	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
+
+
 
 	protected void TestInterface() throws Exception {
 		Scanner a = new Scanner(System.in);
 		String input;
 		do {
 			System.out
-					.print("Please Enter the Test you want to run (Enter X to exit)\n");
+			.print("Please Enter the Test you want to run (Enter X to exit)\n");
 			System.out.print("Enter parameters separated by a space\n");
 			System.out.print("Example: Test1 7\n");
 			input = a.nextLine();
@@ -37,18 +43,22 @@ public class ClientServerNode extends ServerNode {
 						test1(Integer.parseInt(tokens[1]));
 					else
 						throw new Exception();
-					break;
+				break;
 				case ("Test2"):
 					if (tokens.length == 3)
 						test2(tokens[1], Integer.parseInt(tokens[2]));
 					else
 						throw new Exception();
-					break;
+				break;
 				case ("Test3"):
 					break;
 				case ("Test4"):
 					break;
 				case ("Test5"):
+					if (tokens.length == 3)
+						test5(tokens[1].toString(), tokens[2].toString());
+					else
+						throw new Exception();
 					break;
 				case ("Test6"):
 					break;
@@ -77,9 +87,53 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Error! Couldn't delete directory...");
 			}
 		}
+		else if(message.type == msgType.READFILE)
+		{
+
+			//Supposedly going to cache it. Implementation will be completed later.lol
+			//uses the location to contact the chunkserver
+			msgRequestAReadToChunkserver(message);
+		}
+		else if(message.type == msgType.PRINTFILEDATA)
+		{
+			msgPrintFileData(message);
+		}
 	}
-	
-	// example code for echoing input and output
+
+	public void msgPrintFileData(Message dataMessage){
+		chunkReadsRecieved++;
+		for(byte b:dataMessage.fileData)
+			readFileData.add(b);
+		System.out.print(dataMessage.fileData);
+		if(chunkReadsRecieved == chunkCountToExpect){
+			System.out.print(dataMessage.fileData);
+			byte[]finalByteArray = new byte[readFileData.size()];
+			for(int n=0;n<readFileData.size();n++)
+				finalByteArray[n] = readFileData.get(n);
+				
+			try {
+				//convert array of bytes into file
+				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile); 
+				fileOuputStream.write(finalByteArray);
+				fileOuputStream.close();
+
+				
+				System.out.println("Done");
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			chunkCountToExpect = 99;
+			chunkReadsRecieved =0;
+		}
+		
+	}
+
+
+	public void msgRequestAReadToChunkserver(Message m){
+
+		chunkServer.DealWithMessage(m);
+	}
+
 	public void msgEcho() {
 
 		try (Socket echoSocket = new Socket(hostName, portNumber);
@@ -125,7 +179,7 @@ public class ClientServerNode extends ServerNode {
 			}
 		}
 	}
-	
+
 	public void CCreateFile(String folderFilepath, String fileName){
 		Message message = new Message (msgType.CREATEFILE, folderFilepath);
 		message.fileName = fileName;
@@ -134,7 +188,7 @@ public class ClientServerNode extends ServerNode {
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
-	
+
 
 	public void test3(String filepath) {
 		CDeleteDirectory(filepath);
@@ -191,14 +245,14 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 	}*/
-	
+
 	public void CCreateDirectory(String filepath)
 	{
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
-	
+
 	public void test1(int NumFolders){
 		int count = 1;
 		CCreateDirectory("1");
@@ -211,7 +265,7 @@ public class ClientServerNode extends ServerNode {
 			helper("1", count*2+1, NumFolders);
 		}
 	}
-	
+
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
 		if (folderName <= NumMaxFolders)
 		{
@@ -220,7 +274,7 @@ public class ClientServerNode extends ServerNode {
 			helper (newfilepath, folderName*2, NumMaxFolders);
 			helper (newfilepath, folderName*2 + 1, NumMaxFolders);
 		}
-		
+
 	}
 
 	public void CCreateFile(String fullFilePath){ //including filename
@@ -306,37 +360,45 @@ public class ClientServerNode extends ServerNode {
 		// receivedMsg rmsg = (Message)rmsg.readObject();
 	}
 
-	public void test5(String filePath, String localPath) {
-		// Step 1 connect to the master
-		String masterIP = "68.181.174.149";
-		int masterPort = 8111;
-
-		try {
-			Socket masterSocket = new Socket(masterIP, masterPort);
-			ObjectOutputStream objOut = new ObjectOutputStream(
-					masterSocket.getOutputStream());
-			// PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
-			// true);
-			// BufferedReader in = new BufferedReader(new
-			// InputStreamReader(echoSocket.getInputStream()));
-			BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-					System.in));
-			// Step 2 Create a message
-			Message m = new Message(msgType.READFILE, filePath);
-			// Step 3 Write to the master server
-			objOut.writeObject(m);
-		} catch (UnknownHostException e) {
-			System.err.println("Don't know about host " + masterIP);
-			System.exit(1);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.err.println("Couldn't get I/O for the connection to "
-					+ masterIP);
-			System.exit(1);
+	public void test5(String filePath, String localPath){
+		if(filePath == null || localPath == null){
+			System.out.println("Detected null values, please reenter query");
+			return;
 		}
+		//Step 1 connect to the master
+		//		 	String masterIP = "68.181.174.149";
+		//	        int masterPort = 8111;
+		//	 
+		//	        try {
+		//	            Socket masterSocket = new Socket(masterIP, masterPort);
+		//	        	ObjectOutputStream objOut = new ObjectOutputStream(masterSocket.getOutputStream());
+		////	            PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
+		//	           // BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+		//	            BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in));
+		//	          //Step 2 Create a message
+		//		        Message m = new Message(msgType.READFILE ,filePath);
+		//		      //Step 3 Write to the master server
+		//		        objOut.writeObject(m);
+		//	        } catch (UnknownHostException e) {
+		//	            System.err.println("Don't know about host " + masterIP);
+		//	            System.exit(1);
+		//	        } catch (IOException e) {
+		//	        	e.printStackTrace();
+		//	            System.err.println("Couldn't get I/O for the connection to " +
+		//	            		masterIP);
+		//	            System.exit(1);
+		//	        }
+		localPathToCreateFile = localPath;
+		Message m = new Message(msgType.READFILE ,filePath);
+		master.DealWithMessage(m);
 
-		// Step 4 recieves the master message
-		// Step 5 send a request to the chunkserver
+		//Step 4 recieves the master message
+		//Step 5 send a request to the chunkserver
+
+	}
+
+	public void ExpectChunkNumberForRead(int i) {
+		chunkCountToExpect = i;
 	}
 
 }
