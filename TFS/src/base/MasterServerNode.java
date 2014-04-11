@@ -75,27 +75,74 @@ public class MasterServerNode extends ServerNode{
 		if(NamespaceTree.contains(filePath))
 		{
 			String[] tokens = filePath.split(File.pathSeparator);
-			NamespaceNode nextNode = (NamespaceNode)NamespaceTree.get(0);
+			NamespaceNode currentNode = (NamespaceNode)NamespaceTree.get(0);
 			
-			if(tokens[0] == nextNode.filename)
+			//want to iterate through the NamespaceTree to make sure 
+			//all directories in path exist
+			String fullFilePath = null;
+			//assuming that root directory exists already so start at 1
+			for(int i=1;i<tokens.length;i++)
 			{
-				for(int i = 0; i<nextNode.children.size();i++)
+				fullFilePath = "";
+				//Need to concatenate the directories in token to a path
+				for(int tokenIndex = 0; tokenIndex < i; tokenIndex++)
 				{
-					for (String directoryName : tokens)
+					fullFilePath = fullFilePath + File.pathSeparator + tokens[tokenIndex];
+				}
+				
+				//iterate through all children
+				for(int j=0;j<currentNode.children.size();j++)
+				{
+					//if a child's filename = the next filename in path
+					if(fullFilePath.equals(currentNode.children.get(j).filepath))
 					{
-						if(directoryName == nextNode.filename)
-						{
-							
-						}
+						currentNode = currentNode.children.get(j);
+						break;
+					}
+					//could not find the next directory in path name
+					if(j==currentNode.children.size()-1)
+					{
+						//output an error message
+						System.out.println("A directory in the path does not exist! No deletions done.");
+						return;
 					}
 				}
 			}
+			//now that have the node in the NamespaceTree, you iterate through it's children
+			if(currentNode.children.size() > 0)
+			{
+				//recursively going through the tree and deleting all files/directories below
+				deleteAllChildNodes(NamespaceTree,currentNode);
+			}
+				
+			//finally delete directory wanted to delete
+			NamespaceTree.remove(currentNode);
 		}
-		else //the filepath is not in the directory
+		else //the filepath is not in the directory. Send error!
 		{
-			
+			System.out.println("Error! That filepath is not in the directory! Aborting deletion...");
+			return;
 		}
+		
 	}
 	
+	public static void deleteAllChildNodes(LinkedList<NamespaceNode> nsTree,NamespaceNode startingNode)
+	{
+		if(startingNode.children.size()==0)
+		{
+			nsTree.remove(startingNode);
+			//Send message to client server to erase data
+			Message clientMessage = new Message(msgType.DELETEFROMSERVER);
+			clientMessage.chunkClass = startingNode.metaData; //does NS tree hold this?
+			return;
+		}
+		else
+		{
+			for(int i=0;i<startingNode.children.size();i++)
+			{
+				deleteAllChildNodes(nsTree,startingNode.children.get(i));
+			}
+		}
+	}
 	
 }

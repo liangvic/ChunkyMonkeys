@@ -21,10 +21,10 @@ public class Message implements Serializable{
 	}
 	
 //	List<Character> filePath = new ArrayList<Character>();
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE};
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,DELETEFROMSERVER};
 	public msgType type;
 	public String filePath;
 	int startByte;
 	int byteLength;
-	ChunkMetadata chunkClass;
+	public ChunkMetadata chunkClass;
 }
