@@ -68,7 +68,7 @@ public class ClientServerNode extends ServerNode {
 	{
 		if(message.type == msgType.DELETEDIRECTORY)
 		{
-			if(message.success == msgSuccess.SUCCESS)
+			if(message.success == msgSuccess.REQUESTSUCCESS)
 			{
 				System.out.println("Deleted directory sucessfully!");
 			}
