@@ -32,6 +32,7 @@ public class Message implements Serializable{
 	public serverType addressedTo;
 	public serverType sender;
 	public String filePath;
+	public String fileName;
 	int startByte;
 	int byteLength;
 	public ChunkMetadata chunkClass;
