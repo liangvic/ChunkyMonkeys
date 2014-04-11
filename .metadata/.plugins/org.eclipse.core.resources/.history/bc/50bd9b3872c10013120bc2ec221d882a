@@ -160,32 +160,15 @@ public class ClientServerNode extends ServerNode {
 		// this Test would create 5 files in each directory 1\2, 1\2\4 and
 		// 1\2\5.
 		// The files in each directory would be named File1, File2, and File3.
-		if (master.NamespaceMap.get(filepath) != null) {
-			if (master.NamespaceMap.get(filepath).children.size() > 0) {
-				List<String> childs = master.NamespaceMap.get(filepath).children;
-				for (int a = 0; a < childs.size(); a++) {
-					test2helper(childs.get(a), nFiles);
-				}
-			}
-		} else
-			System.out.println("Directory " + filepath + " not found");
 
-		for (int i = 1; i <= nFiles; i++) {
-			try {
-				CCreateFile(filepath, (String) ("File" + i));
-			} catch (Exception e) {
-				System.out.println("Unable to create files");
-			}
-		}
-		
 
-		/*	System.out.println(master.NamespaceMap.size());
+			System.out.println(master.NamespaceMap.size());
 			Iterator it = master.NamespaceMap.entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry) it.next();
 				System.out.println(pairs.getKey() + " = " + pairs.getValue());
 				it.remove(); // avoids a ConcurrentModificationException
-			}*/
+			}
 		
 	}
 	public void test2helper(String filepath, int nFiles){
@@ -195,7 +178,7 @@ public class ClientServerNode extends ServerNode {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
 				for (int a = 0; a < childs.size(); a++) {
-					test2helper(childs.get(a), nFiles);
+					test2(childs.get(a), nFiles);
 				}
 			}
 		} else

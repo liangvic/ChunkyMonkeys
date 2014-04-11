@@ -27,6 +27,7 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
+		NamespaceMap.put("1", new NamespaceNode());
 	}
 
 	// Don't call on this for now; using monolith structure
