@@ -13,6 +13,7 @@ import java.util.Random;
 import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.ChunkLocation;
+import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 
@@ -119,23 +120,37 @@ public class ChunkServerNode extends ServerNode {
 
 	public void DeleteChunk(ChunkMetadata metadata)
 	{
-		/*listMetaData chunkToDelete = null;
-    	boolean foundChunk = false;
-    	for(listMetaData lmd: files) 
-    	{
-    		if(lmd.chunkHash == metadata.chunkHash)
+		ChunkMetadata chunkToDelete = null;
+    	for (Map.Entry<Integer, ChunkMetadata> entry : chunkMap.entrySet())
+		  {
+    		if(entry.getValue().filename == metadata.filename)
     		{
-    			chunkToDelete = lmd;
-    			foundChunk = true;
+    			for(File f: file_list)
+    			{
+    				if(f.fileNumber == entry.getValue().filenumber)
+    				{
+    					for(int i=0;i<entry.getValue().size;i++)
+    					{
+    						f.data[i+entry.getValue().byteoffset] = 0; //need to change later
+    					}
+    				}
+    			}
+    			chunkToDelete = metadata;
+    			
+    			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
+        		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
+        		master.DealWithMessage(successMessageToMaster);
+        		break;
     		}
-    	}
-    	if(foundChunk)
+		  }
+    	
+    	if(chunkToDelete != null)
     	{
-    		files.remove(chunkToDelete);
-    		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
-    		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-    		master.DealWithMessage(successMessageToMaster);
-    	}*/
+    		chunkMap.remove(chunkToDelete);
+    	}
+    	
+    		
+    	
 	}
 
 
@@ -206,7 +221,8 @@ public class ChunkServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+//				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.chunkHash = n_fileName+n_index;
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;

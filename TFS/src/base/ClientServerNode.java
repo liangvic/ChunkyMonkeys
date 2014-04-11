@@ -51,6 +51,10 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 				break;
 				case ("Test3"):
+					if (tokens.length == 2)
+						test3(tokens[1]);
+					else
+						throw new Exception();
 					break;
 				case ("Test4"):
 					break;
@@ -396,6 +400,7 @@ public class ClientServerNode extends ServerNode {
 		//	        }
 		localPathToCreateFile = localPath;
 		Message m = new Message(msgType.READFILE ,filePath);
+		m.sender = serverType.CLIENT;
 		master.DealWithMessage(m);
 
 		//Step 4 recieves the master message
