@@ -39,9 +39,9 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test2"):
-					if (tokens.length == 3)
+					if (tokens.length == 3) {
 						test2(tokens[1], Integer.parseInt(tokens[2]));
-					else
+					} else
 						throw new Exception();
 					break;
 				case ("Test3"):
@@ -60,25 +60,23 @@ public class ClientServerNode extends ServerNode {
 					throw new Exception();
 				}
 			} catch (Exception e) {
+				System.err.print(e);
 				System.out.println("Invalid OP or Parameters. \n");
 			}
 		} while (input != "X" || input != "x");
 
 	}
 
-	public void DealWithMessage(Message message)
-	{
-		if(message.type == msgType.DELETEDIRECTORY)
-		{
-			if(message.success == msgSuccess.REQUESTSUCCESS)
-			{
+	public void DealWithMessage(Message message) {
+		if (message.type == msgType.DELETEDIRECTORY) {
+			if (message.success == msgSuccess.REQUESTSUCCESS) {
 				System.out.println("Deleted directory sucessfully!");
 			} else {
 				System.out.println("Error! Couldn't delete directory...");
 			}
 		}
 	}
-	
+
 	// example code for echoing input and output
 	public void msgEcho() {
 
@@ -109,32 +107,45 @@ public class ClientServerNode extends ServerNode {
 	public void test2(String filepath, int nFiles) {
 		// Create N files in a directory and its subdirectories until the leaf
 		// subdirectories.
-		// Example:  Test2 1\2 3
-		//Assuming the directory structure from the Test1 example above, 
-		//this Test would create 5 files in each directory 1\2, 1\2\4 and 1\2\5.  
-		//The files in each directory would be named File1, File2, and File3.
+		// Example: Test2 1\2 3
+		// Assuming the directory structure from the Test1 example above,
+		// this Test would create 5 files in each directory 1\2, 1\2\4 and
+		// 1\2\5.
+		// The files in each directory would be named File1, File2, and File3.
 
 		String filename = "File";
-		for (int i = 0; i < nFiles; ++i) {
-			CCreateFile(filepath, filename + i);
-		}
-		if (master.NamespaceMap.get(filepath).children.size() > 0){			
-			List<String> childs = master.NamespaceMap.get(filepath).children;
-			for (int a = 0; a < childs.size(); a++){			
-				test2(filepath + "\\" + childs.get(a), nFiles); 
+		if (master.NamespaceMap.get(filepath) != null) {			
+			for (int i = 1; i <= nFiles; i++) {
+				try{
+					CCreateFile(filepath, (String)(filename + i));
+				}
+				catch (Exception e){
+					System.out.println("Unable to create files"); 
+				}
 			}
+			if (master.NamespaceMap.get(filepath).children.size() > 0) {
+				List<String> childs = master.NamespaceMap.get(filepath).children;
+				for (int a = 0; a < childs.size(); a++) {
+					test2(childs.get(a), nFiles);
+				}
+			}
+		} else
+			System.out.println("Directory " + filepath + " not found");
+	}
+
+	public void CCreateFile(String folderFilepath, String fileName) {
+
+		Message message = new Message(msgType.CREATEFILE, folderFilepath, 1);
+		message.fileName = fileName;
+		message.addressedTo = serverType.MASTER;
+		message.sender = serverType.CLIENT;		
+		try{
+		master.DealWithMessage(message);
+		}
+		catch (Exception e){
+			System.out.println("Unable to send message");
 		}
 	}
-	
-	public void CCreateFile(String folderFilepath, String fileName){
-		Message message = new Message (msgType.CREATEFILE, folderFilepath);
-		message.fileName = fileName;
-		message.chunkClass.index = 1;
-		message.addressedTo = serverType.MASTER;
-		message.sender = serverType.CLIENT;
-		master.DealWithMessage(message);
-	}
-	
 
 	public void test3(String filepath) {
 		CDeleteDirectory(filepath);
@@ -165,62 +176,46 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	/*public void test1(Integer numOfDir, String filepath) // recursively creates the specified num of
-										// directories
-	{
-		Socket sock;
-		try {
-			Properties prop = new Properties();
-			prop.load(new FileInputStream("config/config.properties"));
-			sock = new Socket(prop.getProperty("MASTERIP"),
-					Integer.parseInt(prop.getProperty("MASTERPORT")));
-			ObjectOutputStream out = new ObjectOutputStream(
-					sock.getOutputStream());
-			for (int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(Integer.toString(i + 1),
-						msgType.CREATEDIRECTORY);
-				out.writeObject(message);
-			}
-			// out.close();
-			// sock.close();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
-	
-	public void CCreateDirectory(String filepath)
-	{
+	/*
+	 * public void test1(Integer numOfDir, String filepath) // recursively
+	 * creates the specified num of // directories { Socket sock; try {
+	 * Properties prop = new Properties(); prop.load(new
+	 * FileInputStream("config/config.properties")); sock = new
+	 * Socket(prop.getProperty("MASTERIP"),
+	 * Integer.parseInt(prop.getProperty("MASTERPORT"))); ObjectOutputStream out
+	 * = new ObjectOutputStream( sock.getOutputStream()); for (int i = 0; i <
+	 * numOfDir; ++i) { Message message = new Message(Integer.toString(i + 1),
+	 * msgType.CREATEDIRECTORY); out.writeObject(message); } // out.close(); //
+	 * sock.close(); } catch (UnknownHostException e) { // TODO Auto-generated
+	 * catch block e.printStackTrace(); } catch (IOException e) { // TODO
+	 * Auto-generated catch block e.printStackTrace(); } }
+	 */
+
+	public void CCreateDirectory(String filepath) {
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
-	
-	public void test1(int NumFolders){
+
+	public void test1(int NumFolders) {
 		int count = 1;
 		CCreateDirectory("1");
-		if (NumFolders > 1) 
-		{
-			helper("1", count*2, NumFolders);
+		if (NumFolders > 1) {
+			helper("1", count * 2, NumFolders);
 		}
-		if (NumFolders > 2) 
-		{
-			helper("1", count*2+1, NumFolders);
+		if (NumFolders > 2) {
+			helper("1", count * 2 + 1, NumFolders);
 		}
 	}
-	
-	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
-		if (folderName <= NumMaxFolders)
-		{
+
+	public void helper(String parentfilepath, int folderName, int NumMaxFolders) {
+		if (folderName <= NumMaxFolders) {
 			String newfilepath = parentfilepath + "\\" + folderName;
 			CCreateDirectory(newfilepath);
-			helper (newfilepath, folderName*2, NumMaxFolders);
-			helper (newfilepath, folderName*2 + 1, NumMaxFolders);
+			helper(newfilepath, folderName * 2, NumMaxFolders);
+			helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
 		}
-		
+
 	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by

@@ -15,6 +15,12 @@ public class Message implements Serializable{
 		type = msgT;
 	}
 	
+	public Message(msgType msgT, String fp, int i){
+		chunkindex = i;
+		filePath = fp;
+		type = msgT;
+	}
+	
 	public Message(msgType msgT, String fp){
 		filePath = fp;
 		type = msgT;
@@ -35,5 +41,6 @@ public class Message implements Serializable{
 	public String fileName;
 	int startByte;
 	int byteLength;
+	public int chunkindex;
 	public ChunkMetadata chunkClass;
 }
