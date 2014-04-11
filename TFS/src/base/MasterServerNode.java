@@ -16,10 +16,11 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	// private static ServerSocket welcomeSocket;
-
-	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
-	static LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
-
+	
+	public Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
+	public LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
+	public Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
 		int portNumber = 8111;
