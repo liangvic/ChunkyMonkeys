@@ -1,0 +1,13 @@
+package Utility;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class NamespaceNode {
+	static enum nodeType{ DIRECTORY, FILE}
+	public nodeType type;
+	public List<String> children = new ArrayList<String>();
+	public NamespaceNode(){
+	}
+	//file access permissions?
+}

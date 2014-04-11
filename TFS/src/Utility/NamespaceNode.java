@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NamespaceNode {
-	public String name;
+	public static enum nodeType{ DIRECTORY, FILE}
+	public nodeType type;
 	public List<String> children = new ArrayList<String>();
-	public NamespaceNode(){
+	public NamespaceNode(nodeType t){
+		type = t;
 	}
 	//file access permissions?
 }
