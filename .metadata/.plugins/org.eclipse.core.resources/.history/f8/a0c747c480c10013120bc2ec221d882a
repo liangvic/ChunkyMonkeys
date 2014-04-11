@@ -111,7 +111,7 @@ public class ChunkServerNode extends ServerNode {
 		metadata.size = 0;
 		current.data[current.spaceOccupied] = 0;
 		current.data[current.spaceOccupied+2] = 0;
-		current.spaceOccupied+= 2;
+		current.spaceOccupied+= 3;
 		
 		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
