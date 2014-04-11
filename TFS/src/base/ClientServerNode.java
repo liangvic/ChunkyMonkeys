@@ -169,15 +169,14 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public void test1(Integer numOfDir) // recursively creates the specified num of
+	public void test1(Integer numOfDir, String filepath) // recursively creates the specified num of
 										// directories
 	{
 		if(numOfDir > 0) 
 		{
-			Message message = new Message(msgType.CREATEDIRECTORY);
-			master.DealWithMessage(message);
+			CCreateDirectory(numOfDir, filepath);
 			--numOfDir;
-			test1(numOfDir);
+			test1(numOfDir, filepath);
 		}
 		/*Socket sock;
 		try {
@@ -198,6 +197,12 @@ public class ClientServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+	}
+	
+	public void CCreateDirectory(Integer numOfDir, String filepath)
+	{
+		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
+		master.DealWithMessage(message);
 	}
 	
 	//Test 4 stores a file on the local machine in  a target TFS specified by its filepath

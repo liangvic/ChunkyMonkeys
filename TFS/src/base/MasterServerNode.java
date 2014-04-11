@@ -78,7 +78,7 @@ public class MasterServerNode extends ServerNode {
 		}
 		else if(inputMessage.type == msgType.CREATEDIRECTORY && inputMessage.sender == serverType.CLIENT) 
 		{
-			CreateDirectory();
+			CreateDirectory(inputMessage.filePath);
 		}
 	}
 
@@ -173,9 +173,29 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
-	public void CreateDirectory()
+	public void CreateDirectory(String filepath)
 	{
-		/*ServerSocket serverSocket;
+		if () {
+			NamespaceNode newNode = new NamespaceNode();
+			NamespaceTree.add(newNode);
+			// 
+			if(!NamespaceTree.isEmpty())
+			{
+				Vector<NamespaceNode> leafNodes = new Vector<NamespaceNode>();
+				for(NamespaceNode node : NamespaceTree) 
+				{
+					if(!node.children.isEmpty())
+					{
+						leafNodes.add(node);
+					}
+				}
+			}
+
+			// TODO: insert into map
+			// TODO: set chunkData data
+			// TODO: message chunk servers
+
+			/*ServerSocket serverSocket;
 		try {
 			serverSocket = new ServerSocket(myPortNumber);
 			Socket clientSocket = serverSocket.accept();
@@ -206,6 +226,10 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
+		}
+		else 
+		{
+			// invalid directory path
+		}
 	}
-
 }
