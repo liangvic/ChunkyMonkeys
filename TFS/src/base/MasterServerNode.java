@@ -129,10 +129,9 @@ public class MasterServerNode extends ServerNode {
 		client.DealWithMessage(successMessage);
 	}
 
-	public void SendErrorMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.REQUESTERROR;
-		client.DealWithMessage(successMessage);
+	public void SendErrorMessageToClient(Message errorMessage) {
+		errorMessage.success = msgSuccess.REQUESTERROR;
+		client.DealWithMessage(errorMessage);
 	}
 
 	public void MDeleteDirectory(String filePath) {
@@ -152,25 +151,20 @@ public class MasterServerNode extends ServerNode {
 
 			ClearChunkServerMapFile();
 			ClearNamespaceMapFile();
-
-			for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap
-					.entrySet()) {
-				WritePersistentChunkServerMap(entry.getKey(), entry.getValue());
-			}
-			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap
-					.entrySet()) {
-				WritePersistentNamespaceMap(entry.getKey(), entry.getValue());
-			}
-
+			
+			for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap.entrySet())
+			  {
+				 WritePersistentChunkServerMap(entry.getKey(),entry.getValue());
+			  }
+			  for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+			  {
+				  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+			  }
+			SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+			
 		} else // the filepath is not in the directory. Send error!
 		{
-			System.out
-					.println("Error! That filepath is not in the directory! Aborting deletion...");
-			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
-			client.DealWithMessage(errorMessageToClient);
-
+			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 			return;
 		}
 	}
@@ -213,13 +207,9 @@ public class MasterServerNode extends ServerNode {
 					+ indexCounter);
 			Message returnMessage = new Message(msgType.READFILE, cm);
 			client.DealWithMessage(returnMessage);
-		} else {
-			System.out
-					.println("Error! That filepath is not in the directory! Aborting read...");
-			Message errorMessageToClient = new Message(msgType.UNKNOWNFILE);
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
-			// need to send out
-
+		}
+		else{
+			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.fileName));
 			return;
 		}
 		// check if the file contains multiple chunk indexes
@@ -242,7 +232,7 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.get(filepath) == null
 				|| chunkServerMap.get(hashstring) != null
 				|| NamespaceMap.get(filepath).type == nodeType.FILE) {
-			System.out.println("error in creating file");
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 		} else {
 
 			String newName = filepath + "\\" + filename;
@@ -262,15 +252,16 @@ public class MasterServerNode extends ServerNode {
 					chunkServer.DealWithMessage(newMessage);
 
 				} catch (Exception e) {
-					System.out.println("Master Unable to CreateFile");
+					SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 				}
 
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
 				WritePersistentChunkServerMap(newName,
 						chunkServerMap.get(newName));
+				SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
 
 			} else {
-				System.out.println("File exists already");
+				SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 			}
 
 		}
@@ -288,7 +279,7 @@ public class MasterServerNode extends ServerNode {
 			}
 			if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
 				// parent directory does not exist
-				SendErrorMessageToClient();
+				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 				return;
 			} else if (NamespaceMap.containsKey(parent)) {
 				NamespaceMap.get(parent).children.add(filepath);
@@ -303,7 +294,7 @@ public class MasterServerNode extends ServerNode {
 			WritePersistentNamespaceMap(filepath, newNode);
 		} else // directory already exists
 		{
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 		}
 
 		/*
