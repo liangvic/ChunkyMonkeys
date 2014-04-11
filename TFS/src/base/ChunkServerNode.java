@@ -221,12 +221,8 @@ public class ChunkServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-<<<<<<< HEAD
-				newMetaData.chunkHash = n_tempHash;
-=======
 //				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
 				newMetaData.chunkHash = n_fileName+n_index;
->>>>>>> ae0c09240737ae9553057c85acf284f143d76338
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
