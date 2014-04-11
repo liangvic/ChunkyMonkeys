@@ -126,11 +126,16 @@ public class ClientServerNode extends ServerNode {
 		
 	}
 
+<<<<<<< HEAD
+	// example code for echoing input and output
+=======
+
 	public void msgRequestAReadToChunkserver(Message m){
 
 		chunkServer.DealWithMessage(m);
 	}
 
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 	public void msgEcho() {
 
 		try (Socket echoSocket = new Socket(hostName, portNumber);
@@ -186,8 +191,14 @@ public class ClientServerNode extends ServerNode {
 			System.out.println("Directory " + filepath + " not found");
 	}
 
+<<<<<<< HEAD
 	public void CCreateFile(String folderFilepath, String fileName) {
+
 		Message message = new Message(msgType.CREATEFILE, folderFilepath, 1);
+=======
+	public void CCreateFile(String folderFilepath, String fileName){
+		Message message = new Message (msgType.CREATEFILE, folderFilepath);
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 		message.fileName = fileName;
 		message.addressedTo = serverType.MASTER;
 		message.sender = serverType.CLIENT;		
@@ -198,6 +209,11 @@ public class ClientServerNode extends ServerNode {
 			System.out.println("Unable to send message");
 		}
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
+
 	public void test3(String filepath) {
 		CDeleteDirectory(filepath);
 	}
@@ -227,6 +243,24 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+<<<<<<< HEAD
+	/*
+	 * public void test1(Integer numOfDir, String filepath) // recursively
+	 * creates the specified num of // directories { Socket sock; try {
+	 * Properties prop = new Properties(); prop.load(new
+	 * FileInputStream("config/config.properties")); sock = new
+	 * Socket(prop.getProperty("MASTERIP"),
+	 * Integer.parseInt(prop.getProperty("MASTERPORT"))); ObjectOutputStream out
+	 * = new ObjectOutputStream( sock.getOutputStream()); for (int i = 0; i <
+	 * numOfDir; ++i) { Message message = new Message(Integer.toString(i + 1),
+	 * msgType.CREATEDIRECTORY); out.writeObject(message); } // out.close(); //
+	 * sock.close(); } catch (UnknownHostException e) { // TODO Auto-generated
+	 * catch block e.printStackTrace(); } catch (IOException e) { // TODO
+	 * Auto-generated catch block e.printStackTrace(); } }
+	 */
+
+	public void CCreateDirectory(String filepath) {
+=======
 	/*public void test1(Integer numOfDir, String filepath) // recursively creates the specified num of
 										// directories
 	{
@@ -256,12 +290,17 @@ public class ClientServerNode extends ServerNode {
 
 	public void CCreateDirectory(String filepath)
 	{
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
 
+<<<<<<< HEAD
+	public void test1(int NumFolders) {
+=======
 	public void test1(int NumFolders){
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 		int count = 1;
 		CCreateDirectory("1");
 		if (NumFolders > 1) {
@@ -272,9 +311,14 @@ public class ClientServerNode extends ServerNode {
 		}
 	}
 
+<<<<<<< HEAD
+	public void helper(String parentfilepath, int folderName, int NumMaxFolders) {
+		if (folderName <= NumMaxFolders) {
+=======
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
 		if (folderName <= NumMaxFolders)
 		{
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 			String newfilepath = parentfilepath + "\\" + folderName;
 			CCreateDirectory(newfilepath);
 			helper(newfilepath, folderName * 2, NumMaxFolders);

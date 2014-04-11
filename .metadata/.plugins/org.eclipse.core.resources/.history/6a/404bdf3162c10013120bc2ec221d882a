@@ -20,19 +20,88 @@ public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
 	public MasterServerNode master;
 
+<<<<<<< HEAD
 	public class File {
 		int fileNumber = 0;
 		int spaceOccupied = 0;
 		byte[] data = new byte[67108864];
+=======
+
+	public class File{
+		int fileNumber;
+		int spaceOccupied;
+		byte[] data;
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 	}
 
 	List<File> file_list = new ArrayList<File>();
 
+<<<<<<< HEAD
 	public ChunkServerNode() {
 		for (int i = 0; i < 5; i++)
 			file_list.add(new File());
 
 	}
+
+	// hash to data
+	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();
+
+	/*
+	 * public static void main(String argv[]) throws Exception {
+	 * 
+	 * ServerSocket welcomeSocket = new ServerSocket(6789);
+	 * 
+	 * while(true) { Socket connectionSocket = welcomeSocket.accept();
+	 * BufferedReader inFromClient = new BufferedReader(new
+	 * InputStreamReader(connectionSocket.getInputStream())); DataOutputStream
+	 * outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+	 * clientSentence = inFromClient.readLine(); System.out.println("Received: "
+	 * + clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
+	 * '\n'; outToClient.writeBytes(capitalizedSentence); } }
+	 */
+
+	public void DealWithMessage(Message message) {
+		if (message.type == msgType.DELETEDIRECTORY) {
+			DeleteChunk(message.chunkClass);
+		} else if (message.type == msgType.CREATEFILE) {
+
+			AddNewBlankChunk(message.chunkClass);
+
+		}
+	}
+
+	public void AddNewBlankChunk(ChunkMetadata metadata) {
+		// TODO: have to create new Chunkmetadata and copy over metadata
+		try {
+			chunkMap.put(metadata.chunkHash, metadata);
+			File current = file_list.get(metadata.filenumber);
+			metadata.byteoffset = current.spaceOccupied;
+			metadata.size = 0;
+			current.data[current.spaceOccupied] = 0;
+			current.data[current.spaceOccupied + 1] = 0;
+			current.spaceOccupied += 8;
+
+		} catch (Exception e) {
+			System.out.println("oh godd");
+		}
+		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
+		newMessage.success = msgSuccess.REQUESTSUCCESS;
+		master.DealWithMessage(newMessage);
+
+	}
+
+	public void DeleteChunk(ChunkMetadata metadata) {
+		/*
+		 * listMetaData chunkToDelete = null; boolean foundChunk = false;
+		 * for(listMetaData lmd: files) { if(lmd.chunkHash ==
+		 * metadata.chunkHash) { chunkToDelete = lmd; foundChunk = true; } }
+		 * if(foundChunk) { files.remove(chunkToDelete); Message
+		 * successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
+		 * successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
+		 * master.DealWithMessage(successMessageToMaster); }
+		 */
+	}
+=======
 	//hash to data
 
 	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
@@ -41,7 +110,10 @@ public class ChunkServerNode extends ServerNode {
 
 
 	/* public static void main(String argv[]) throws Exception
+=======
 
+    /* public static void main(String argv[]) throws Exception
+>>>>>>> master
     {
 
        ServerSocket welcomeSocket = new ServerSocket(6789);
@@ -255,4 +327,5 @@ public class ChunkServerNode extends ServerNode {
 		}
 
 	}
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 }

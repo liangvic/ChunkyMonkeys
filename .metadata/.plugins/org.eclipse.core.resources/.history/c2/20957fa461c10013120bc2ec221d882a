@@ -185,7 +185,14 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-
+<<<<<<< HEAD
+	public void CreateFile(String filepath, String filename, int index) {
+		String hashstring = filepath + "\\" + filename + index;
+		int hash = hashstring.hashCode();
+		// if folder doesn't exist or file already exists
+		if (NamespaceMap.get(filepath) == null
+				|| chunkServerMap.get(hash) != null) {
+=======
 	public void ReadFile(Message inputMessage){
 		int indexCounter = 1;
 		if(chunkServerMap.containsKey(inputMessage.fileName+indexCounter)){
@@ -220,6 +227,7 @@ public class MasterServerNode extends ServerNode {
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hash) != null){
 
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 			SendErrorMessageToClient();
 		} else {
 
@@ -253,7 +261,12 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+<<<<<<< HEAD
 	public void CreateDirectory(String filepath) throws Exception {
+=======
+	public void CreateDirectory(String filepath)
+	{
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			String delim = "\\+";
 			String[] tokens = filepath.split(delim);
@@ -274,6 +287,13 @@ public class MasterServerNode extends ServerNode {
 			}
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
+<<<<<<< HEAD
+			// File file = new File(filepath);
+			// file.mkdirs();
+=======
+			/*File file = new File(filepath);
+			file.mkdirs();*/
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 			SendSuccessMessageToClient();
 			tfsLogger.LogMsg("Created directory " + filepath);
 		} else // directory already exists
@@ -302,6 +322,9 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 
+<<<<<<< HEAD
+	public void LoadChunkServerMap() {
+=======
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
 	{
 		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
@@ -364,11 +387,50 @@ public class MasterServerNode extends ServerNode {
 	
 	public void LoadChunkServerMap()
 	{
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 		String path = "dataStorage/MData_ChunkServerMap.txt";
 		try {
 			FileReader fr = new FileReader(path);
 			BufferedReader textReader = new BufferedReader(fr);
 			String textLine;
+<<<<<<< HEAD
+
+			while ((textLine = textReader.readLine()) != null) {
+				// STRUCTURE///
+				// KEY VERSION# SIZEOF_LOCATIONLIST
+				// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
+				// CHUNKLOCATIONN_PORT
+				// CHUNKHASH
+				// REFERENCECOUNT
+				String[] data = textLine.split("\t");
+
+				String key;
+				key = data[0];
+
+				int version = Integer.parseInt(data[1]);
+
+				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				int locationSize = locations.size();
+
+				for (int i = 3; i < 3 + (locationSize / 2); i = i + 2) {
+					locations.add(new chunkLocation(data[i], Integer
+							.parseInt(data[i + 1])));
+				}
+
+				List<Integer> hash = new ArrayList<Integer>();
+				String tempHash = data[3 + (locationSize / 2)];
+				for (int i = 0; i < tempHash.length(); i++) {
+					hash.add(Character.getNumericValue(tempHash.charAt(i)));// adds
+																			// at
+																			// end
+				}
+				tempHash = hash.toString();
+				int count = Integer.parseInt(data[data.length - 1]);
+
+				ChunkMetadata newMetaData = new ChunkMetadata(version,
+						locations, Integer.parseInt(tempHash), count);
+
+=======
 			
 			while((textLine = textReader.readLine())!= null)
 			{
@@ -433,6 +495,7 @@ public class MasterServerNode extends ServerNode {
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
 				chunkServerMap.put(key, newMetaData);
 			}
 			textReader.close();

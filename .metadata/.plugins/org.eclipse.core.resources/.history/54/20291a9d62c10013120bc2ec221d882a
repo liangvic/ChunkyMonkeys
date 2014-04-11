@@ -1,0 +1,17 @@
+package Utility;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class NamespaceNode {
+<<<<<<< HEAD
+	public String name;
+	public List<String> children = new ArrayList<String>();
+	public NamespaceNode(){
+	}
+=======
+	public List<String> children = new ArrayList<String>();
+
+>>>>>>> bd57e76c31fab950a76a5d62b62c85fb759120fe
+	//file access permissions?
+}

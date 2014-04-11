@@ -29,8 +29,13 @@ public class Message implements Serializable{
 		type = msgT;
 		chunkClass = chunkData;
 	}
+	public Message(msgType msgT, byte[] byteData) {
+		type = msgT;
+		fileData = byteData;
+	}
 //	List<Character> filePath = new ArrayList<Character>();
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE};
+
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE};
 	public msgType type;
 	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
 	public msgSuccess success;
@@ -43,4 +48,5 @@ public class Message implements Serializable{
 	int byteLength;
 	public int chunkindex;
 	public ChunkMetadata chunkClass;
+	public byte[] fileData;
 }
