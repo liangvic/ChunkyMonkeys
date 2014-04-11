@@ -87,15 +87,31 @@ public class MasterServerNode extends ServerNode {
 			} else {
 				SendErrorMessageToClient();
 			}
-		} else if (inputMessage.type == msgType.CREATEDIRECTORY
-				&& inputMessage.sender == serverType.CLIENT) {
-			try {
-				CreateDirectory(inputMessage.filePath);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		}
+		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
+		{
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				try {
+					CreateDirectory(inputMessage.filePath);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
-		} else if (inputMessage.type == msgType.CREATEFILE) {
+			else if(inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Directory " + " creation successful");
+				}
+				else if (inputMessage.success == msgSuccess.REQUESTERROR) {
+					System.out.println("Directory " + " creation failed");
+			
+				}
+			}
+		}
+		else if (inputMessage.type == msgType.CREATEFILE)
+		{			
 			if (inputMessage.sender == serverType.CLIENT)
 				CreateFile(inputMessage.filePath, inputMessage.fileName,
 						inputMessage.chunkindex);
@@ -252,25 +268,27 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public void CreateDirectory(String filepath) throws Exception {
+	public void CreateDirectory(String filepath) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			String delim = "\\+";
-			String[] tokens = filepath.split(delim);
-			if (tokens.length > 1)
-			{
-				String supposedParent = tokens[0];
-				if (tokens.length > 2){
-					for (int i = 1; i < tokens.length - 1 ; i++){			
-						supposedParent += "\\" + tokens[i]; 
-					}
-				}				
-				if(NamespaceMap.containsKey(supposedParent)) 
-				{
-					NamespaceMap.get(supposedParent).children.add(filepath);
-				}
-				else
-					throw new Exception();
+			File path = new File(filepath);
+			String parentPath = path.getParent();
+			String parent;
+			if(parentPath == null) {
+				parent = filepath;
 			}
+			else {
+				parent = parentPath;
+			}
+			if(!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
+				// parent directory does not exist
+				SendErrorMessageToClient();
+				return;
+			}
+			else if(NamespaceMap.containsKey(parent)) 
+			{
+				NamespaceMap.get(parent).children.add(filepath);
+			}
+
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
 			SendSuccessMessageToClient();
