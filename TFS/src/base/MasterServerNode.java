@@ -15,6 +15,8 @@ public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
 	public ChunkServerNode chunkServer;
 
+	// private static ServerSocket welcomeSocket;
+
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	
@@ -80,6 +82,10 @@ public class MasterServerNode extends ServerNode {
 		{
 			CreateDirectory(inputMessage.filePath);
 		}
+		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
+		{
+			CreateFile(inputMessage.filePath, inputMessage.fileName);
+		}
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -136,19 +142,35 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
-	
+
+	public void CreateFile(String filepath, String filename){
+		if (NamespaceMap.get(filepath) != null){
+			SendErrorMessageToClient();
+		}
+		else
+		{
+			String newName = filepath + "\";" + filename;
+			NamespaceMap.get(filepath).children.add(newName);
+			NamespaceMap.put(newName, new NamespaceNode());
+			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));
+			
+			newMessage.
+			chunkServer.DealWithMessage(newMessage);
+		}
+	}
+
 	public void CreateDirectory(String filepath)
 	{
-		if (NamespaceMap.containsKey(filepath)) { // directory exists
-			NamespaceNode dir = NamespaceMap.get(filepath); // node of directory to create subdirectories in
+		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			NamespaceNode newNode = new NamespaceNode();
-
 			NamespaceMap.put(filepath, newNode);
 			// TODO: set chunkData data
 			// TODO: message chunk servers
+			File file = new File(filepath);
+			file.mkdirs();
 			SendSuccessMessageToClient();
 		}
-		else // invalid directory path
+		else // directory already exists
 		{
 			SendErrorMessageToClient();
 		}
