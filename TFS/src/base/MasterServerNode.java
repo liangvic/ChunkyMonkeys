@@ -183,8 +183,6 @@ public class MasterServerNode extends ServerNode {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
-			// TODO: set chunkData data
-			// TODO: message chunk servers
 			File file = new File(filepath);
 			file.mkdirs();
 			SendSuccessMessageToClient();
