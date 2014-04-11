@@ -27,7 +27,6 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
-		NamespaceMap.put("1", new NamespaceNode());
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -83,9 +82,9 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY
 				&& inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-				SendSuccessMessageToClient();
+				//SendSuccessMessageToClient();
 			} else {
-				SendErrorMessageToClient();
+				//SendErrorMessageToClient();
 			}
 		}
 		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
@@ -133,16 +132,14 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
-	public void SendSuccessMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
+	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
-	public void SendErrorMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.REQUESTERROR;
-		client.DealWithMessage(successMessage);
+	public void SendErrorMessageToClient(Message errorMessage) {
+		errorMessage.success = msgSuccess.REQUESTERROR;
+		client.DealWithMessage(errorMessage);
 	}
 
 	public void MDeleteDirectory(String filePath) {
@@ -235,7 +232,7 @@ public class MasterServerNode extends ServerNode {
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null){
 
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE));
 		} else {
 
 				String newName = filepath + "\\" + filename;
@@ -281,7 +278,7 @@ public class MasterServerNode extends ServerNode {
 			}
 			if(!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
 				// parent directory does not exist
-				SendErrorMessageToClient();
+				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 				return;
 			}
 			else if(NamespaceMap.containsKey(parent)) 
@@ -291,11 +288,11 @@ public class MasterServerNode extends ServerNode {
 
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
-			SendSuccessMessageToClient();
+			SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 			tfsLogger.LogMsg("Created directory " + filepath);
 		} else // directory already exists
 		{
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 		}
 
 		/*
@@ -446,7 +443,7 @@ public class MasterServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.chunkHash = n_tempHash;
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
