@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.Message.serverType;
 import Utility.Message.msgSuccess;
@@ -53,7 +54,12 @@ public class ClientServerNode extends ServerNode {
 				case ("Test3"):
 					break;
 				case ("Test4"):
-					break;
+					if (tokens.length == 3){
+						test4(tokens[1].toString(), tokens[2].toString());
+					}
+					else{
+						throw new Exception();
+					}
 				case ("Test5"):
 					if (tokens.length == 3)
 						test5(tokens[1].toString(), tokens[2].toString());
@@ -286,42 +292,50 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateFile(String fullFilePath){ //including filename
 		Message msg = new Message(fullFilePath, msgType.CREATEFILE);
 		int index = fullFilePath.lastIndexOf('\\');
+		msg.chunkindex = 1;
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
 		master.DealWithMessage(msg);
-
 	}
 	
-	public void CAppendToFile(String fullFilePath, byte[] byteStream){
+	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
 		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
-		master.DealWithMessage(msg);
+		return master.AssignChunkServer(msg);
+		//master.DealWithMessage(msg);
 	}
 	
-	public void CAppendToFile2(String fullFilePath, byte[] byteStream){
+	public void CAppendToFile(ChunkMetadata cm, String fullFilePath, byte[] byteStream){
+		
+		//CAppendToFile(fullFilePath, byteStream);//retrieve metadata
+		
 		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
+		msg.chunkClass= cm;
+		
+		
+		
 		chunkServer.DealWithMessage(msg);
 	}
 	
-	public void AppendToChunkServer(int chunkHandle, ChunkServerNode myServer){
+	public void AppendToChunkServer(String hashstring, ChunkServerNode myServer){
 		//later on set chunk handle and chunkserver to myServer
+		//CAppendToFile2(filePath, byteFile);
 	}
 	
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
 	public void test4(String localPath, String filePath) {
-		// Step 1: Connect to the Master
 		/*
 		 * Plan:
 		 * Send message to server including the filepath to createfile
@@ -329,8 +343,8 @@ public class ClientServerNode extends ServerNode {
 		 * Write to the created file
 		 * If file >64MB (size of a chunk), write to several chunks
 		 */
-		
 		CCreateFile(filePath); //empty file created
+		System.out.println(filePath);
 		
 		FileInputStream fileInputStream = null;
 		File localFile = new File(localPath);
@@ -344,11 +358,11 @@ public class ClientServerNode extends ServerNode {
 		} catch(Exception e){
 			e.printStackTrace();
 		}
-		
-		CAppendToFile(filePath, byteFile); //sends message to master to append to specified file
+		ChunkMetadata cm;		
+		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
-		
-		CAppendToFile2(filePath, byteFile); //now sends to chunkServer
+				
+		CAppendToFile(cm, filePath, byteFile); //now sends to chunkServer
 		/*
 		//now to cut it up into 64MB chunks
 		if (byteFile.length >67108864){ //67108864 bytes = 64MB

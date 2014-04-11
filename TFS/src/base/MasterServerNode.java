@@ -240,17 +240,20 @@ public class MasterServerNode extends ServerNode {
 		client.ExpectChunkNumberForRead(indexCounter-1);
 	}
 
-	public void AssignChunkServer(Message inputMessage){
+	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		int hash = hashstring.hashCode();
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 		//newMetaData.listOfLocations = 0;
-		newMetaData.chunkHash = hash;
+		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
 		newMetaData.filenumber = rand.nextInt(5);
 		newMetaData.byteoffset = 0;
 		newMetaData.size = inputMessage.fileData.length;
-		client.AppendToChunkServer(hash, chunkServer);
+		
+		//Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+		return newMetaData;
+		//client.AppendToChunkServer(hashstring, myServer);
+		//client.AppendToChunkServer(newMetaData, chunkServer);
 	}
 	
 	public void CreateFile(String filepath, String filename, int index){
@@ -470,7 +473,7 @@ public class MasterServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.chunkHash = n_tempHash;
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;

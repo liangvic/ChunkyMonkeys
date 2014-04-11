@@ -77,6 +77,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 		else if (message.type == msgType.APPENDTOFILE)
 		{
+			if (message.chunkClass == null){
+				System.out.println("chunkClass is null");
+			}
 			AppendToFile(message.chunkClass, message.fileData);
 		}
 	}
@@ -235,7 +238,7 @@ public class ChunkServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.chunkHash = n_tempHash;
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
