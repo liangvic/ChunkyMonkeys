@@ -81,6 +81,13 @@ public class ChunkServerNode extends ServerNode {
 			}
 			AppendToFile(message.chunkClass, message.fileData);
 		}
+		else if (message.type == msgType.APPENDTOFILE)
+		{
+			if (message.chunkClass == null){
+				System.out.println("chunkClass is null");
+			}
+			AppendToFile(message.chunkClass, message.fileData);
+		}
 	}
 
 	public void ReadChunks(ChunkMetadata metadata) {
@@ -119,6 +126,7 @@ public class ChunkServerNode extends ServerNode {
 		chunkMap.put(metadata.filename, metadata);
 		TFSFile current = file_list.get(1);
 		metadata.byteoffset = current.spaceOccupied;
+
 		metadata.size = 4;
 		
 		String s = "popo";
@@ -161,7 +169,6 @@ public class ChunkServerNode extends ServerNode {
 													// shouldn't append)
 		current.data[current.spaceOccupied + metadata.size] = (byte) metadata.size;
 		current.spaceOccupied = current.data.length;
-
 		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		newMessage.addressedTo = serverType.MASTER;

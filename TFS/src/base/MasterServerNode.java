@@ -320,7 +320,8 @@ public class MasterServerNode extends ServerNode {
 				WritePersistentChunkServerMap(newName,
 						chunkServerMap.get(newName));
 				SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
-
+				tfsLogger.LogMsg("Created file " + newName);
+				
 			} else {
 				SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 			}
