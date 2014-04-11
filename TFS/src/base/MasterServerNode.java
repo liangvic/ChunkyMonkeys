@@ -6,6 +6,7 @@ import java.util.*;
 import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.Message.msgType;
+
 import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode{
@@ -14,7 +15,7 @@ public class MasterServerNode extends ServerNode{
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	static LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
-	
+
 	public static void main(String args[]) throws Exception
     {
 	        int portNumber = 8111;
@@ -144,5 +145,36 @@ public class MasterServerNode extends ServerNode{
 			}
 		}
 	}
+	public void CreateDirectory(Message message)
+	{
+		ServerSocket serverSocket;
+		try {
+			serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
+			File file = new File(message.filePath);
+			Message responseMsg;
+			if(!file.exists()) {
+				file.mkdir();
+				//TODO: insert into map
+				//TODO: assign chunk and replicas to chunk servers
+				ChunkMetadata chunkData = new ChunkMetadata();
+				//TODO: set chunkData data
+				responseMsg = new Message(msgType.SUCCESS, chunkData);
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				out.writeObject(responseMsg);
+				//TODO: message chunk servers
+			}
+			else {
+				responseMsg = new Message(msgType.ERROR);
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				out.writeObject(responseMsg);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	
 }

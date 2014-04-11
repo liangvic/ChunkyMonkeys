@@ -153,15 +153,16 @@ public class ClientServerNode extends ServerNode {
 	{
 		Socket sock;
 		try {
-			sock = new Socket(myIP, myPortNumber);
-
+			Properties prop = new Properties();
+			prop.load(new FileInputStream("config/config.properties"));
+			sock = new Socket(prop.getProperty("MASTERIP"), Integer.parseInt(prop.getProperty("MASTERPORT")));
 			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 			for(int i = 0; i < numOfDir; ++i) {
-				Message message = new Message(msgType.CREATEDIRECTORY);				
+				Message message = new Message(Integer.toString(i+1), msgType.CREATEDIRECTORY);
 				out.writeObject(message);
 			}
-			out.close();
-			sock.close();
+			//out.close();
+			//sock.close();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -169,6 +170,35 @@ public class ClientServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	//Test 4 stores a file on the local machine in  a target TFS specified by its filepath
+	public void test4(String localPath, String filePath){
+		//Step 1: Connect to the Master
+		String masterIP = "68.181.174.149";
+		int masterPort = 8111;
+		
+		try{
+			Socket masterSocket = new Socket(masterIP, masterPort);
+			PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
+	        // BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+	        BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in));
+	        
+		} catch (UnknownHostException e){
+			System.err.println("Don't know about host " + masterIP);
+			System.exit(1);
+		} catch (IOException e) {
+        	e.printStackTrace();
+            System.err.println("Couldn't get I/O for the connection to " +
+            		masterIP);
+            System.exit(1);
+        }
+		//Step 2: Receive Message to be Written
+		//if it exists, return error. else read content and store in TFS file
+		//Pseudocode referring to coderanch.com/t/205325/sockets/java/send-java-Object-socket
+		//InputStream is = clientSocket.getInputStream();
+		//ObjectInputStream ois = new ObjectInputStream(is);
+		//receivedMsg rmsg = (Message)rmsg.readObject();
 	}
 	
 	public void test5(String filePath, String localPath){

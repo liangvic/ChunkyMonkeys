@@ -19,9 +19,12 @@ public class Message implements Serializable{
 		filePath = fp;
 		type = msgT;
 	}
-	
+	public Message(msgType msgT, ChunkMetadata chunkData) {
+		type = msgT;
+		chunkClass = chunkData;
+	}
 //	List<Character> filePath = new ArrayList<Character>();
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,DELETEFROMSERVER};
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE, DELETEFROMSERVER,SUCCESS, ERROR};
 	public msgType type;
 	public String filePath;
 	int startByte;
