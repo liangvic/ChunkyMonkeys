@@ -136,6 +136,7 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
+	
 	public void CreateDirectory(String filepath)
 	{
 		if (NamespaceMap.containsKey(filepath)) { // directory exists
