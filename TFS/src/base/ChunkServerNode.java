@@ -24,12 +24,11 @@ public class ChunkServerNode extends ServerNode{
 		int spaceOccupied;
 		byte[] data;
 	}
-	
+
 	List<File> file_list = new ArrayList<File>();
 			
 	//hash to data
 	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
-	   
     
     /* public static void main(String argv[]) throws Exception
     {
@@ -77,7 +76,7 @@ public class ChunkServerNode extends ServerNode{
     
     public void DeleteChunk(ChunkMetadata metadata)
     {
-    	listMetaData chunkToDelete = null;
+    	/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
     	for(listMetaData lmd: files)
     	{
@@ -93,6 +92,6 @@ public class ChunkServerNode extends ServerNode{
     		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
     		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
-    	}
+    	}*/
     }
 }
