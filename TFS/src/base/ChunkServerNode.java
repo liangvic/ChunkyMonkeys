@@ -12,28 +12,38 @@ import java.util.Random;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
-import Utility.chunkLocation;
+import Utility.ChunkLocation;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 
-public class ChunkServerNode extends ServerNode{
+public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
 	public MasterServerNode master;
-	
-	public class File{
-		int fileNumber;
-		int spaceOccupied;
-		byte[] data;
+
+	public class File {
+		int fileNumber = 0;
+		int spaceOccupied = 0;
+		byte[] data = new byte[67108864];
 	}
 
 	List<File> file_list = new ArrayList<File>();
-			
+
+	public ChunkServerNode() {
+		for (int i = 0; i < 5; i++)
+			file_list.add(new File());
+
+	}
 	//hash to data
+
 	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
-    
-    /* public static void main(String argv[]) throws Exception
+
+
+
+
+	/* public static void main(String argv[]) throws Exception
+
     {
-       
+
        ServerSocket welcomeSocket = new ServerSocket(6789);
 
        while(true)
@@ -48,38 +58,70 @@ public class ChunkServerNode extends ServerNode{
           outToClient.writeBytes(capitalizedSentence);
        }
     }*/
-    
-    public void DealWithMessage(Message message)
+
+	public void DealWithMessage(Message message)
 	{
-    	if(message.type == msgType.DELETEDIRECTORY)
-    	{
-    		DeleteChunk(message.chunkClass);
-    	}
-    	else if (message.type == msgType.CREATEFILE)
-    	{
-    		AddNewBlankChunk(message.chunkClass);
-    	}
+		if(message.type == msgType.DELETEDIRECTORY)
+		{
+			DeleteChunk(message.chunkClass);
+		}
+
+		else if (message.type == msgType.CREATEFILE)
+		{
+			AddNewBlankChunk(message.chunkClass);
+		}
+		else if (message.type == msgType.READFILE)
+		{
+			ReadChunks(message.chunkClass);
+		}
 	}
-    public void AddNewBlankChunk(ChunkMetadata metadata){
-    	//TODO: have to create new Chunkmetadata and copy over metadata
-    	chunkMap.put(metadata.chunkHash, metadata);
-    	File current = file_list.get(metadata.filenumber);
-    	metadata.byteoffset = current.spaceOccupied;
-    	metadata.size = 0;
-    	current.data[current.spaceOccupied] = 0;
-    	current.data[current.spaceOccupied+1] = 0;
-    	current.spaceOccupied+= 8;
-    	
-    	Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
-    	newMessage.success = msgSuccess.REQUESTSUCCESS;
-    	master.DealWithMessage(newMessage);
-    }
-    
-    public void DeleteChunk(ChunkMetadata metadata)
-    {
-    	/*listMetaData chunkToDelete = null;
+	public void ReadChunks(ChunkMetadata metadata){
+		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
+		//		for(ChunkLocation messageLocation: metadata.listOfLocations){
+		//			for(File fileData: file_list){
+		//				if((fileData.location.chunkIP == messageLocation.chunkIP) && (fileData.location.chunkPort == messageLocation.chunkPort)){
+		//					fileMetaData.add(fileData.data);
+		//				}
+		//			}
+		//		}
+		//		
+		for(File fileData:file_list){
+
+			if(metadata.filenumber == fileData.fileNumber){
+				byte[] dataINeed = new byte[metadata.size];
+				//check byte offset
+				for(int i=0;i<metadata.size;i++){
+					dataINeed[i]=fileData.data[metadata.byteoffset+i];
+				}
+				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
+				break;
+			}
+		}
+
+		//		client.DealWithMessage(new Message(msgType.PRINTFILEDATA, fileMetaData));
+
+	}
+
+	public void AddNewBlankChunk(ChunkMetadata metadata){
+		//TODO: have to create new Chunkmetadata and copy over metadata
+		chunkMap.put(metadata.chunkHash, metadata);
+		File current = file_list.get(metadata.filenumber);
+		metadata.byteoffset = current.spaceOccupied;
+		metadata.size = 0;
+		current.data[current.spaceOccupied] = 0;
+		current.data[current.spaceOccupied+1] = 0;
+		current.spaceOccupied+= 8;
+
+		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
+		newMessage.success = msgSuccess.REQUESTSUCCESS;
+		master.DealWithMessage(newMessage);
+	}
+
+	public void DeleteChunk(ChunkMetadata metadata)
+	{
+		/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
-    	for(listMetaData lmd: files)
+    	for(listMetaData lmd: files) 
     	{
     		if(lmd.chunkHash == metadata.chunkHash)
     		{
@@ -94,16 +136,17 @@ public class ChunkServerNode extends ServerNode{
     		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
     	}*/
-    }
-    
-    public void LoadServerNodeMap()
+	}
+
+
+	public void LoadServerNodeMap()
 	{
-    	String path = "dataStorage/SData_ChunkMap.txt";
+		String path = "dataStorage/SData_ChunkMap.txt";
 		try {
 			FileReader fr = new FileReader(path);
 			BufferedReader textReader = new BufferedReader(fr);
 			String textLine;
-			
+
 			while((textLine = textReader.readLine())!= null)
 			{
 				//STRUCTURE///
@@ -117,23 +160,23 @@ public class ChunkServerNode extends ServerNode{
 				//INDEX
 				//SIZE
 				String[] data = textLine.split("\t");
-				
+
 				//key
 				String key;
 				key = data[0];
-				
+
 				//version
 				int n_version = Integer.parseInt(data[1]);
-				
+
 				//location
-				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = Integer.parseInt(data[2]);
 				int newIndexCounter = 3 + (locationSize/2);
 				for(int i=3; i<newIndexCounter; i=i+2)
 				{
-					locations.add(new chunkLocation(data[i],Integer.parseInt(data[i+1])));
+					locations.add(new ChunkLocation(data[i],Integer.parseInt(data[i+1])));
 				}
-				
+
 				//hash
 				List<Integer> hash = new ArrayList<Integer>();
 				String n_tempHash = data[newIndexCounter++];
@@ -142,22 +185,22 @@ public class ChunkServerNode extends ServerNode{
 					hash.add(Character.getNumericValue(n_tempHash.charAt(i)));//adds at end
 				}
 				n_tempHash = hash.toString();
-				
+
 				//count
 				int n_count = Integer.parseInt(data[newIndexCounter++]);
-				
+
 				//filename
 				String n_fileName = data[newIndexCounter++];
-				
+
 				//fileNumber
 				int n_fileNumber = Integer.parseInt(data[newIndexCounter++]);
-				
+
 				//byteoffset
 				int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
-				
+
 				//index
 				int n_index = Integer.parseInt(data[newIndexCounter++]);
-				
+
 				//size
 				int n_size = Integer.parseInt(data[newIndexCounter++]);
 
@@ -178,8 +221,8 @@ public class ChunkServerNode extends ServerNode{
 			e.printStackTrace();
 		}
 	}
-    
-    public void WritePersistentServerNodeMap(int chunkHash, ChunkMetadata chunkmd)
+
+	public void WritePersistentServerNodeMap(int chunkHash, ChunkMetadata chunkmd)
 	{
 		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		//STRUCTURE///
@@ -195,20 +238,21 @@ public class ChunkServerNode extends ServerNode{
 		BufferedWriter out = null;
 		try  
 		{
-		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
-		    out = new BufferedWriter(fstream);
-		    out.write(chunkHash+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
-		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
-		    {
-		    	out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
-		    }
-		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
-		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
-		    out.newLine();
+			FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+			out = new BufferedWriter(fstream);
+			out.write(chunkHash+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+			for(int i=0;i<chunkmd.listOfLocations.size();i++)
+			{
+				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
+			}
+			out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
+			out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
+			out.newLine();
 		}
 		catch (IOException e)
 		{
-		    System.err.println("Error: " + e.getMessage());
+			System.err.println("Error: " + e.getMessage());
 		}
+
 	}
 }
