@@ -155,6 +155,25 @@ public class MasterServerNode extends ServerNode {
 				// files/directories below
 				deleteAllChildNodes(filePath);
 			}
+			
+			String[] tokens = filePath.split(File.pathSeparator);
+			String parentPath = tokens[0];
+			for(int i=1;i<tokens.length-1;i++)
+			{
+				parentPath = parentPath + "\\" + tokens[i]; 
+			}
+			
+			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+			  {
+				for(int i=0;i<entry.getValue().children.size();i++)
+				{
+					if(entry.getValue().children.get(i).contains(parentPath))
+					{
+						entry.getValue().children.remove(i);
+					}
+				}
+			  }
+			
 			// finally delete directory wanted to delete
 			NamespaceMap.remove(filePath);
 
@@ -194,10 +213,14 @@ public class MasterServerNode extends ServerNode {
 																			// NS
 																			// tree
 
+				chunkServerMap.remove(hashPath);
+				
 				// sending protocol
 				chunkServer.DealWithMessage(clientMessage);
 				chunkIndex++;
 				hashPath = startingNodeFilePath + chunkIndex;
+				
+				
 			}
 
 			return;
@@ -207,6 +230,17 @@ public class MasterServerNode extends ServerNode {
 				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children
 						.get(i));
 			}
+			NamespaceMap.get(startingNodeFilePath).children.clear();
+			NamespaceMap.remove(startingNodeFilePath);
+			int chunkIndex = 1;
+			String hashPath = startingNodeFilePath + chunkIndex;
+			while (chunkServerMap.containsKey(hashPath)) {
+				chunkServerMap.remove(hashPath);
+				
+				chunkIndex++;
+				hashPath = startingNodeFilePath + chunkIndex;
+			}
+			
 		}
 	}
 
@@ -345,41 +379,50 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 
-	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd) {
-		// String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
-		File file = new File("dataStorage/File" + chunkmd.filenumber);
-		// STRUCTURE///
-		// KEY VERSION# SIZEOF_LOCATIONLIST
-		// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
-		// CHUNKLOCATIONN_PORT
-		// CHUNKHASH
-		// REFERENCECOUNT
-		// FILENAME
-		// FILENUMBER
-		// BYTEOFFSET
-		// INDEX
-		// SIZE
+	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
+	{
+		if(chunkServerMap.size()==0)
+		{
+			System.out.println("NOthing in map!!!");
+		}
+		else
+		{
+			System.out.println("There are " + chunkServerMap.size());
+		}
+		
+		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
+		
+		//STRUCTURE///
+		//KEY VERSION# SIZEOF_LOCATIONLIST 
+		//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+		//CHUNKHASH
+		//REFERENCECOUNT
+		//FILENAME
+		//FILENUMBER
+		//BYTEOFFSET
+		//INDEX
+		//SIZE
 		BufferedWriter out = null;
-		try {
-			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); // true
-																				// tells
-																				// to
-																				// append
-																				// data.
-			out = new BufferedWriter(fstream);
-			out.write(key + "\t" + chunkmd.versionNumber + "\t"
-					+ chunkmd.listOfLocations.size() + "\t");
-			for (int i = 0; i < chunkmd.listOfLocations.size(); i++) {
-				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t"
-						+ chunkmd.listOfLocations.get(i).chunkPort + "\t");
-			}
-			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
-					+ chunkmd.filename + "\t");
-			out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t"
-					+ chunkmd.index + "\t" + chunkmd.size);
-			out.newLine();
-		} catch (IOException e) {
-			System.err.println("Error: " + e.getMessage());
+		try  
+		{
+			File file = new File("dataStorage/MData_ChunkServerMap.txt");
+		    FileWriter ofstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
+		    out = new BufferedWriter(ofstream);
+		    out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
+		    {
+		    	out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
+		    }
+		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
+		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
+		    out.newLine();
+		    
+		    out.close();
+		    ofstream.close();
+		}
+		catch (IOException e)
+		{
+		    System.err.println("Error: " + e.getMessage());
 		}
 	}
 
@@ -409,10 +452,9 @@ public class MasterServerNode extends ServerNode {
 			System.err.println("Error: " + e.getMessage());
 		}
 	}
-
-	public void LoadChunkServerMap() {
-		System.out.println("Trying to read file");
-		// String path = "dataStorage/MData_ChunkServerMap.txt";
+	
+	public void LoadChunkServerMap()
+	{	
 		try {
 			File file = new File("dataStorage/MData_ChunkServerMap.txt");
 			FileReader fr = new FileReader(file);
@@ -487,6 +529,7 @@ public class MasterServerNode extends ServerNode {
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
+				
 				chunkServerMap.put(key, newMetaData);
 			}
 			textReader.close();
@@ -551,7 +594,7 @@ public class MasterServerNode extends ServerNode {
 																				// tells
 																				// to
 																				// append
-																				// data.
+			// data.
 			out = new BufferedWriter(fstream);
 			System.out.println("Writing out to file");
 			out.write("");
@@ -563,18 +606,15 @@ public class MasterServerNode extends ServerNode {
 
 	public void ClearNamespaceMapFile() {
 		BufferedWriter out = null;
-		try {
-			File file = new File("dataStorage/MData_NamespaceMap.txt");
-			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); // true
-																				// tells
-																				// to
-																				// append
-																				// data.
-			out = new BufferedWriter(fstream);
-			System.out.println("Writing out to file");
-			out.write(" ");
-			out.close();
-		} catch (IOException e) {
+		try  
+		{
+		   File file = new File("dataStorage/MData_NamespaceMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); //true tells to append data.
+		    out = new BufferedWriter(fstream);
+		    System.out.println("Writing out to file");
+		    out.write("");
+		    out.close();
+		}catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
 		}
 	}

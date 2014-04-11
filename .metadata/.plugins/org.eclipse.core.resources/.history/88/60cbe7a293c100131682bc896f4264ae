@@ -16,6 +16,10 @@ import java.util.Timer;
 public class launch {
 
 	public static void main(String args[]) throws Exception {
+<<<<<<< HEAD
+		
+=======
+>>>>>>> fd34280e3f104f6ac3f94d640a81da1ca8a76bbd
 		MasterServerNode master = new MasterServerNode();
 		ClientServerNode client = new ClientServerNode();
 		ChunkServerNode chunkServer = new ChunkServerNode();
