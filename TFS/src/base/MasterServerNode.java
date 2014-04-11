@@ -27,6 +27,7 @@ public class MasterServerNode extends ServerNode {
 	{
 		LoadChunkServerMap();
 		LoadNamespaceMap();
+		
 	}
 	
 	// Don't call on this for now; using monolith structure
@@ -281,10 +282,14 @@ public class MasterServerNode extends ServerNode {
 		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
 		    out = new BufferedWriter(fstream);
 		    out.write(key+"\t");
-		    for(int i=0;i<nsNode.children.size();i++)
+		    if(nsNode.children.size()>0)
 		    {
-		    	out.write(nsNode.children.get(i)+ "\t");
+		    	for(int i=0;i<nsNode.children.size();i++)
+			    {
+			    	out.write(nsNode.children.get(i)+ "\t");
+			    }
 		    }
+		    
 		    out.newLine();
 		}
 		catch (IOException e)
@@ -324,7 +329,7 @@ public class MasterServerNode extends ServerNode {
 				
 				//location
 				List<chunkLocation> locations = new ArrayList<chunkLocation>();
-				int locationSize = locations.size();
+				int locationSize = Integer.parseInt(data[2]);
 				int newIndexCounter = 3 + (locationSize/2);
 				for(int i=3; i<newIndexCounter; i=i+2)
 				{
