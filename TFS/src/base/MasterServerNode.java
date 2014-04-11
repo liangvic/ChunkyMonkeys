@@ -26,7 +26,6 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
-//		NamespaceMap.put("1", new NamespaceNode());
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -242,7 +241,7 @@ public class MasterServerNode extends ServerNode {
 
 	public void CreateFile(String filepath, String filename, int index){
 
-		String hashstring = filepath + "\\" + filename + Integer.toString(index);
+		String hashstring = filepath + "\\" + filename + index;
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null){
 
