@@ -157,6 +157,7 @@ public class ChunkServerNode extends ServerNode {
 		ChunkMetadata chunkToDelete = null;
     	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 		  {
+    		System.out.println(entry.getValue().filename + " " + metadata.filename);
     		if(entry.getValue().filename == metadata.filename)
     		{
     			for(TFSFile f: file_list)
@@ -174,14 +175,27 @@ public class ChunkServerNode extends ServerNode {
     			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
         		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
         		master.DealWithMessage(successMessageToMaster);
+        		
+        		/*int index = 1;
+        		while(chunkMap.containsKey(chunkToDelete.filename))
+        		{
+        			chunkMap.remove(entry.getValue());
+        			index++;
+        		}*/
+        		System.out.println("File name is: "+chunkToDelete.filename);
+        		chunkMap.remove(chunkToDelete.filename);
         		break;
     		}
 		  }
-    	
+    	/*int index = 1;
     	if(chunkToDelete != null)
     	{
-    		chunkMap.remove(chunkToDelete);
-    	}
+    		while(chunkMap.containsKey(chunkToDelete.+index))
+    		{
+    			chunkMap.remove(chunkToDelete);
+    		}
+    				
+    	}*/
     	
     		
     	

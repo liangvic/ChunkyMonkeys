@@ -205,23 +205,24 @@ public class MasterServerNode extends ServerNode {
 
 			int chunkIndex = 1;
 			String hashPath = startingNodeFilePath + chunkIndex;
-			while (chunkServerMap.containsKey(hashPath)) {
+			if(chunkServerMap.containsKey(startingNodeFilePath))
+			{
+				chunkServerMap.remove(startingNodeFilePath);
+			}
 				// Send message to client server to erase data
 				Message clientMessage = new Message(msgType.DELETEDIRECTORY);
 
 				clientMessage.chunkClass = chunkServerMap.get(hashPath); // does
 																			// NS
 																			// tree
-
 				chunkServerMap.remove(hashPath);
 				
 				// sending protocol
-				chunkServer.DealWithMessage(clientMessage);
-				chunkIndex++;
-				hashPath = startingNodeFilePath + chunkIndex;
+				//chunkServer.DealWithMessage(clientMessage);
+				//chunkIndex++;
+				//hashPath = startingNodeFilePath + chunkIndex;
 				
 				
-			}
 
 			return;
 		} else {
@@ -232,14 +233,6 @@ public class MasterServerNode extends ServerNode {
 			}
 			NamespaceMap.get(startingNodeFilePath).children.clear();
 			NamespaceMap.remove(startingNodeFilePath);
-			int chunkIndex = 1;
-			String hashPath = startingNodeFilePath + chunkIndex;
-			while (chunkServerMap.containsKey(hashPath)) {
-				chunkServerMap.remove(hashPath);
-				
-				chunkIndex++;
-				hashPath = startingNodeFilePath + chunkIndex;
-			}
 			
 		}
 	}
@@ -309,6 +302,7 @@ public class MasterServerNode extends ServerNode {
 				chunkServerMap.put(newName, newChunk);
 
 				Message newMessage = new Message(msgType.CREATEFILE, newChunk);
+				newMessage.chunkClass.filename = newName;
 				try {
 					chunkServer.DealWithMessage(newMessage);
 
@@ -381,15 +375,6 @@ public class MasterServerNode extends ServerNode {
 
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
 	{
-		if(chunkServerMap.size()==0)
-		{
-			System.out.println("NOthing in map!!!");
-		}
-		else
-		{
-			System.out.println("There are " + chunkServerMap.size());
-		}
-		
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		
 		//STRUCTURE///
