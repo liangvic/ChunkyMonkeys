@@ -221,31 +221,80 @@ public class ClientServerNode extends ServerNode {
 		
 	}
 
+	public void CCreateFile(String fullFilePath){ //including filename
+		Message msg = new Message(fullFilePath, msgType.CREATEFILE);
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.MASTER;
+		msg.sender = serverType.CLIENT;
+		master.DealWithMessage(msg);
+
+	}
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
 	public void test4(String localPath, String filePath) {
 		// Step 1: Connect to the Master
-		String masterIP = "68.181.174.149";
-		int masterPort = 8111;
+		/*
+		 * Plan:
+		 * Send message to server including the filepath to createfile
+		 * If no error returned, read the content of the local file and send to TFS
+		 * Write to the created file
+		 * If file >64MB (size of a chunk), write to several chunks
+		 */
+		
+		CCreateFile(filePath); //empty file created
+		
+		FileInputStream fileInputStream = null;
+		File localFile = new File(localPath);
+		byte[] byteFile = new byte[(int)localFile.length()];
+		
+		//convert file into array of bytes
+		try{
+			fileInputStream = new FileInputStream(localFile);
+			fileInputStream.read(byteFile);
+			fileInputStream.close();
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		/*
+		//now to cut it up into 64MB chunks
+		if (byteFile.length >67108864){ //67108864 bytes = 64MB
+			int numChunks = ((byteFile.length - 1)/67108864) + 1;
+			int currentIndex = 0;
+			byte[][] Chunks = new byte[numChunks][]; //creates a list of byte arrays
+			while(currentIndex <= numChunks-1){
+				Chunks[currentIndex] = Arrays.copyOf(byteFile, 67108864);
+				//INCOMPLETE! NEED TO SEPARATE TO DIFFERENT CHUNKS
+			}	
+		}
+		*/
 
-		try {
-			Socket masterSocket = new Socket(masterIP, masterPort);
-			PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
-					true);
+		
+		
+		
+//		String masterIP = "68.181.174.149";
+//		int masterPort = 8111;
+//
+//		try {
+//			Socket masterSocket = new Socket(masterIP, masterPort);
+//			PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
+//					true);
 			// BufferedReader in = new BufferedReader(new
 			// InputStreamReader(echoSocket.getInputStream()));
-			BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-					System.in));
-
-		} catch (UnknownHostException e) {
-			System.err.println("Don't know about host " + masterIP);
-			System.exit(1);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.err.println("Couldn't get I/O for the connection to "
-					+ masterIP);
-			System.exit(1);
-		}
+//			BufferedReader stdIn = new BufferedReader(new InputStreamReader(
+//					System.in));
+//
+//		} catch (UnknownHostException e) {
+//			System.err.println("Don't know about host " + masterIP);
+//			System.exit(1);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			System.err.println("Couldn't get I/O for the connection to "
+//					+ masterIP);
+//			System.exit(1);
+//		}
 		// Step 2: Receive Message to be Written
 		// if it exists, return error. else read content and store in TFS file
 		// Pseudocode referring to
