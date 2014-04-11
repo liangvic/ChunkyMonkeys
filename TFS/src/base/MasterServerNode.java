@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.TFSLogger;
@@ -11,7 +12,7 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.NamespaceNode;
-import Utility.chunkLocation;
+import Utility.ChunkLocation;
 
 public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -53,8 +54,8 @@ public class MasterServerNode extends ServerNode {
 			DealWithMessage(receivedMessage);
 		} catch (IOException e) {
 			System.out
-					.println("Exception caught when trying to listen on port "
-							+ portNumber + " or listening for a connection");
+			.println("Exception caught when trying to listen on port "
+					+ portNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		/*
@@ -102,7 +103,11 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
-		
+		else if(inputMessage.type == msgType.READFILE && inputMessage.sender == serverType.CLIENT) 
+		{
+			ReadFile(inputMessage);
+		}
+
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -118,6 +123,7 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void MDeleteDirectory(String filePath) {
+
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
@@ -133,10 +139,12 @@ public class MasterServerNode extends ServerNode {
 		else // the filepath is not in the directory. Send error!
 		{
 			System.out
-					.println("Error! That filepath is not in the directory! Aborting deletion...");
+			.println("Error! That filepath is not in the directory! Aborting deletion...");
 			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-			errorMessageToClient.success = msgSuccess.REQUESTSUCCESS;
+
+			errorMessageToClient.success = msgSuccess.REQUESTERROR;
 			client.DealWithMessage(errorMessageToClient);
+
 			return;
 		}
 	}
@@ -145,6 +153,7 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			NamespaceMap.remove(startingNodeFilePath);
 			
+
 			int chunkIndex = 1;
 			String hashPath = startingNodeFilePath+chunkIndex;
 			while(chunkServerMap.containsKey(hashPath.hashCode()))
@@ -159,6 +168,7 @@ public class MasterServerNode extends ServerNode {
 				chunkIndex++;
 				hashPath = startingNodeFilePath + chunkIndex;
 			}
+
 			return;
 		} 
 		else {
@@ -167,11 +177,45 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
+
+
+
+	public void ReadFile(Message inputMessage){
+		int indexCounter = 1;
+		if(chunkServerMap.containsKey(inputMessage.fileName+indexCounter)){
+			//master extracts the chunkclass from the filepath key
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName+indexCounter);
+			Message returnMessage = new Message(msgType.READFILE,cm);
+			client.DealWithMessage(returnMessage);
+		}
+		else{
+			System.out.println("Error! That filepath is not in the directory! Aborting read...");
+			Message errorMessageToClient = new Message(msgType.UNKNOWNFILE);
+			errorMessageToClient.success = msgSuccess.REQUESTERROR;
+			// need to send out
+
+			return;
+		}
+		//check if the file contains multiple chunk indexes
+		indexCounter++;
+		while(chunkServerMap.containsKey(inputMessage.fileName+indexCounter)){
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName+indexCounter);
+			Message returnMessage = new Message(msgType.READFILE,cm);
+			client.DealWithMessage(returnMessage);
+			indexCounter++;
+		}
+		client.ExpectChunkNumberForRead(indexCounter-1);
+	}
+
+
+
 	public void CreateFile(String filepath, String filename, int index){
+
 		String hashstring = filepath + "\\" + filename + index;
 		int hash = hashstring.hashCode();
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hash) != null){
+
 			SendErrorMessageToClient();
 		}
 		else
@@ -323,12 +367,12 @@ public class MasterServerNode extends ServerNode {
 				int n_version = Integer.parseInt(data[1]);
 				
 				//location
-				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = locations.size();
 				int newIndexCounter = 3 + (locationSize/2);
 				for(int i=3; i<newIndexCounter; i=i+2)
 				{
-					locations.add(new chunkLocation(data[i],Integer.parseInt(data[i+1])));
+					locations.add(new ChunkLocation(data[i],Integer.parseInt(data[i+1])));
 				}
 				
 				//hash

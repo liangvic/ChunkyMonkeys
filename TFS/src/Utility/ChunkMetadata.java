@@ -10,7 +10,7 @@ public class ChunkMetadata{
 		referenceCount = refCount;
 	}
 	public int versionNumber;
-	public List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
+	public List<ChunkLocation> listOfLocations = new ArrayList<ChunkLocation>();
 	public int chunkHash;
 	public int referenceCount;
 	public String filename;
@@ -18,6 +18,7 @@ public class ChunkMetadata{
 	public int byteoffset;
 	public int index;
 	public int size;	
+
 
 
 	
