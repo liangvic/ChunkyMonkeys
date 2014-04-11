@@ -21,17 +21,17 @@ public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
 	public MasterServerNode master;
 
-	public class File {
+	public class TFSFile {
 		int fileNumber = 0;
 		int spaceOccupied = 0;
 		byte[] data = new byte[67108864];
 	}
 
-	List<File> file_list = new ArrayList<File>();
+	List<TFSFile> file_list = new ArrayList<TFSFile>();
 
 	public ChunkServerNode() {
 		for (int i = 0; i < 5; i++)
-			file_list.add(new File());
+			file_list.add(new TFSFile());
 
 	}
 	//hash to data
@@ -86,7 +86,7 @@ public class ChunkServerNode extends ServerNode {
 		//			}
 		//		}
 		//		
-		for(File fileData:file_list){
+		for(TFSFile fileData:file_list){
 
 			if(metadata.filenumber == fileData.fileNumber){
 				byte[] dataINeed = new byte[metadata.size];
@@ -106,7 +106,7 @@ public class ChunkServerNode extends ServerNode {
 	public void AddNewBlankChunk(ChunkMetadata metadata){
 		//TODO: have to create new Chunkmetadata and copy over metadata
 		chunkMap.put(metadata.filename, metadata);
-		File current = file_list.get(metadata.filenumber);
+		TFSFile current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = 0;
 		current.data[current.spaceOccupied] = 0;
@@ -116,16 +116,18 @@ public class ChunkServerNode extends ServerNode {
 		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		master.DealWithMessage(newMessage);
+		
+		WritePersistentServerNodeMap(metadata.filename,metadata);
 	}
 
 	public void DeleteChunk(ChunkMetadata metadata)
 	{
 		ChunkMetadata chunkToDelete = null;
-    	for (Map.Entry<Integer, ChunkMetadata> entry : chunkMap.entrySet())
+    	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 		  {
     		if(entry.getValue().filename == metadata.filename)
     		{
-    			for(File f: file_list)
+    			for(TFSFile f: file_list)
     			{
     				if(f.fileNumber == entry.getValue().filenumber)
     				{
@@ -193,13 +195,16 @@ public class ChunkServerNode extends ServerNode {
 				}
 
 				//hash
-				List<Integer> hash = new ArrayList<Integer>();
+				/*List<Integer> hash = new ArrayList<Integer>();
 				String n_tempHash = data[newIndexCounter++];
 				for(int i=0;i<n_tempHash.length();i++)
 				{
 					hash.add(Character.getNumericValue(n_tempHash.charAt(i)));//adds at end
 				}
-				n_tempHash = hash.toString();
+				n_tempHash = hash.toString();*/
+				
+				//hash
+				String n_hash = data[newIndexCounter++];
 
 				//count
 				int n_count = Integer.parseInt(data[newIndexCounter++]);
@@ -221,7 +226,7 @@ public class ChunkServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.chunkHash = n_hash;
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
@@ -253,7 +258,8 @@ public class ChunkServerNode extends ServerNode {
 		BufferedWriter out = null;
 		try  
 		{
-			FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+			File file = new File("dataStorage/MData_ChunkServerMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 			out = new BufferedWriter(fstream);
 			out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 			for(int i=0;i<chunkmd.listOfLocations.size();i++)
