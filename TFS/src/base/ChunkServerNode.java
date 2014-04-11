@@ -16,6 +16,7 @@ import Utility.ChunkLocation;
 import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
+import Utility.Message.serverType;
 
 public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -75,6 +76,13 @@ public class ChunkServerNode extends ServerNode {
 		{
 			ReadChunks(message.chunkClass);
 		}
+		else if (message.type == msgType.APPENDTOFILE)
+		{
+			if (message.chunkClass == null){
+				System.out.println("chunkClass is null");
+			}
+			AppendToFile(message.chunkClass, message.fileData);
+		}
 	}
 	public void ReadChunks(ChunkMetadata metadata){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
@@ -120,6 +128,30 @@ public class ChunkServerNode extends ServerNode {
 		WritePersistentServerNodeMap(metadata.filename,metadata);
 	}
 
+	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray){
+		chunkMap.put(metadata.chunkHash, metadata);
+		TFSFile current = file_list.get(metadata.filenumber);
+		metadata.byteoffset = current.spaceOccupied;
+		metadata.size = byteArray.length;
+		current.data[current.spaceOccupied] = (byte) metadata.size;
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try { //appends byteArray to the end of current.data
+			outputStream.write(current.data);
+			outputStream.write(byteArray);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		current.data = outputStream.toByteArray(); //does this create a new correct file or append(it shouldn't append)
+		current.data[current.spaceOccupied+metadata.size] = (byte) metadata.size;
+		current.spaceOccupied = current.data.length;
+		
+		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
+		newMessage.success = msgSuccess.REQUESTSUCCESS;
+		newMessage.addressedTo = serverType.MASTER;
+		newMessage.sender = serverType.CHUNKSERVER;
+		master.DealWithMessage(newMessage);
+	}
+	
 	public void DeleteChunk(ChunkMetadata metadata)
 	{
 		ChunkMetadata chunkToDelete = null;

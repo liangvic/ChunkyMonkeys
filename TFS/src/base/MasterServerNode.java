@@ -121,6 +121,17 @@ public class MasterServerNode extends ServerNode {
 				&& inputMessage.sender == serverType.CLIENT) {
 			ReadFile(inputMessage);
 		}
+		else if(inputMessage.type == msgType.APPENDTOFILE && inputMessage.sender == serverType.CLIENT)
+		{
+			if(inputMessage.sender == serverType.CLIENT)
+				AssignChunkServer(inputMessage);
+			else if (inputMessage.sender == serverType.CHUNKSERVER){
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS)
+					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+			}
+		}
 
 	}
 
@@ -224,7 +235,23 @@ public class MasterServerNode extends ServerNode {
 		client.ExpectChunkNumberForRead(indexCounter - 1);
 	}
 
-	public void CreateFile(String filepath, String filename, int index) {
+	public ChunkMetadata AssignChunkServer(Message inputMessage){
+		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
+		//newMetaData.listOfLocations = 0;
+		newMetaData.chunkHash = hashstring;
+		Random rand = new Random();
+		newMetaData.filenumber = rand.nextInt(5);
+		newMetaData.byteoffset = 0;
+		newMetaData.size = inputMessage.fileData.length;
+		
+		//Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+		return newMetaData;
+		//client.AppendToChunkServer(hashstring, myServer);
+		//client.AppendToChunkServer(newMetaData, chunkServer);
+	}
+	
+	public void CreateFile(String filepath, String filename, int index){
 
 		String newfilename = filepath + "\\" + filename;
 		String hashstring = newfilename + index;
