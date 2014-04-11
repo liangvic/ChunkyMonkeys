@@ -169,10 +169,17 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public static void test1(Integer numOfDir) // creates the specified num of
+	public void test1(Integer numOfDir) // recursively creates the specified num of
 										// directories
 	{
-		Socket sock;
+		if(numOfDir > 0) 
+		{
+			Message message = new Message(msgType.CREATEDIRECTORY);
+			master.DealWithMessage(message);
+			--numOfDir;
+			test1(numOfDir);
+		}
+		/*Socket sock;
 		try {
 			Properties prop = new Properties();
 			prop.load(new FileInputStream("config/config.properties"));
@@ -190,7 +197,7 @@ public class ClientServerNode extends ServerNode {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	//Test 4 stores a file on the local machine in  a target TFS specified by its filepath

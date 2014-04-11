@@ -17,7 +17,7 @@ public class MasterServerNode extends ServerNode{
 	//private static ServerSocket welcomeSocket;
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
-	static LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
+	LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
 
 	public void main(String args[]) throws Exception
     {
@@ -82,6 +82,10 @@ public class MasterServerNode extends ServerNode{
 			{
 				SendErrorMessageToClient();
 			}
+		}
+		else if(inputMessage.type == msgType.CREATEDIRECTORY && inputMessage.sender == serverType.CLIENT) 
+		{
+			CreateDirectory();
 		}
 	}
 	public void SendSuccessMessageToClient()
@@ -182,9 +186,9 @@ public class MasterServerNode extends ServerNode{
 			}
 		}
 	}
-	public void CreateDirectory(Message message)
+	public void CreateDirectory()
 	{
-		ServerSocket serverSocket;
+		/*ServerSocket serverSocket;
 		try {
 			serverSocket = new ServerSocket(myPortNumber);
 			Socket clientSocket = serverSocket.accept();
@@ -212,7 +216,7 @@ public class MasterServerNode extends ServerNode{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	
