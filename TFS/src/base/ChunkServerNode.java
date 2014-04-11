@@ -81,13 +81,6 @@ public class ChunkServerNode extends ServerNode {
 			}
 			AppendToFile(message.chunkClass, message.fileData);
 		}
-		else if (message.type == msgType.APPENDTOFILE)
-		{
-			if (message.chunkClass == null){
-				System.out.println("chunkClass is null");
-			}
-			AppendToFile(message.chunkClass, message.fileData);
-		}
 	}
 
 	public void ReadChunks(ChunkMetadata metadata) {
@@ -133,7 +126,6 @@ public class ChunkServerNode extends ServerNode {
 		byte buf[] = s.getBytes();	
 		for (int i = 1; i <= s.length(); i++)
 			file_list.get(1).data[current.spaceOccupied+ i] = buf[i-1];
-		
 		current.spaceOccupied += s.length();
 
 		WritePersistentServerNodeMap(metadata.filename, metadata);
@@ -169,6 +161,7 @@ public class ChunkServerNode extends ServerNode {
 													// shouldn't append)
 		current.data[current.spaceOccupied + metadata.size] = (byte) metadata.size;
 		current.spaceOccupied = current.data.length;
+
 		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		newMessage.addressedTo = serverType.MASTER;
