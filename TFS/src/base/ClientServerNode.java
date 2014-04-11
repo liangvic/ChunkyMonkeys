@@ -93,11 +93,25 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Successfully created directory "+message.filePath);
 			}
 			else {
-				System.out.println("Failed to create directory");
+				System.out.println("Failed to create directory "+message.filePath);
+			}
+		}
+		else if (message.type == msgType.CREATEFILE) {
+			if(message.success == msgSuccess.REQUESTSUCCESS) {
+				System.out.println("Successfully created file "+message.filePath);
+			}
+			else {
+				System.out.println("Failed to create file "+message.filePath);
 			}
 		}
 		else if(message.type == msgType.READFILE)
 		{
+			if(message.success == msgSuccess.REQUESTSUCCESS) {
+				
+			}
+			else {
+				System.out.println("Read failed. Could not find file.");
+			}
 			// Supposedly going to cache it. Implementation will be completed
 			// later.lol
 			// uses the location to contact the chunkserver

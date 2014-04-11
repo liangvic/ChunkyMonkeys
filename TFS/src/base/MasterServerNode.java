@@ -138,10 +138,9 @@ public class MasterServerNode extends ServerNode {
 		client.DealWithMessage(successMessage);
 	}
 
-	public void SendErrorMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.REQUESTERROR;
-		client.DealWithMessage(successMessage);
+	public void SendErrorMessageToClient(Message errorMessage) {
+		errorMessage.success = msgSuccess.REQUESTERROR;
+		client.DealWithMessage(errorMessage);
 	}
 
 	public void MDeleteDirectory(String filePath) {
@@ -170,17 +169,11 @@ public class MasterServerNode extends ServerNode {
 			  {
 				  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 			  }
-			
+			SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 			
 		} else // the filepath is not in the directory. Send error!
 		{
-			System.out
-			.println("Error! That filepath is not in the directory! Aborting deletion...");
-			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
-			client.DealWithMessage(errorMessageToClient);
-
+			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 			return;
 		}
 	}
@@ -223,11 +216,7 @@ public class MasterServerNode extends ServerNode {
 			client.DealWithMessage(returnMessage);
 		}
 		else{
-			System.out.println("Error! That filepath is not in the directory! Aborting read...");
-			Message errorMessageToClient = new Message(msgType.UNKNOWNFILE);
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
-			// need to send out
-
+			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.fileName));
 			return;
 		}
 		//check if the file contains multiple chunk indexes
@@ -246,7 +235,7 @@ public class MasterServerNode extends ServerNode {
 		String hashstring = filepath + "\\" + filename + index;
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null || NamespaceMap.get(filepath).type == nodeType.FILE){
-			System.out.println("error in creating file");
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 		} else {
 
 				String newName = filepath + "\\" + filename;
@@ -274,10 +263,10 @@ public class MasterServerNode extends ServerNode {
 					
 					WritePersistentNamespaceMap(newName,NamespaceMap.get(newName));
 					WritePersistentChunkServerMap(newName,chunkServerMap.get(newName));
-					
+					SendSuccessMessageToClient(new Message(msgType.CREATEFILE, newName));
 				} 
 				else {
-					System.out.println("Folder exists already");
+					SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 				}
 			
 		}
@@ -296,7 +285,7 @@ public class MasterServerNode extends ServerNode {
 			}
 			if(!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
 				// parent directory does not exist
-				SendErrorMessageToClient();
+				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 				return;
 			}
 			else if(NamespaceMap.containsKey(parent)) 
@@ -312,7 +301,7 @@ public class MasterServerNode extends ServerNode {
 			WritePersistentNamespaceMap(filepath,newNode);
 		} else // directory already exists
 		{
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 		}
 
 		/*
