@@ -15,7 +15,7 @@ public class ChunkMetadata{
 	String filename;
 	public int filenumber;
 	int byteoffset;
-	public int index;
+	int index;
 	int size;	
 	int versionNumber;
 	

@@ -129,7 +129,6 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateFile(String folderFilepath, String fileName){
 		Message message = new Message (msgType.CREATEFILE, folderFilepath);
 		message.fileName = fileName;
-		message.chunkClass.index = 1;
 		message.addressedTo = serverType.MASTER;
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);

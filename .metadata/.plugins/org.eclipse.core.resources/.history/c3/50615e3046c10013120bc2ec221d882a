@@ -6,16 +6,15 @@ public class ChunkMetadata{
 	public ChunkMetadata(){
 		
 	}
-	public ChunkMetadata(String filename, int ind, int v, int refCount){
+	public ChunkMetadata(String filename, int v, int refCount){
 		versionNumber = v;
-		index = ind;
-		chunkHash = ((String)(filename + index)).hashCode();
+		chunkHash = filename.hashCode();
 		referenceCount = refCount;
 	}
 	String filename;
 	public int filenumber;
 	int byteoffset;
-	public int index;
+	index;
 	int size;	
 	int versionNumber;
 	
