@@ -10,20 +10,6 @@ public class TFSLogger {
 	private final static Logger tfsLogger = Logger.getLogger(TFSLogger.class.getName());
 	private FileHandler fh;
 	
-	/*public TFSLogger() 
-	{
-		try {
-			
-			
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}*/
-	
 	public void LogMsg(String logMsg) 
 	{
 		try {

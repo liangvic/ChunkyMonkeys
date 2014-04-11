@@ -215,7 +215,7 @@ public class ClientServerNode extends ServerNode {
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
 		if (folderName <= NumMaxFolders)
 		{
-			String newfilepath = parentfilepath + File.pathSeparator + folderName;
+			String newfilepath = parentfilepath + "\\" + folderName;
 			CCreateDirectory(newfilepath);
 			helper (newfilepath, folderName*2, NumMaxFolders);
 			helper (newfilepath, folderName*2 + 1, NumMaxFolders);
