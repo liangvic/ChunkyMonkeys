@@ -87,9 +87,22 @@ public class MasterServerNode extends ServerNode {
 				SendErrorMessageToClient();
 			}
 		}
-		else if(inputMessage.type == msgType.CREATEDIRECTORY && inputMessage.sender == serverType.CLIENT) 
+		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
 		{
-			CreateDirectory(inputMessage.filePath);
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				CreateDirectory(inputMessage.filePath);
+			}
+			else if(inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Directory " + " creation successful");
+				}
+				else if (inputMessage.success == msgSuccess.REQUESTERROR) {
+					System.out.println("Directory " + " creation failed");
+			
+				}
+			}
 		}
 		else if (inputMessage.type == msgType.CREATEFILE)
 		{			
