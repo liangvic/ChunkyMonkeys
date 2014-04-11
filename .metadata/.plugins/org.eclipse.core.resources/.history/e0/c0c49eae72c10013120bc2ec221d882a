@@ -49,10 +49,6 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test3"):
-					if (tokens.length == 2)
-						test3(tokens[1]);
-					else
-						throw new Exception();
 					break;
 				case ("Test4"):
 					break;
@@ -86,17 +82,8 @@ public class ClientServerNode extends ServerNode {
 			} else {
 				System.out.println("Error! Couldn't delete directory...");
 			}
-		}
-		else if (message.type == msgType.CREATEDIRECTORY) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created directory "+message.filePath);
-			}
-			else {
-				System.out.println("Failed to create directory "+message.filePath);
-			}
-		}
-		else if(message.type == msgType.READFILE)
-		{
+		} else if (message.type == msgType.READFILE) {
+
 			// Supposedly going to cache it. Implementation will be completed
 			// later.lol
 			// uses the location to contact the chunkserver
@@ -192,13 +179,13 @@ public class ClientServerNode extends ServerNode {
 		}
 		
 
-		/*	System.out.println(master.NamespaceMap.size());
+			System.out.println(master.NamespaceMap.size());
 			Iterator it = master.NamespaceMap.entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry) it.next();
 				System.out.println(pairs.getKey() + " = " + pairs.getValue());
 				it.remove(); // avoids a ConcurrentModificationException
-			}*/
+			}
 		
 	}
 	public void test2helper(String filepath, int nFiles){
@@ -416,8 +403,7 @@ public class ClientServerNode extends ServerNode {
 		// System.exit(1);
 		// }
 		localPathToCreateFile = localPath;
-		Message m = new Message(msgType.READFILE ,filePath);
-		m.sender = serverType.CLIENT;
+		Message m = new Message(msgType.READFILE, filePath);
 		master.DealWithMessage(m);
 
 		// Step 4 recieves the master message

@@ -121,7 +121,7 @@ public class ChunkServerNode extends ServerNode {
 	public void DeleteChunk(ChunkMetadata metadata)
 	{
 		ChunkMetadata chunkToDelete = null;
-    	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
+    	for (Map.Entry<Integer, ChunkMetadata> entry : chunkMap.entrySet())
 		  {
     		if(entry.getValue().filename == metadata.filename)
     		{
@@ -222,11 +222,11 @@ public class ChunkServerNode extends ServerNode {
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
 <<<<<<< HEAD
-				newMetaData.chunkHash = n_tempHash;
+				//CHANGEDnewMetaData.chunkHash = Integer.parseInt(n_tempHash);
 =======
 //				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
 				newMetaData.chunkHash = n_fileName+n_index;
->>>>>>> ae0c09240737ae9553057c85acf284f143d76338
+>>>>>>> 8f549afeeae6cdf4501d41eeff87e9f9260dafa4
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;

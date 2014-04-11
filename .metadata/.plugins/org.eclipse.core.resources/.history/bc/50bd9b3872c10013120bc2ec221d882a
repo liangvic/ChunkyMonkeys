@@ -49,10 +49,6 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test3"):
-					if (tokens.length == 2)
-						test3(tokens[1]);
-					else
-						throw new Exception();
 					break;
 				case ("Test4"):
 					break;
@@ -86,17 +82,8 @@ public class ClientServerNode extends ServerNode {
 			} else {
 				System.out.println("Error! Couldn't delete directory...");
 			}
-		}
-		else if (message.type == msgType.CREATEDIRECTORY) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created directory "+message.filePath);
-			}
-			else {
-				System.out.println("Failed to create directory "+message.filePath);
-			}
-		}
-		else if(message.type == msgType.READFILE)
-		{
+		} else if (message.type == msgType.READFILE) {
+
 			// Supposedly going to cache it. Implementation will be completed
 			// later.lol
 			// uses the location to contact the chunkserver
@@ -173,32 +160,15 @@ public class ClientServerNode extends ServerNode {
 		// this Test would create 5 files in each directory 1\2, 1\2\4 and
 		// 1\2\5.
 		// The files in each directory would be named File1, File2, and File3.
-		if (master.NamespaceMap.get(filepath) != null) {
-			if (master.NamespaceMap.get(filepath).children.size() > 0) {
-				List<String> childs = master.NamespaceMap.get(filepath).children;
-				for (int a = 0; a < childs.size(); a++) {
-					test2helper(childs.get(a), nFiles);
-				}
-			}
-		} else
-			System.out.println("Directory " + filepath + " not found");
 
-		for (int i = 1; i <= nFiles; i++) {
-			try {
-				CCreateFile(filepath, (String) ("File" + i));
-			} catch (Exception e) {
-				System.out.println("Unable to create files");
-			}
-		}
-		
 
-		/*	System.out.println(master.NamespaceMap.size());
+			System.out.println(master.NamespaceMap.size());
 			Iterator it = master.NamespaceMap.entrySet().iterator();
 			while (it.hasNext()) {
 				Map.Entry pairs = (Map.Entry) it.next();
 				System.out.println(pairs.getKey() + " = " + pairs.getValue());
 				it.remove(); // avoids a ConcurrentModificationException
-			}*/
+			}
 		
 	}
 	public void test2helper(String filepath, int nFiles){
@@ -208,7 +178,7 @@ public class ClientServerNode extends ServerNode {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
 				for (int a = 0; a < childs.size(); a++) {
-					test2helper(childs.get(a), nFiles);
+					test2(childs.get(a), nFiles);
 				}
 			}
 		} else
@@ -416,8 +386,7 @@ public class ClientServerNode extends ServerNode {
 		// System.exit(1);
 		// }
 		localPathToCreateFile = localPath;
-		Message m = new Message(msgType.READFILE ,filePath);
-		m.sender = serverType.CLIENT;
+		Message m = new Message(msgType.READFILE, filePath);
 		master.DealWithMessage(m);
 
 		// Step 4 recieves the master message
