@@ -1,0 +1,21 @@
+package Utility;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class NamespaceNode {
+	public String name;
+	public List<String> children = new ArrayList<String>();
+	public String parent = null;
+
+	public NamespaceNode(String Nname){
+		name = Nname;
+		String delim = "\\+";
+		String[] tokens = Nname.split(delim);
+		String pare
+		for (int i = 0; i < tokens.length -2; i++){
+			parent += tokens[i] + "\\"; 
+		}
+	}
+	//file access permissions?
+}

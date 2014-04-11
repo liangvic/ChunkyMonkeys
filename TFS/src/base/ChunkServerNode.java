@@ -17,31 +17,32 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 
-public class ChunkServerNode extends ServerNode{
+public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
 	public MasterServerNode master;
 
-
-	public class File{
-		int fileNumber;
-		int spaceOccupied;
-		byte[] data;
+	public class File {
+		int fileNumber = 0;
+		int spaceOccupied = 0;
+		byte[] data = new byte[67108864];
 	}
 
 	List<File> file_list = new ArrayList<File>();
 
+	public ChunkServerNode() {
+		for (int i = 0; i < 5; i++)
+			file_list.add(new File());
+
+	}
 	//hash to data
 
-	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
+	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();	
 
 
 
 
 	/* public static void main(String argv[]) throws Exception
-=======
 
-    /* public static void main(String argv[]) throws Exception
->>>>>>> master
     {
 
        ServerSocket welcomeSocket = new ServerSocket(6789);
@@ -108,7 +109,7 @@ public class ChunkServerNode extends ServerNode{
 
 	public void AddNewBlankChunk(ChunkMetadata metadata){
 		//TODO: have to create new Chunkmetadata and copy over metadata
-		chunkMap.put(metadata.chunkHash, metadata);
+		chunkMap.put(metadata.filename, metadata);
 		File current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = 0;
@@ -149,7 +150,7 @@ public class ChunkServerNode extends ServerNode{
 	{
 		/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
-    	for(listMetaData lmd: files)
+    	for(listMetaData lmd: files) 
     	{
     		if(lmd.chunkHash == metadata.chunkHash)
     		{
@@ -238,7 +239,7 @@ public class ChunkServerNode extends ServerNode{
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
-				chunkMap.put(Integer.parseInt(key), newMetaData);
+				chunkMap.put(key, newMetaData);
 			}
 			textReader.close();
 		} catch (FileNotFoundException e) {
@@ -250,7 +251,7 @@ public class ChunkServerNode extends ServerNode{
 		}
 	}
 
-	public void WritePersistentServerNodeMap(int chunkHash, ChunkMetadata chunkmd)
+	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
 		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		//STRUCTURE///
@@ -268,7 +269,7 @@ public class ChunkServerNode extends ServerNode{
 		{
 			FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
 			out = new BufferedWriter(fstream);
-			out.write(chunkHash+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+			out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 			for(int i=0;i<chunkmd.listOfLocations.size();i++)
 			{
 				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
