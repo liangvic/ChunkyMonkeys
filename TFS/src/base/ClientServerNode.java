@@ -287,6 +287,31 @@ public class ClientServerNode extends ServerNode {
 		master.DealWithMessage(msg);
 
 	}
+	
+	public void CAppendToFile(String fullFilePath, byte[] byteStream){
+		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.MASTER;
+		msg.sender = serverType.CLIENT;
+		master.DealWithMessage(msg);
+	}
+	
+	public void CAppendToFile2(String fullFilePath, byte[] byteStream){
+		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.sender = serverType.CLIENT;
+		chunkServer.DealWithMessage(msg);
+	}
+	
+	public void AppendToChunkServer(int chunkHandle, ChunkServerNode myServer){
+		//later on set chunk handle and chunkserver to myServer
+	}
+	
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
 	public void test4(String localPath, String filePath) {
@@ -314,6 +339,10 @@ public class ClientServerNode extends ServerNode {
 			e.printStackTrace();
 		}
 		
+		CAppendToFile(filePath, byteFile); //sends message to master to append to specified file
+		//now chunkServer will be set
+		
+		CAppendToFile2(filePath, byteFile); //now sends to chunkServer
 		/*
 		//now to cut it up into 64MB chunks
 		if (byteFile.length >67108864){ //67108864 bytes = 64MB
@@ -327,6 +356,7 @@ public class ClientServerNode extends ServerNode {
 		}
 		*/
 
+		
 		
 		
 		
