@@ -82,9 +82,9 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY
 				&& inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-				SendSuccessMessageToClient();
+				//SendSuccessMessageToClient();
 			} else {
-				SendErrorMessageToClient();
+				//SendErrorMessageToClient();
 			}
 		}
 		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
@@ -133,8 +133,7 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
-	public void SendSuccessMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
+	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
@@ -301,14 +300,13 @@ public class MasterServerNode extends ServerNode {
 				return;
 			}
 			else if(NamespaceMap.containsKey(parent)) 
-
 			{
 				NamespaceMap.get(parent).children.add(filepath);
 			}
 
 			NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
 			NamespaceMap.put(filepath, newNode);
-			SendSuccessMessageToClient();
+			SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 			tfsLogger.LogMsg("Created directory " + filepath);
 			
 			WritePersistentNamespaceMap(filepath,newNode);
