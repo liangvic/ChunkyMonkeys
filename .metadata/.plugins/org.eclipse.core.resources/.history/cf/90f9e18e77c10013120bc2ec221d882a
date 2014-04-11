@@ -170,7 +170,6 @@ public class ClientServerNode extends ServerNode {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
 				for (int a = 0; a < childs.size(); a++) {
 					test2helper(childs.get(a), nFiles);
-					System.out.println("Enter loop");
 				}
 			}
 		} else
@@ -188,7 +187,7 @@ public class ClientServerNode extends ServerNode {
 		Iterator it = master.NamespaceMap.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry) it.next();
-			System.out.println(pairs.getKey() + " = " + master.NamespaceMap.get(pairs.getKey()).children.size());
+			System.out.println(pairs.getKey() + " = " + pairs.getValue());
 			it.remove(); // avoids a ConcurrentModificationException
 		}
 
