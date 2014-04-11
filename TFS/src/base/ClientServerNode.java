@@ -63,6 +63,7 @@ public class ClientServerNode extends ServerNode {
 					else{
 						throw new Exception();
 					}
+					break;
 				case ("Test5"):
 					if (tokens.length == 3)
 						test5(tokens[1].toString(), tokens[2].toString());
@@ -113,7 +114,8 @@ public class ClientServerNode extends ServerNode {
 		else if(message.type == msgType.READFILE)
 		{
 			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				
+				System.out.println("Read succeeded. Found file.");
+				msgRequestAReadToChunkserver(message);
 			}
 			else {
 				System.out.println("Read failed. Could not find file.");
@@ -121,7 +123,7 @@ public class ClientServerNode extends ServerNode {
 			// Supposedly going to cache it. Implementation will be completed
 			// later.lol
 			// uses the location to contact the chunkserver
-			msgRequestAReadToChunkserver(message);
+			
 		} else if (message.type == msgType.PRINTFILEDATA) {
 			msgPrintFileData(message);
 		}
@@ -129,9 +131,10 @@ public class ClientServerNode extends ServerNode {
 
 	public void msgPrintFileData(Message dataMessage) {
 		chunkReadsRecieved++;
+		chunkCountToExpect = 1;
 		for (byte b : dataMessage.fileData)
 			readFileData.add(b);
-		System.out.print(dataMessage.fileData);
+		System.out.print(localPathToCreateFile);
 		if (chunkReadsRecieved == chunkCountToExpect) {
 			System.out.print(dataMessage.fileData);
 			byte[] finalByteArray = new byte[readFileData.size()];
@@ -139,9 +142,10 @@ public class ClientServerNode extends ServerNode {
 				finalByteArray[n] = readFileData.get(n);
 
 			try {
+				File file = new File(localPathToCreateFile);
+				file.createNewFile();
 				// convert array of bytes into file
-				FileOutputStream fileOuputStream = new FileOutputStream(
-						localPathToCreateFile);
+				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
 				fileOuputStream.write(finalByteArray);
 				fileOuputStream.close();
 
@@ -342,6 +346,7 @@ public class ClientServerNode extends ServerNode {
 	}
 	
 	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
+		System.out.println("Attempting to retrieve metadata fror: "+fullFilePath);
 		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
 		msg.fileName = fullFilePath.substring(index+1);
@@ -386,7 +391,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 
 
-		CCreateFile(filePath); // empty file created
+//		CCreateFile(filePath); // empty file created
 
 		FileInputStream fileInputStream = null;
 		File localFile = new File(localPath);
@@ -400,11 +405,13 @@ public class ClientServerNode extends ServerNode {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ChunkMetadata cm;		
+		ChunkMetadata cm;	
+		System.out.println("path: "+filePath);
 		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
-				
+		System.out.println("metadata hash "+cm.chunkHash);		
 		CAppendToFile(cm, filePath, byteFile); //now sends to chunkServer
+		
 		/*
 		//now to cut it up into 64MB chunks
 		if (byteFile.length >67108864){ //67108864 bytes = 64MB
@@ -526,6 +533,7 @@ public class ClientServerNode extends ServerNode {
 	}
 
 	public void ExpectChunkNumberForRead(int i) {
+		System.out.println("expecting "+i+" chunks");
 		chunkCountToExpect = i;
 	}
 

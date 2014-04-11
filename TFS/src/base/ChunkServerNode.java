@@ -81,7 +81,8 @@ public class ChunkServerNode extends ServerNode {
 			if (message.chunkClass == null){
 				System.out.println("chunkClass is null");
 			}
-			AppendToFile(message.chunkClass, message.fileData);
+			else
+				AppendToFile(message.chunkClass, message.fileData);
 		}
 	}
 	public void ReadChunks(ChunkMetadata metadata){
@@ -94,14 +95,17 @@ public class ChunkServerNode extends ServerNode {
 		//			}
 		//		}
 		//		
+		System.out.println("file #s "+file_list.size());
 		for(TFSFile fileData:file_list){
 
 			if(metadata.filenumber == fileData.fileNumber){
+				System.out.println("filenumbers "+metadata.filenumber);
 				byte[] dataINeed = new byte[metadata.size];
 				//check byte offset
 				for(int i=0;i<metadata.size;i++){
 					dataINeed[i]=fileData.data[metadata.byteoffset+i];
 				}
+				System.out.println("readchunksize: "+dataINeed.length);
 				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
 				break;
 			}
@@ -129,11 +133,17 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray){
+		System.out.println("not null: "+metadata.filename);
+		System.out.println("Starting append to file. chubkhash: "+metadata.chunkHash);
 		chunkMap.put(metadata.chunkHash, metadata);
+		//Get the corresponding file number
 		TFSFile current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = byteArray.length;
 		current.data[current.spaceOccupied] = (byte) metadata.size;
+		current.spaceOccupied++;
+		System.out.println("original length: "+current.data.length);
+		System.out.println("add length: "+byteArray.length);
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		try { //appends byteArray to the end of current.data
 			outputStream.write(current.data);
@@ -144,11 +154,14 @@ public class ChunkServerNode extends ServerNode {
 		current.data = outputStream.toByteArray(); //does this create a new correct file or append(it shouldn't append)
 		current.data[current.spaceOccupied+metadata.size] = (byte) metadata.size;
 		current.spaceOccupied = current.data.length;
+		System.out.println("final length: "+current.spaceOccupied);
 		
+		//now send message to master
 		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		newMessage.addressedTo = serverType.MASTER;
 		newMessage.sender = serverType.CHUNKSERVER;
+		
 		master.DealWithMessage(newMessage);
 	}
 	

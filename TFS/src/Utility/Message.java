@@ -28,6 +28,8 @@ public class Message implements Serializable{
 	public Message(msgType msgT, ChunkMetadata chunkData) {
 		type = msgT;
 		chunkClass = chunkData;
+		chunkindex = chunkData.index;
+		fileName = chunkData.filename;
 	}
 	public Message(msgType msgT, byte[] byteData) {
 		type = msgT;

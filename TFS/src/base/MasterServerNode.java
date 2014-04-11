@@ -76,11 +76,10 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-		if (inputMessage.type == msgType.DELETEDIRECTORY
-				&& inputMessage.sender == serverType.CLIENT) {
+		System.out.println("inputMessagetype "+ inputMessage.type);
+		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 			MDeleteDirectory(inputMessage.filePath);
-		} else if (inputMessage.type == msgType.DELETEDIRECTORY
-				&& inputMessage.sender == serverType.CHUNKSERVER) {
+		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 				// SendSuccessMessageToClient();
 			} else {
@@ -89,7 +88,6 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
 			if (inputMessage.sender == serverType.CLIENT) {
 				try {
-
 					CreateDirectory(inputMessage.filePath);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -117,17 +115,17 @@ public class MasterServerNode extends ServerNode {
 							+ inputMessage.chunkClass.filename
 							+ " creation failed");
 			}
-		} else if (inputMessage.type == msgType.READFILE
-				&& inputMessage.sender == serverType.CLIENT) {
+		} else if (inputMessage.type == msgType.READFILE && inputMessage.sender == serverType.CLIENT) {
 			ReadFile(inputMessage);
 		}
-		else if(inputMessage.type == msgType.APPENDTOFILE && inputMessage.sender == serverType.CLIENT)
+		else if(inputMessage.type == msgType.APPENDTOFILE)
 		{
 			if(inputMessage.sender == serverType.CLIENT)
 				AssignChunkServer(inputMessage);
 			else if (inputMessage.sender == serverType.CHUNKSERVER){
-				if(inputMessage.success == msgSuccess.REQUESTSUCCESS)
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+				}
 				else if (inputMessage.success == msgSuccess.REQUESTERROR)
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
@@ -212,31 +210,35 @@ public class MasterServerNode extends ServerNode {
 
 	public void ReadFile(Message inputMessage) {
 		int indexCounter = 1;
-		if (chunkServerMap.containsKey(inputMessage.fileName + indexCounter)) {
+		System.out.println("trying to read "+inputMessage.filePath + indexCounter);
+		if (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
 			// master extracts the chunkclass from the filepath key
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName
-					+ indexCounter);
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ indexCounter);
+			System.out.println("hoho lets see here "+cm.chunkHash);
 			Message returnMessage = new Message(msgType.READFILE, cm);
+			returnMessage.success = msgSuccess.REQUESTSUCCESS;
 			client.DealWithMessage(returnMessage);
 		}
 		else{
-			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.fileName));
+			System.out.println("doesnt exist");
+			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
 			return;
 		}
 		// check if the file contains multiple chunk indexes
 		indexCounter++;
-		while (chunkServerMap.containsKey(inputMessage.fileName + indexCounter)) {
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName
+		while (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath
 					+ indexCounter);
 			Message returnMessage = new Message(msgType.READFILE, cm);
 			client.DealWithMessage(returnMessage);
 			indexCounter++;
 		}
-		client.ExpectChunkNumberForRead(indexCounter - 1);
+//		client.ExpectChunkNumberForRead(indexCounter - 1);
 	}
 
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+		System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
@@ -245,14 +247,27 @@ public class MasterServerNode extends ServerNode {
 		newMetaData.byteoffset = 0;
 		newMetaData.size = inputMessage.fileData.length;
 		
+		//add to hashmap
+		chunkServerMap.put(hashstring, newMetaData);
+		//create a new namespace node
+		//filename and get parent, add child.
+		
+		
+		
+		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
+		
 		//Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
 		return newMetaData;
 		//client.AppendToChunkServer(hashstring, myServer);
 		//client.AppendToChunkServer(newMetaData, chunkServer);
+		
+		
 	}
 	
 	public void CreateFile(String filepath, String filename, int index){
-
+		System.out.println("CREATING FILE");
 		String newfilename = filepath + "\\" + filename;
 		String hashstring = newfilename + index;
 		// if folder doesn't exist or file already exists
