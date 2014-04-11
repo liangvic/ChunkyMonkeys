@@ -55,6 +55,10 @@ public class ClientServerNode extends ServerNode {
 				case ("Test4"):
 					break;
 				case ("Test5"):
+					if (tokens.length == 3)
+						test5(tokens[1].toString(), tokens[2].toString());
+					else
+						throw new Exception();
 					break;
 				case ("Test6"):
 					break;
@@ -113,12 +117,13 @@ public class ClientServerNode extends ServerNode {
 				fileOuputStream.write(finalByteArray);
 				fileOuputStream.close();
 
-				chunkCountToExpect = 99;
-				chunkReadsRecieved =0;
+				
 				System.out.println("Done");
 			}catch(Exception e){
 				e.printStackTrace();
 			}
+			chunkCountToExpect = 99;
+			chunkReadsRecieved =0;
 		}
 		
 	}

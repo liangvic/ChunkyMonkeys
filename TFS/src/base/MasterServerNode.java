@@ -178,6 +178,7 @@ public class MasterServerNode extends ServerNode {
 			client.DealWithMessage(returnMessage);
 			indexCounter++;
 		}
+		client.ExpectChunkNumberForRead(indexCounter-1);
 	}
 
 

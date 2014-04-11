@@ -80,10 +80,11 @@ public class ChunkServerNode extends ServerNode{
 //		}
 //		
 		for(File fileData:file_list){
-			byte[] dataINeed = new byte[fileData.spaceLeft];
+			
 			if(metadata.filenumber == fileData.fileNumber){
+				byte[] dataINeed = new byte[metadata.size];
 				//check byte offset
-				for(int i=0;i<fileData.spaceLeft;i++){
+				for(int i=0;i<metadata.size;i++){
 					dataINeed[i]=fileData.data[metadata.byteoffset+i];
 				}
 				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
@@ -100,22 +101,22 @@ public class ChunkServerNode extends ServerNode{
 
 	public void DeleteChunk(ChunkMetadata metadata)
 	{
-		listMetaData chunkToDelete = null;
-		boolean foundChunk = false;
-		for(listMetaData lmd: files)
-		{
-			if(lmd.chunkHash == metadata.chunkHash)
-			{
-				chunkToDelete = lmd;
-				foundChunk = true;
-			}
-		}
-		if(foundChunk)
-		{
-			files.remove(chunkToDelete);
-			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
-			successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-			master.DealWithMessage(successMessageToMaster);
-		}
+//		listMetaData chunkToDelete = null;
+//		boolean foundChunk = false;
+//		for(listMetaData lmd: files)
+//		{
+//			if(lmd.chunkHash == metadata.chunkHash)
+//			{
+//				chunkToDelete = lmd;
+//				foundChunk = true;
+//			}
+//		}
+//		if(foundChunk)
+//		{
+//			files.remove(chunkToDelete);
+//			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
+//			successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
+//			master.DealWithMessage(successMessageToMaster);
+//		}
 	}
 }

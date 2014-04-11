@@ -16,7 +16,7 @@ public class ChunkMetadata{
 	public int filenumber;
 	public int byteoffset;
 	public int index;
-	int size;	
+	public int size;	
 	int versionNumber;
 
 	List<ChunkLocation> listOfLocations = new ArrayList<ChunkLocation>();
