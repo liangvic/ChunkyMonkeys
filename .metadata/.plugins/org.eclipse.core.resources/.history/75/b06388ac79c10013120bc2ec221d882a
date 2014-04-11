@@ -192,13 +192,13 @@ public class ClientServerNode extends ServerNode {
 			}
 		}
 
-		/*System.out.println(master.NamespaceMap.size());
+		System.out.println(master.NamespaceMap.size());
 		Iterator it = master.NamespaceMap.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry pairs = (Map.Entry) it.next();
 			System.out.println(pairs.getKey() + " = " + master.NamespaceMap.get(pairs.getKey()).children.size());
 			it.remove(); // avoids a ConcurrentModificationException
-		}*/
+		}
 
 	}
 
