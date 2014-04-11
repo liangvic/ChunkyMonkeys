@@ -88,9 +88,7 @@ public class MasterServerNode extends ServerNode {
 				CreateFile(inputMessage.filePath, inputMessage.fileName,  inputMessage.chunkClass.index);
 			else if (inputMessage.sender == serverType.CHUNKSERVER){
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation successful");
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+					System.out.println("File" + "")
 			}
 		}
 		

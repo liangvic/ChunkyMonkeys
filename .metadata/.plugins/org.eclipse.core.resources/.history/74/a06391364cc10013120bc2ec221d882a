@@ -21,7 +21,7 @@ public class ChunkServerNode extends ServerNode{
 	
 	public class File{
 		int fileNumber;
-		int spaceOccupied;
+		int spaceLeft;
 		byte[] data;
 	}
 	
@@ -61,18 +61,8 @@ public class ChunkServerNode extends ServerNode{
     	}
 	}
     public void AddNewBlankChunk(ChunkMetadata metadata){
-    	//TODO: have to create new Chunkmetadata and copy over metadata
     	chunkMap.put(metadata.chunkHash, metadata);
-    	File current = file_list.get(metadata.filenumber);
-    	metadata.byteoffset = current.spaceOccupied;
-    	metadata.size = 0;
-    	current.data[current.spaceOccupied] = 0;
-    	current.data[current.spaceOccupied+1] = 0;
-    	current.spaceOccupied+= 8;
-    	
-    	Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
-    	newMessage.success = msgSuccess.REQUESTSUCCESS;
-    	master.DealWithMessage(newMessage);
+    	file_list.get(metadata.filenumber).
     }
     
     public void DeleteChunk(ChunkMetadata metadata)

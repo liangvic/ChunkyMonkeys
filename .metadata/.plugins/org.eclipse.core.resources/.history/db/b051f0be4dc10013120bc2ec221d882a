@@ -71,7 +71,6 @@ public class ChunkServerNode extends ServerNode{
     	current.spaceOccupied+= 8;
     	
     	Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
-    	newMessage.success = msgSuccess.REQUESTSUCCESS;
     	master.DealWithMessage(newMessage);
     }
     

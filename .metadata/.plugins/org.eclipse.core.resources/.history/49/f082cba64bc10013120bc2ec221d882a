@@ -82,18 +82,10 @@ public class MasterServerNode extends ServerNode {
 		{
 			CreateDirectory(inputMessage.filePath);
 		}
-		else if (inputMessage.type == msgType.CREATEFILE)
-		{			
-			if (inputMessage.sender == serverType.CLIENT)
-				CreateFile(inputMessage.filePath, inputMessage.fileName,  inputMessage.chunkClass.index);
-			else if (inputMessage.sender == serverType.CHUNKSERVER){
-				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation successful");
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
-			}
+		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
+		{
+			CreateFile(inputMessage.filePath, inputMessage.fileName,  inputMessage.chunkClass.index);
 		}
-		
 	}
 
 	public void SendSuccessMessageToClient() {
@@ -151,15 +143,13 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 	public void CreateFile(String filepath, String filename, int index){
-		String hashstring = filepath + "\\" + filename + index;
-		int hash = hashstring.hashCode();
-		//if folder doesn't exist or file already exists
-		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hash) != null){
+		filepath + "\\" + filename + index + "\\" + dsadsad
+		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(filepath + "\";" + filename + index)){
 			SendErrorMessageToClient();
 		}
 		else
 		{
-			String newName = filepath + "\\" + filename;
+			String newName = filepath + "\";" + filename;
 			NamespaceMap.get(filepath).children.add(newName);
 			NamespaceMap.put(newName, new NamespaceNode());
 			ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 1); 

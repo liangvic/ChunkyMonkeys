@@ -12,7 +12,7 @@ public class ChunkMetadata{
 		chunkHash = ((String)(filename + index)).hashCode();
 		referenceCount = refCount;
 	}
-	public String filename;
+	String filename;
 	public int filenumber;
 	public int byteoffset;
 	public int index;

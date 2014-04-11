@@ -6,17 +6,17 @@ public class ChunkMetadata{
 	public ChunkMetadata(){
 		
 	}
-	public ChunkMetadata(String filename, int chunkindex, int versionnumber, int refCount){
-		versionNumber = versionnumber;
-		index = chunkindex;
+	public ChunkMetadata(String filename, int ind, int v, int refCount){
+		versionNumber = v;
+		index = ind;
 		chunkHash = ((String)(filename + index)).hashCode();
 		referenceCount = refCount;
 	}
-	public String filename;
+	String filename;
 	public int filenumber;
 	public int byteoffset;
 	public int index;
-	public int size;	
+	int size;	
 	int versionNumber;
 	
 	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
