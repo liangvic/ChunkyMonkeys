@@ -120,7 +120,7 @@ public class ChunkServerNode extends ServerNode{
 	{
 		/*listMetaData chunkToDelete = null;
     	boolean foundChunk = false;
-    	for(listMetaData lmd: files)
+    	for(listMetaData lmd: files) 
     	{
     		if(lmd.chunkHash == metadata.chunkHash)
     		{
