@@ -42,8 +42,8 @@ public class MasterServerNode extends ServerNode {
 			DealWithMessage(receivedMessage);
 		} catch (IOException e) {
 			System.out
-					.println("Exception caught when trying to listen on port "
-							+ portNumber + " or listening for a connection");
+			.println("Exception caught when trying to listen on port "
+					+ portNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		/*
@@ -79,6 +79,10 @@ public class MasterServerNode extends ServerNode {
 		else if(inputMessage.type == msgType.CREATEDIRECTORY && inputMessage.sender == serverType.CLIENT) 
 		{
 			CreateDirectory();
+		}
+		else if(inputMessage.type == msgType.READFILE && inputMessage.sender == serverType.CLIENT) 
+		{
+			ReadFile(inputMessage);
 		}
 	}
 
@@ -123,7 +127,7 @@ public class MasterServerNode extends ServerNode {
 					if (j == currentNode.children.size() - 1) {
 						// output an error message
 						System.out
-								.println("A directory in the path does not exist! No deletions done.");
+						.println("A directory in the path does not exist! No deletions done.");
 						Message errorMessageToClient = new Message(
 								msgType.DELETEDIRECTORY);
 						errorMessageToClient.success = msgSuccess.SUCCESS;
@@ -144,9 +148,9 @@ public class MasterServerNode extends ServerNode {
 		} else // the filepath is not in the directory. Send error!
 		{
 			System.out
-					.println("Error! That filepath is not in the directory! Aborting deletion...");
+			.println("Error! That filepath is not in the directory! Aborting deletion...");
 			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-			errorMessageToClient.success = msgSuccess.SUCCESS;
+			errorMessageToClient.success = msgSuccess.ERROR;
 			// need to send out
 
 			return;
@@ -161,7 +165,7 @@ public class MasterServerNode extends ServerNode {
 			// Send message to client server to erase data
 			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
 			clientMessage.chunkClass = startingNode.metaData; // does NS tree
-																// hold this?
+			// hold this?
 
 			// sending protocol
 			chunkServer.DealWithMessage(clientMessage);
@@ -173,6 +177,24 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
+
+	public void ReadFile(Message inputMessage){
+		if(chunkServerMap.containsKey(inputMessage.filePath)){
+			//master extracts the chunkclass from the filepath key
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath);
+			Message returnMessage = new Message(msgType.READFILE,cm);
+			client.DealWithMessage(returnMessage);
+		}
+		else{
+			System.out.println("Error! That filepath is not in the directory! Aborting read...");
+			Message errorMessageToClient = new Message(msgType.UNKNOWNFILE);
+			errorMessageToClient.success = msgSuccess.ERROR;
+			// need to send out
+
+			return;
+		}
+	}
+
 	public void CreateDirectory()
 	{
 		/*ServerSocket serverSocket;

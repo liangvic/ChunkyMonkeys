@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.Message.msgSuccess;
@@ -20,9 +21,9 @@ public class ChunkServerNode extends ServerNode{
     public class listMetaData{
     	int checksum; //??
     	int chunkVersion;
-    	String location;
+    	ChunkLocation location;
     	List<Character> chunkHash = new ArrayList<Character>();
-    	List<Character> data = new ArrayList<Character>();
+    	List<Byte> data = new ArrayList<Byte>();
     }
     
     //TODO: check if we are using a list as data structure
@@ -54,8 +55,24 @@ public class ChunkServerNode extends ServerNode{
     	{
     		DeleteChunk(message.chunkClass);
     	}
+    	else if(message.type == msgType.READFILE)
+    	{
+    		ReadChunks(message.chunkClass);
+    	}
 	}
-    
+    public void ReadChunks(ChunkMetadata metadata){
+    	List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
+    	for(ChunkLocation messageLocation: metadata.listOfLocations){
+    		for(listMetaData fileData: files){
+    			if((fileData.location.chunkIP == messageLocation.chunkIP) && (fileData.location.chunkPort == messageLocation.chunkPort)){
+    				fileMetaData.add(fileData.data);
+    			}
+    		}
+    	}
+    	
+    	client.DealWithMessage(new Message(msgType.PRINTFILEDATA, fileMetaData));
+    	
+    }
     public void DeleteChunk(ChunkMetadata metadata)
     {
     	listMetaData chunkToDelete = null;

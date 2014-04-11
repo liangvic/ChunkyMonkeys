@@ -13,9 +13,10 @@ public class ClientServerNode extends ServerNode {
 	public MasterServerNode master;
 	public ChunkServerNode chunkServer;
 	
+	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
-
+	
 
 	protected void TestInterface() throws Exception {
 		Scanner a = new Scanner(System.in);
@@ -77,8 +78,57 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Error! Couldn't delete directory...");
 			}
 		}
+		else if(message.type == msgType.READFILE)
+		{
+//			if(message.success == msgSuccess.SUCCESS)
+//			{
+//				System.out.println("Message sucessfully re!");
+//			}
+//			else
+//			{
+//				System.out.println("Error! Couldn't delete directory...");
+//			}
+			
+			//Supposedly going to cache it. Implementation will be completed later.lol
+			msgRequestAReadToChunkserver(message);
+		}
+		else if(message.type == msgType.PRINTFILEDATA)
+		{
+			msgPrintFileData(message);
+		}
 	}
 	
+	public void msgPrintFileData(Message dataMessage){
+		List<Byte> totalData = new ArrayList<Byte>();
+		for(List<Byte> data: dataMessage.fileData){
+			for(byte b:data){
+				totalData.add(b);
+			}
+		}
+		byte[] bFile = new byte[(int) totalData.size()];
+		for(int i=0;i<totalData.size();i++ ){
+			bFile[i] = totalData.get(i);
+		}
+		System.out.print(bFile);
+ 
+        try {
+      
+ 
+	    //convert array of bytes into file
+	    FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile); 
+	    fileOuputStream.write(bFile);
+	    fileOuputStream.close();
+ 
+	    System.out.println("Done");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+	}
+	
+	public void msgRequestAReadToChunkserver(Message m){
+
+		chunkServer.DealWithMessage(m);
+	}
 	public void msgEcho() {
 
 		try (Socket echoSocket = new Socket(hostName, portNumber);
@@ -230,31 +280,36 @@ public class ClientServerNode extends ServerNode {
 	}
 	
 	public void test5(String filePath, String localPath){
+		if(filePath == null || localPath == null){
+			System.out.println("Detected null values, please reenter query");
+			return;
+		}
 		//Step 1 connect to the master
-		 	String masterIP = "68.181.174.149";
-	        int masterPort = 8111;
-	 
-	        try {
-	            Socket masterSocket = new Socket(masterIP, masterPort);
-	        	ObjectOutputStream objOut = new ObjectOutputStream(masterSocket.getOutputStream());
-//	            PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
-	           // BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-	            BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in));
-	          //Step 2 Create a message
-		        Message m = new Message(msgType.READFILE ,filePath);
-		      //Step 3 Write to the master server
-		        objOut.writeObject(m);
-	        } catch (UnknownHostException e) {
-	            System.err.println("Don't know about host " + masterIP);
-	            System.exit(1);
-	        } catch (IOException e) {
-	        	e.printStackTrace();
-	            System.err.println("Couldn't get I/O for the connection to " +
-	            		masterIP);
-	            System.exit(1);
-	        }
-	        
-	    
+//		 	String masterIP = "68.181.174.149";
+//	        int masterPort = 8111;
+//	 
+//	        try {
+//	            Socket masterSocket = new Socket(masterIP, masterPort);
+//	        	ObjectOutputStream objOut = new ObjectOutputStream(masterSocket.getOutputStream());
+////	            PrintWriter out =  new PrintWriter(masterSocket.getOutputStream(), true);
+//	           // BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+//	            BufferedReader stdIn = new BufferedReader(  new InputStreamReader(System.in));
+//	          //Step 2 Create a message
+//		        Message m = new Message(msgType.READFILE ,filePath);
+//		      //Step 3 Write to the master server
+//		        objOut.writeObject(m);
+//	        } catch (UnknownHostException e) {
+//	            System.err.println("Don't know about host " + masterIP);
+//	            System.exit(1);
+//	        } catch (IOException e) {
+//	        	e.printStackTrace();
+//	            System.err.println("Couldn't get I/O for the connection to " +
+//	            		masterIP);
+//	            System.exit(1);
+//	        }
+	    localPathToCreateFile = localPath;
+		Message m = new Message(msgType.READFILE ,filePath);
+		master.DealWithMessage(m);
 	    
 	   //Step 4 recieves the master message
 	        //Step 5 send a request to the chunkserver
