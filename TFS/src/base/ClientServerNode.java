@@ -93,7 +93,7 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Successfully created directory "+message.filePath);
 			}
 			else {
-				System.out.println("Failed to create directory "+message.filePath);
+				System.out.println("Failed to create directory");
 			}
 		}
 		else if(message.type == msgType.READFILE)
