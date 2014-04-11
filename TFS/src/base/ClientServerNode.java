@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Utility.ChunkMetadata;
 import Utility.Message;
 import Utility.Message.serverType;
 import Utility.Message.msgSuccess;
@@ -29,8 +30,7 @@ public class ClientServerNode extends ServerNode {
 		do {
 			System.out
 					.print("Please Enter the Test you want to run (Enter X to exit)\n");
-			System.out.print("Enter parameters separated by a space\n");
-			System.out.print("Example: Test1 7\n");
+			System.out.print("Enter parameters separated by a space (Enter C for commands)\n");
 			input = a.nextLine();
 
 			String delim = "[ ]+";
@@ -56,7 +56,12 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test4"):
-					break;
+					if (tokens.length == 3){
+						test4(tokens[1].toString(), tokens[2].toString());
+					}
+					else{
+						throw new Exception();
+					}
 				case ("Test5"):
 					if (tokens.length == 3)
 						test5(tokens[1].toString(), tokens[2].toString());
@@ -64,16 +69,23 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test6"):
+					if (tokens.length == 3)
+						test6(tokens[1].toString(), tokens[2].toString());
+					else
+						throw new Exception();
 					break;
 				case ("Test7"):
 					break;
 				case ("X"):
+					System.exit(0);
+					break;
+				case ("C"): 
+					printCommands();
 					break;
 				default:
 					throw new Exception();
 				}
 			} catch (Exception e) {
-				System.err.print(e);
 				System.out.println("Invalid OP or Parameters. \n");
 			}
 		} while (input != "X" || input != "x");
@@ -277,6 +289,8 @@ public class ClientServerNode extends ServerNode {
 		 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
 		 */
 		Message message = new Message(msgType.DELETEDIRECTORY);
+		message.filePath = filepath;
+		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 
 	}
@@ -326,24 +340,59 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateFile(String fullFilePath) { // including filename
 		Message msg = new Message(fullFilePath, msgType.CREATEFILE);
 		int index = fullFilePath.lastIndexOf('\\');
+
+		msg.chunkindex = 1;
 		msg.fileName = fullFilePath.substring(index + 1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
 		master.DealWithMessage(msg);
-
 	}
+	
+	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
+		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.MASTER;
+		msg.sender = serverType.CLIENT;
+		return master.AssignChunkServer(msg);
+		//master.DealWithMessage(msg);
+	}
+	
+	public void CAppendToFile(ChunkMetadata cm, String fullFilePath, byte[] byteStream){
+		
+		//CAppendToFile(fullFilePath, byteStream);//retrieve metadata
+		
+		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.sender = serverType.CLIENT;
+		msg.chunkClass= cm;
+		
+		
+		
+		chunkServer.DealWithMessage(msg);
+	}
+	
+	public void AppendToChunkServer(String hashstring, ChunkServerNode myServer){
+		//later on set chunk handle and chunkserver to myServer
+		//CAppendToFile2(filePath, byteFile);
+	}
+	
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
 	public void test4(String localPath, String filePath) {
-		// Step 1: Connect to the Master
 		/*
 		 * Plan: Send message to server including the filepath to createfile If
 		 * no error returned, read the content of the local file and send to TFS
 		 * Write to the created file If file >64MB (size of a chunk), write to
 		 * several chunks
 		 */
+
 
 		CCreateFile(filePath); // empty file created
 
@@ -359,6 +408,49 @@ public class ClientServerNode extends ServerNode {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		ChunkMetadata cm;		
+		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
+		//now chunkServer will be set
+				
+		CAppendToFile(cm, filePath, byteFile); //now sends to chunkServer
+		/*
+		//now to cut it up into 64MB chunks
+		if (byteFile.length >67108864){ //67108864 bytes = 64MB
+			int numChunks = ((byteFile.length - 1)/67108864) + 1;
+			int currentIndex = 0;
+			byte[][] Chunks = new byte[numChunks][]; //creates a list of byte arrays
+			while(currentIndex <= numChunks-1){
+				Chunks[currentIndex] = Arrays.copyOf(byteFile, 67108864);
+				//INCOMPLETE! NEED TO SEPARATE TO DIFFERENT CHUNKS
+			}	
+		}
+		*/
+
+		
+		
+		
+		
+//		String masterIP = "68.181.174.149";
+//		int masterPort = 8111;
+//
+//		try {
+//			Socket masterSocket = new Socket(masterIP, masterPort);
+//			PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
+//					true);
+			// BufferedReader in = new BufferedReader(new
+			// InputStreamReader(echoSocket.getInputStream()));
+//			BufferedReader stdIn = new BufferedReader(new InputStreamReader(
+//					System.in));
+//
+//		} catch (UnknownHostException e) {
+//			System.err.println("Don't know about host " + masterIP);
+//			System.exit(1);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			System.err.println("Couldn't get I/O for the connection to "
+//					+ masterIP);
+//			System.exit(1);
+//		}
 
 		/*
 		 * //now to cut it up into 64MB chunks if (byteFile.length >67108864){
@@ -441,6 +533,21 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	public void test6(String filePath, String localPath){
+		//CAppendToFile(Strin);
+		
+	}
+	
+	public void CAppendToFile(String filePath, String localPath){
+	
+	}
+	public void printCommands(){
+		System.out.println("Format closely follows that of in the Assignment Page");
+		System.out.println("Test1 <numfolders>			i.e. Test1 7");
+		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
+		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
+		//System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
+	}
 	public void ExpectChunkNumberForRead(int i) {
 		chunkCountToExpect = i;
 	}
