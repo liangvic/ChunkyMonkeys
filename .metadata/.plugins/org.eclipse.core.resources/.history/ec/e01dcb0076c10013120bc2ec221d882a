@@ -245,7 +245,8 @@ public class MasterServerNode extends ServerNode {
 		String hashstring = filepath + "\\" + filename + index;
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null || NamespaceMap.get(filepath).type == nodeType.FILE){
-			System.out.println("error in creating file");
+
+			SendErrorMessageToClient();
 		} else {
 
 				String newName = filepath + "\\" + filename;

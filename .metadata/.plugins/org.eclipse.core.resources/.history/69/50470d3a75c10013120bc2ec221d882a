@@ -244,8 +244,9 @@ public class MasterServerNode extends ServerNode {
 
 		String hashstring = filepath + "\\" + filename + index;
 		//if folder doesn't exist or file already exists
-		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null || NamespaceMap.get(filepath).type == nodeType.FILE){
-			System.out.println("error in creating file");
+		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null){
+
+			SendErrorMessageToClient();
 		} else {
 
 				String newName = filepath + "\\" + filename;
@@ -306,7 +307,7 @@ public class MasterServerNode extends ServerNode {
 				}
 			}
 
-			NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
+			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
 			SendSuccessMessageToClient();
 			tfsLogger.LogMsg("Created directory " + filepath);
@@ -503,9 +504,8 @@ public class MasterServerNode extends ServerNode {
 				for (int i = 1; i < data.length; i++) {
 					children.add(data[i]);
 				}
-				
-				//TODO fix
-				NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
+
+				NamespaceNode addingNode = new NamespaceNode();
 				addingNode.children = children;
 
 				NamespaceMap.put(key, addingNode);
