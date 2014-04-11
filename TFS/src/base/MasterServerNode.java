@@ -93,6 +93,7 @@ public class MasterServerNode extends ServerNode {
 			if(inputMessage.sender == serverType.CLIENT)
 			{
 				try {
+					
 					CreateDirectory(inputMessage.filePath);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -273,6 +274,7 @@ public class MasterServerNode extends ServerNode {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			String delim = "\\+";
 			String[] tokens = filepath.split(delim);
+			
 			if (tokens.length >= 1)
 			{
 				String supposedParent = tokens[0];
@@ -283,10 +285,13 @@ public class MasterServerNode extends ServerNode {
 				}				
 				if(NamespaceMap.containsKey(supposedParent)) 
 				{
+					
 					NamespaceMap.get(supposedParent).children.add(filepath);
 				}
-				else
-					throw new Exception();
+				else{
+					
+//					throw new Exception();
+				}
 			}
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);

@@ -396,6 +396,7 @@ public class ClientServerNode extends ServerNode {
 		//	        }
 		localPathToCreateFile = localPath;
 		Message m = new Message(msgType.READFILE ,filePath);
+		m.sender = serverType.CLIENT;
 		master.DealWithMessage(m);
 
 		//Step 4 recieves the master message
