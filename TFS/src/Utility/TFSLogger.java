@@ -10,7 +10,7 @@ public class TFSLogger {
 	private final static Logger tfsLogger = Logger.getLogger(TFSLogger.class.getName());
 	private FileHandler fh;
 	
-	public TFSLogger() 
+	public void LogMsg(String logMsg) 
 	{
 		try {
 			fh = new FileHandler("logger.log", true);
@@ -18,7 +18,9 @@ public class TFSLogger {
 			tfsLogger.setLevel(Level.FINE);
 			SimpleFormatter formatter = new SimpleFormatter();  
 		    fh.setFormatter(formatter); 
-			
+			tfsLogger.fine(logMsg);
+			fh.flush();
+			fh.close();
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -26,12 +28,5 @@ public class TFSLogger {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	public void LogMsg(String logMsg) 
-	{
-		tfsLogger.fine(logMsg);
-		fh.flush();
-		//fh.close();
 	}
 }
