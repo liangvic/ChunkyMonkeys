@@ -16,7 +16,7 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
-	LinkedList<NamespaceNode> NamespaceTree = new LinkedList<NamespaceNode>();
+	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
@@ -175,25 +175,19 @@ public class MasterServerNode extends ServerNode {
 	}
 	public void CreateDirectory(String filepath)
 	{
-		if () {
+		if (NamespaceMap.containsKey(filepath)) { // directory exists
+			NamespaceNode dir = NamespaceMap.get(filepath); // node of directory to create subdirectories in
 			NamespaceNode newNode = new NamespaceNode();
-			NamespaceTree.add(newNode);
-			// 
-			if(!NamespaceTree.isEmpty())
-			{
-				Vector<NamespaceNode> leafNodes = new Vector<NamespaceNode>();
-				for(NamespaceNode node : NamespaceTree) 
-				{
-					if(!node.children.isEmpty())
-					{
-						leafNodes.add(node);
-					}
-				}
-			}
 
-			// TODO: insert into map
+			NamespaceMap.put(filepath, newNode);
 			// TODO: set chunkData data
 			// TODO: message chunk servers
+			SendSuccessMessageToClient();
+		}
+		else // invalid directory path
+		{
+			SendErrorMessageToClient();
+		}
 
 			/*ServerSocket serverSocket;
 		try {
@@ -226,10 +220,5 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		}
-		else 
-		{
-			// invalid directory path
-		}
 	}
 }
