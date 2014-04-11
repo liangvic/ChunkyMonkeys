@@ -109,14 +109,11 @@ public class ChunkServerNode extends ServerNode {
 		TFSFile current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = 0;
-		current.data[current.spaceOccupied] = 1;
-		current.data[current.spaceOccupied+1] = (byte) 232;
-		current.data[current.spaceOccupied+2] = 1;
-		current.spaceOccupied+= 3;
-		
-		for (int i = 0; i < current.spaceOccupied; i++){
-			System.out.print("");
-		}
+		current.data[current.spaceOccupied] = 0;
+		current.data[current.spaceOccupied+1] = 0;
+		current.spaceOccupied+= 8;
+
+		System.out.prinln("yoyoy");
 		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		master.DealWithMessage(newMessage);

@@ -236,8 +236,7 @@ public class MasterServerNode extends ServerNode {
 
 	public void CreateFile(String filepath, String filename, int index) {
 
-		String newfilename = filepath + "\\" + filename;
-		String hashstring = newfilename + index;
+		String hashstring = filepath + "\\" + filename + index;
 		// if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null
 				|| chunkServerMap.get(hashstring) != null
@@ -246,7 +245,7 @@ public class MasterServerNode extends ServerNode {
 		} else {
 
 			String newName = filepath + "\\" + filename;
-			if (NamespaceMap.get(newfilename) == null) {
+			if (NamespaceMap.get(filepath) != null) {
 				NamespaceMap.put(newName, new NamespaceNode(nodeType.FILE));
 
 				NamespaceMap.get(filepath).children.add(newName);
@@ -270,7 +269,7 @@ public class MasterServerNode extends ServerNode {
 						chunkServerMap.get(newName));
 
 			} else {
-				System.out.println("File exists already");
+				System.out.println("Folder exists already");
 			}
 
 		}
