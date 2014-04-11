@@ -12,7 +12,7 @@ public class ChunkMetadata{
 		referenceCount = refCount;
 	}
 	String filename;
-	public int filenumber;
+	int filenumber;
 	int byteoffset;
 	int size;	
 	int versionNumber;

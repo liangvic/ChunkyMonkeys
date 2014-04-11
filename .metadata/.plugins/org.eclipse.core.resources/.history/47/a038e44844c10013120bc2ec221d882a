@@ -19,6 +19,14 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
+	public class ChunkMetaData{
+		int version;
+		int filenumber;
+		int byteoffset;
+		int size;
+		
+	}
+	
 	public class File{
 		int fileNumber;
 		int spaceLeft;
@@ -61,7 +69,12 @@ public class ChunkServerNode extends ServerNode{
     	}
 	}
     public void AddNewBlankChunk(ChunkMetadata metadata){
-    	chunkMap.put(metadata.chunkHash, metadata);
+    	Random rand = new Random();
+ 
+    	ChunkMetadata newChunk = new ChunkMetadata();
+	 	newChunk.filenumber = rand.nextInt(10);
+	 	newChunk.
+    	chunkMap.put(metadata.chunkHash, )
     }
     
     public void DeleteChunk(ChunkMetadata metadata)

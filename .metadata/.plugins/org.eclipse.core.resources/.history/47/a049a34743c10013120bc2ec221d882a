@@ -19,6 +19,14 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
+	public class ChunkMetaData{
+		int version;
+		int filenumber;
+		int byteoffset;
+		int size;
+		
+	}
+	
 	public class File{
 		int fileNumber;
 		int spaceLeft;
@@ -28,7 +36,7 @@ public class ChunkServerNode extends ServerNode{
 	List<File> file_list = new ArrayList<File>();
 			
 	//hash to data
-	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
+	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	
 	   
     
     /* public static void main(String argv[]) throws Exception
@@ -57,11 +65,16 @@ public class ChunkServerNode extends ServerNode{
     	}
     	else if (message.type == msgType.CREATEFILE)
     	{
-    		AddNewBlankChunk(message.chunkClass);
+    		AddNewBLankChunk(message.chunkClass);
     	}
 	}
-    public void AddNewBlankChunk(ChunkMetadata metadata){
-    	chunkMap.put(metadata.chunkHash, metadata);
+    public void AddChunk(ChunkMetadata metadata){
+    	Random rand = new Random();
+ 
+    	ChunkMetaData newChunk = new ChunkMetaData();
+	 	newChunk.filenumber = rand.nextInt(10);
+	 	newChunk.
+    	chunkMap.put(metadata.chunkHash, )
     }
     
     public void DeleteChunk(ChunkMetadata metadata)

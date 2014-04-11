@@ -61,7 +61,10 @@ public class ChunkServerNode extends ServerNode{
     	}
 	}
     public void AddNewBlankChunk(ChunkMetadata metadata){
-    	chunkMap.put(metadata.chunkHash, metadata);
+    	ChunkMetadata newChunk = new ChunkMetadata();
+	 	newChunk.filenumber = rand.nextInt(10);
+	 	newChunk.
+    	chunkMap.put(metadata.chunkHash, )
     }
     
     public void DeleteChunk(ChunkMetadata metadata)

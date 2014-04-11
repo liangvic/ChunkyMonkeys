@@ -154,7 +154,7 @@ public class MasterServerNode extends ServerNode {
 			ChunkMetadata newChunk = new ChunkMetadata(newName, 1, 3); 
 			
 	    	Random rand = new Random();	
-			newChunk.filenumber = rand.nextInt(5);
+			newChunk.filenumber = rand.nextInt(10);
 			chunkServerMap.put(newName, newChunk);			
 			
 			Message newMessage = new Message(msgType.CREATEFILE,newChunk);

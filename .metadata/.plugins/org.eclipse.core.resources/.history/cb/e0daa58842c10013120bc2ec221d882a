@@ -151,13 +151,9 @@ public class MasterServerNode extends ServerNode {
 			String newName = filepath + "\";" + filename;
 			NamespaceMap.get(filepath).children.add(newName);
 			NamespaceMap.put(newName, new NamespaceNode());
-			ChunkMetadata newChunk = new ChunkMetadata(newName, 1, 3); 
+			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));			
 			
-	    	Random rand = new Random();	
-			newChunk.filenumber = rand.nextInt(5);
-			chunkServerMap.put(newName, newChunk);			
-			
-			Message newMessage = new Message(msgType.CREATEFILE,newChunk);
+			Message newMessage = new Message(msgType.CREATEFILE);
 			chunkServer.DealWithMessage(newMessage);
 		}
 	}
