@@ -72,7 +72,7 @@ public class MasterServerNode extends ServerNode{
 		{
 			MDeleteDirectory(inputMessage.filePath);
 		}
-		else if(inputMessage.type == msgType.DELETEFROMSERVER && inputMessage.sender == serverType.CHUNKSERVER)
+		else if(inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER)
 		{
 			if(inputMessage.success == msgSuccess.SUCCESS)
 			{
@@ -132,7 +132,7 @@ public class MasterServerNode extends ServerNode{
 					{
 						//output an error message
 						System.out.println("A directory in the path does not exist! No deletions done.");
-						Message errorMessageToClient = new Message(msgType.DELETEFROMSERVER);
+						Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
 						errorMessageToClient.success = msgSuccess.SUCCESS;
 						return;
 					}
@@ -151,7 +151,7 @@ public class MasterServerNode extends ServerNode{
 		else //the filepath is not in the directory. Send error!
 		{
 			System.out.println("Error! That filepath is not in the directory! Aborting deletion...");
-			Message errorMessageToClient = new Message(msgType.DELETEFROMSERVER);
+			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
 			errorMessageToClient.success = msgSuccess.SUCCESS;
 			//need to send out
 			
@@ -166,7 +166,7 @@ public class MasterServerNode extends ServerNode{
 		{
 			nsTree.remove(startingNode);
 			//Send message to client server to erase data
-			Message clientMessage = new Message(msgType.DELETEFROMSERVER);
+			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
 			clientMessage.chunkClass = startingNode.metaData; //does NS tree hold this?
 			
 			//sending protocol

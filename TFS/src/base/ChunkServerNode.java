@@ -50,7 +50,7 @@ public class ChunkServerNode extends ServerNode{
     
     public void DealWithMessage(Message message)
 	{
-    	if(message.type == msgType.DELETEFROMSERVER)
+    	if(message.type == msgType.DELETEDIRECTORY)
     	{
     		DeleteChunk(message.chunkClass);
     	}
@@ -71,7 +71,7 @@ public class ChunkServerNode extends ServerNode{
     	if(foundChunk)
     	{
     		files.remove(chunkToDelete);
-    		Message successMessageToMaster = new Message(msgType.DELETEFROMSERVER);
+    		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
     		successMessageToMaster.success = msgSuccess.SUCCESS;
     		master.DealWithMessage(successMessageToMaster);
     	}
