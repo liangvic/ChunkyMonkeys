@@ -89,6 +89,14 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Error! Couldn't delete directory...");
 			}
 		}
+		else if (message.type == msgType.CREATEDIRECTORY) {
+			if(message.success == msgSuccess.REQUESTSUCCESS) {
+				System.out.println("Successfully created directory "+message.filePath);
+			}
+			else {
+				System.out.println("Failed to create directory "+message.filePath);
+			}
+		}
 		else if(message.type == msgType.READFILE)
 		{
 

@@ -26,7 +26,6 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
-//		NamespaceMap.put("1", new NamespaceNode());
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -82,9 +81,9 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY
 				&& inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-				SendSuccessMessageToClient();
+				//SendSuccessMessageToClient();
 			} else {
-				SendErrorMessageToClient();
+				//SendErrorMessageToClient();
 			}
 		}
 		else if(inputMessage.type == msgType.CREATEDIRECTORY) 
@@ -133,16 +132,14 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
-	public void SendSuccessMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
+	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
-	public void SendErrorMessageToClient() {
-		Message successMessage = new Message(msgType.CREATEDIRECTORY);
-		successMessage.success = msgSuccess.REQUESTERROR;
-		client.DealWithMessage(successMessage);
+	public void SendErrorMessageToClient(Message errorMessage) {
+		errorMessage.success = msgSuccess.REQUESTERROR;
+		client.DealWithMessage(errorMessage);
 	}
 
 	public void MDeleteDirectory(String filePath) {
@@ -246,7 +243,7 @@ public class MasterServerNode extends ServerNode {
 		//if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null){
 
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE));
 		} else {
 
 				String newName = filepath + "\\" + filename;
@@ -285,37 +282,33 @@ public class MasterServerNode extends ServerNode {
 
 	public void CreateDirectory(String filepath) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			String delim = "\\+";
-			String[] tokens = filepath.split(delim);
-			
-			if (tokens.length >= 1)
-			{
-				String supposedParent = tokens[0];
-				if (tokens.length >= 2){
-					for (int i = 1; i < tokens.length - 1 ; i++){			
-						supposedParent += "\\" + tokens[i]; 
-					}
-				}				
-				if(NamespaceMap.containsKey(supposedParent)) 
-				{
-					
-					NamespaceMap.get(supposedParent).children.add(filepath);
-				}
-				else{
-					
-//					throw new Exception();
-				}
+			File path = new File(filepath);
+			String parentPath = path.getParent();
+			String parent;
+			if(parentPath == null) {
+				parent = filepath;
+			}
+			else {
+				parent = parentPath;
+			}
+			if(!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
+				// parent directory does not exist
+				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
+				return;
+			}
+			else if(NamespaceMap.containsKey(parent)) {
+				NamespaceMap.get(parent).children.add(filepath);
 			}
 
 			NamespaceNode newNode = new NamespaceNode();
 			NamespaceMap.put(filepath, newNode);
-			SendSuccessMessageToClient();
+			SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 			tfsLogger.LogMsg("Created directory " + filepath);
 			
 			WritePersistentNamespaceMap(filepath,newNode);
 		} else // directory already exists
 		{
-			SendErrorMessageToClient();
+			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
 		}
 
 		/*
