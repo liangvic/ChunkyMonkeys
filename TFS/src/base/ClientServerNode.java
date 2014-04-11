@@ -30,8 +30,7 @@ public class ClientServerNode extends ServerNode {
 		do {
 			System.out
 					.print("Please Enter the Test you want to run (Enter X to exit)\n");
-			System.out.print("Enter parameters separated by a space\n");
-			System.out.print("Example: Test1 7\n");
+			System.out.print("Enter parameters separated by a space (Enter C for commands)\n");
 			input = a.nextLine();
 
 			String delim = "[ ]+";
@@ -70,16 +69,23 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test6"):
+					if (tokens.length == 3)
+						test6(tokens[1].toString(), tokens[2].toString());
+					else
+						throw new Exception();
 					break;
 				case ("Test7"):
 					break;
 				case ("X"):
+					System.exit(0);
+					break;
+				case ("C"): 
+					printCommands();
 					break;
 				default:
 					throw new Exception();
 				}
 			} catch (Exception e) {
-				System.err.print(e);
 				System.out.println("Invalid OP or Parameters. \n");
 			}
 		} while (input != "X" || input != "x");
@@ -525,6 +531,21 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	public void test6(String filePath, String localPath){
+		//CAppendToFile(Strin);
+		
+	}
+	
+	public void CAppendToFile(String filePath, String localPath){
+	
+	}
+	public void printCommands(){
+		System.out.println("Format closely follows that of in the Assignment Page");
+		System.out.println("Test1 <numfolders>			i.e. Test1 7");
+		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
+		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
+		//System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
+	}
 	public void ExpectChunkNumberForRead(int i) {
 		chunkCountToExpect = i;
 	}
