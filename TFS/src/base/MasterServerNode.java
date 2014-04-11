@@ -237,6 +237,62 @@ public class MasterServerNode extends ServerNode {
 		}*/
 	}
 
+	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
+	{
+		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
+		//STRUCTURE///
+		//KEY VERSION# SIZEOF_LOCATIONLIST 
+		//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+		//CHUNKHASH
+		//REFERENCECOUNT
+		//FILENAME
+		//FILENUMBER
+		//BYTEOFFSET
+		//INDEX
+		//SIZE
+		BufferedWriter out = null;
+		try  
+		{
+		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+		    out = new BufferedWriter(fstream);
+		    out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
+		    {
+		    	out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
+		    }
+		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
+		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
+		    out.newLine();
+		}
+		catch (IOException e)
+		{
+		    System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
+	public void WritePersistentNamespaceMap(String key,NamespaceNode nsNode)
+	{
+		String fileToWriteTo = "dataStorage/MData_NamespaceMap.txt";
+		//STRUCTURE///
+		//KEY CHILD CHILD CHILD ...//
+		BufferedWriter out = null;
+		try  
+		{
+		    FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
+		    out = new BufferedWriter(fstream);
+		    out.write(key+"\t");
+		    for(int i=0;i<nsNode.children.size();i++)
+		    {
+		    	out.write(nsNode.children.get(i)+ "\t");
+		    }
+		    out.newLine();
+		}
+		catch (IOException e)
+		{
+		    System.err.println("Error: " + e.getMessage());
+		}
+	}
+	
 	public void LoadChunkServerMap()
 	{
 		String path = "dataStorage/MData_ChunkServerMap.txt";
@@ -252,32 +308,62 @@ public class MasterServerNode extends ServerNode {
 				//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
 				//CHUNKHASH
 				//REFERENCECOUNT
+				//FILENAME
+				//FILENUMBER
+				//BYTEOFFSET
+				//INDEX
+				//SIZE
 				String[] data = textLine.split("\t");
 				
+				//key
 				String key;
 				key = data[0];
 				
-				int version = Integer.parseInt(data[1]);
+				//version
+				int n_version = Integer.parseInt(data[1]);
 				
+				//location
 				List<chunkLocation> locations = new ArrayList<chunkLocation>();
 				int locationSize = locations.size();
-				
-				for(int i=3; i<3+(locationSize/2); i=i+2)
+				int newIndexCounter = 3 + (locationSize/2);
+				for(int i=3; i<newIndexCounter; i=i+2)
 				{
 					locations.add(new chunkLocation(data[i],Integer.parseInt(data[i+1])));
 				}
 				
+				//hash
 				List<Integer> hash = new ArrayList<Integer>();
-				String tempHash = data[3+(locationSize/2)];
-				for(int i=0;i<tempHash.length();i++)
+				String n_tempHash = data[newIndexCounter++];
+				for(int i=0;i<n_tempHash.length();i++)
 				{
-					hash.add(Character.getNumericValue(tempHash.charAt(i)));//adds at end
+					hash.add(Character.getNumericValue(n_tempHash.charAt(i)));//adds at end
 				}
-				tempHash = hash.toString();
-				int count = Integer.parseInt(data[data.length-1]);
+				n_tempHash = hash.toString();
 				
-				ChunkMetadata newMetaData = new ChunkMetadata(version,locations,Integer.parseInt(tempHash),count);
+				//count
+				int n_count = Integer.parseInt(data[newIndexCounter++]);
 				
+				//filename
+				String n_fileName = data[newIndexCounter++];
+				
+				//fileNumber
+				int n_fileNumber = Integer.parseInt(data[newIndexCounter++]);
+				
+				//byteoffset
+				int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
+				
+				//index
+				int n_index = Integer.parseInt(data[newIndexCounter++]);
+				
+				//size
+				int n_size = Integer.parseInt(data[newIndexCounter++]);
+
+				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
+				newMetaData.listOfLocations = locations;
+				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+				newMetaData.filenumber = n_fileNumber;
+				newMetaData.byteoffset = n_byteOffset;
+				newMetaData.size = n_size;
 				chunkServerMap.put(key, newMetaData);
 			}
 			textReader.close();
