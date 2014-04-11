@@ -92,7 +92,12 @@ public class MasterServerNode extends ServerNode {
 		{
 			if(inputMessage.sender == serverType.CLIENT)
 			{
-				CreateDirectory(inputMessage.filePath);
+				try {
+					CreateDirectory(inputMessage.filePath);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			else if(inputMessage.sender == serverType.CHUNKSERVER)
 			{
@@ -268,10 +273,10 @@ public class MasterServerNode extends ServerNode {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			String delim = "\\+";
 			String[] tokens = filepath.split(delim);
-			if (tokens.length > 1)
+			if (tokens.length >= 1)
 			{
 				String supposedParent = tokens[0];
-				if (tokens.length > 2){
+				if (tokens.length >= 2){
 					for (int i = 1; i < tokens.length - 1 ; i++){			
 						supposedParent += "\\" + tokens[i]; 
 					}
