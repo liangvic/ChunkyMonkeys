@@ -44,8 +44,8 @@ public class MasterServerNode extends ServerNode {
 			DealWithMessage(receivedMessage);
 		} catch (IOException e) {
 			System.out
-			.println("Exception caught when trying to listen on port "
-					+ portNumber + " or listening for a connection");
+					.println("Exception caught when trying to listen on port "
+							+ portNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		/*
@@ -84,11 +84,7 @@ public class MasterServerNode extends ServerNode {
 		}
 		else if (inputMessage.type == msgType.CREATEFILE && inputMessage.sender == serverType.CLIENT)
 		{
-			CreateFile(inputMessage.filePath, inputMessage.fileName,  inputMessage.chunkClass.index);
-		}
-		else if(inputMessage.type == msgType.READFILE && inputMessage.sender == serverType.CLIENT) 
-		{
-			ReadFile(inputMessage);
+			CreateFile(inputMessage.filePath, inputMessage.fileName);
 		}
 	}
 
@@ -105,7 +101,6 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void MDeleteDirectory(String filePath) {
-
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
@@ -121,12 +116,10 @@ public class MasterServerNode extends ServerNode {
 		else // the filepath is not in the directory. Send error!
 		{
 			System.out
-			.println("Error! That filepath is not in the directory! Aborting deletion...");
+					.println("Error! That filepath is not in the directory! Aborting deletion...");
 			Message errorMessageToClient = new Message(msgType.DELETEDIRECTORY);
-
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
+			errorMessageToClient.success = msgSuccess.REQUESTSUCCESS;
 			client.DealWithMessage(errorMessageToClient);
-
 			return;
 		}
 	}
@@ -137,10 +130,8 @@ public class MasterServerNode extends ServerNode {
 			
 			// Send message to client server to erase data
 			Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-
 			clientMessage.chunkClass = chunkServerMap.get(startingNodeFilePath); // does NS tree
 																// hold this?
-
 			// sending protocol
 			chunkServer.DealWithMessage(clientMessage);
 			return;
@@ -151,39 +142,7 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
-
-
-
-	public void ReadFile(Message inputMessage){
-		int indexCounter = 1;
-		if(chunkServerMap.containsKey(inputMessage.fileName+indexCounter)){
-			//master extracts the chunkclass from the filepath key
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName+indexCounter);
-			Message returnMessage = new Message(msgType.READFILE,cm);
-			client.DealWithMessage(returnMessage);
-		}
-		else{
-			System.out.println("Error! That filepath is not in the directory! Aborting read...");
-			Message errorMessageToClient = new Message(msgType.UNKNOWNFILE);
-			errorMessageToClient.success = msgSuccess.REQUESTERROR;
-			// need to send out
-
-			return;
-		}
-		//check if the file contains multiple chunk indexes
-		indexCounter++;
-		while(chunkServerMap.containsKey(inputMessage.fileName+indexCounter)){
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.fileName+indexCounter);
-			Message returnMessage = new Message(msgType.READFILE,cm);
-			client.DealWithMessage(returnMessage);
-			indexCounter++;
-		}
-	}
-
-
-
-	public void CreateFile(String filepath, String filename, int index){
-
+	public void CreateFile(String filepath, String filename){
 		if (NamespaceMap.get(filepath) != null){
 			SendErrorMessageToClient();
 		}
@@ -192,13 +151,9 @@ public class MasterServerNode extends ServerNode {
 			String newName = filepath + "\";" + filename;
 			NamespaceMap.get(filepath).children.add(newName);
 			NamespaceMap.put(newName, new NamespaceNode());
-			ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 1); 
+			chunkServerMap.put(newName, new ChunkMetadata(newName, 1, 3));			
 			
-	    	Random rand = new Random();	
-			newChunk.filenumber = rand.nextInt(5);
-			chunkServerMap.put(newName, newChunk);			
-			
-			Message newMessage = new Message(msgType.CREATEFILE,newChunk);
+			newMessage = new Message()
 			chunkServer.DealWithMessage(newMessage);
 		}
 	}

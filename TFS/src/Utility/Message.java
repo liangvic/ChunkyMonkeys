@@ -23,9 +23,9 @@ public class Message implements Serializable{
 		type = msgT;
 		chunkClass = chunkData;
 	}
-	public Message(msgType msgT, List<List<Byte>> fd) {
+	public Message(msgType msgT, byte[] byteData) {
 		type = msgT;
-		fileData = fd;
+		fileData = byteData;
 	}
 //	List<Character> filePath = new ArrayList<Character>();
 	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE};
@@ -40,5 +40,5 @@ public class Message implements Serializable{
 	int startByte;
 	int byteLength;
 	public ChunkMetadata chunkClass;
-	public List<List<Byte>> fileData;
+	public byte[] fileData;
 }

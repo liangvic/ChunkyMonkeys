@@ -3,6 +3,7 @@ package base;
 import java.io.*;
 import java.util.Scanner;
 
+import Utility.TFSLogger;
 import base.*;
 public class launch {
 
@@ -10,6 +11,7 @@ public class launch {
 		MasterServerNode master = new MasterServerNode();
 		ClientServerNode client = new ClientServerNode();
 		ChunkServerNode chunkServer = new ChunkServerNode();
+		TFSLogger tfsLogger = new TFSLogger();
 		
 		master.client = client;
 		master.chunkServer = chunkServer;
