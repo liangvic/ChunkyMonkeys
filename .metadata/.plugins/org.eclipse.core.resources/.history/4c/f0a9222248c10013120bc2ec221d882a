@@ -9,13 +9,13 @@ public class ChunkMetadata{
 	public ChunkMetadata(String filename, int ind, int v, int refCount){
 		versionNumber = v;
 		index = ind;
-		chunkHash = ((String)(filename + index)).hashCode();
+		chunkHash = filename.hashCode();
 		referenceCount = refCount;
 	}
 	String filename;
 	public int filenumber;
 	int byteoffset;
-	public int index;
+	int index;
 	int size;	
 	int versionNumber;
 	
