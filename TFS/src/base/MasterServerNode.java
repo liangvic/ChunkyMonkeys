@@ -377,15 +377,15 @@ public class MasterServerNode extends ServerNode {
 	public void WritePersistentNamespaceMap(String key,NamespaceNode nsNode)
 	{
 		//STRUCTURE///
-		//KEY CHILD CHILD CHILD ...//
+		//KEY TYPE CHILD CHILD CHILD ...//
 		BufferedWriter out = null;
 		try  
 		{
 		   File file = new File("dataStorage/MData_NamespaceMap.txt");
 			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 		    out = new BufferedWriter(fstream);
-		    System.out.println("Writing out to file");
-		    out.write(key+"\t");
+		    //System.out.println("Writing out to file");
+		    out.write(key+"\t"+nsNode.type.toString()+"\t");
 		    if(nsNode.children.size()>0)
 		    {
 		    	for(int i=0;i<nsNode.children.size();i++)
@@ -507,13 +507,24 @@ public class MasterServerNode extends ServerNode {
 				String key;
 				List<String> children = new ArrayList<String>();
 				key = data[0];
-				for (int i = 1; i < data.length; i++) {
+				String stringEnum = data[1];
+				nodeType type;
+				if(stringEnum.equals("DIRECTORY"))
+				{
+					type = nodeType.DIRECTORY;
+				}
+				else
+				{
+					type = nodeType.FILE;
+				}
+				for (int i = 2; i < data.length; i++) {
 					children.add(data[i]);
 				}
 				
 				//TODO fix
 				NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
 				addingNode.children = children;
+				addingNode.type = type;
 
 				NamespaceMap.put(key, addingNode);
 			}
