@@ -1,13 +1,11 @@
 package base;
 
-import Utility.ChunkMetadata;
-
+import 
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import Utility.ChunkMetadata;
 import Utility.Message;
@@ -18,24 +16,21 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
-	public class ChunkMetaData{
-		int version;
-		int filenumber;
-		int byteoffset;
-		int size;
-	}
 	
-	public class File{
-		int fileNumber;
-		int spaceLeft;
-		byte[] data;
-	}
+	HashMap<int, ChunkMetadata> chunkMap = new Map<int, ChunkMetadata>();
 	
-	List<File> file_list = new ArrayList<File>();
-			
-	//hash to data
-	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	
-	   
+    public class listMetaData{
+    	int checksum; //??
+    	int chunkVersion;
+    	String location;
+    	int chunkHash;
+    	List<Character> data = new ArrayList<Character>();
+    }
+    
+    //TODO: check if we are using a list as data structure
+    //Map<ChunkMetadata,char[]> chunkMap = new HashMap<ChunkMetadata,char[]>();
+    List<listMetaData> files = new ArrayList<listMetaData>();
+    
     
     /* public static void main(String argv[]) throws Exception
     {

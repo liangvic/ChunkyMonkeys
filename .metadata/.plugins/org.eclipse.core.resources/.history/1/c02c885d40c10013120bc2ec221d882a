@@ -19,23 +19,25 @@ public class ChunkServerNode extends ServerNode{
 	public MasterServerNode master;
 	
 	public class ChunkMetaData{
-		int version;
 		int filenumber;
 		int byteoffset;
 		int size;
 	}
 	
-	public class File{
-		int fileNumber;
-		int spaceLeft;
-		byte[] data;
-	}
-	
-	List<File> file_list = new ArrayList<File>();
-			
-	//hash to data
 	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	
-	   
+	
+    public class listMetaData{
+    	int checksum; //??
+    	int chunkVersion;
+    	String location;
+    	int chunkHash;
+    	List<Character> data = new ArrayList<Character>();
+    }
+    
+    //TODO: check if we are using a list as data structure
+    //Map<ChunkMetadata,char[]> chunkMap = new HashMap<ChunkMetadata,char[]>();
+    List<listMetaData> files = new ArrayList<listMetaData>();
+    
     
     /* public static void main(String argv[]) throws Exception
     {

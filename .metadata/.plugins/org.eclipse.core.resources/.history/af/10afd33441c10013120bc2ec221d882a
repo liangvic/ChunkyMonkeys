@@ -31,7 +31,7 @@ public class ChunkServerNode extends ServerNode{
 		byte[] data;
 	}
 	
-	List<File> file_list = new ArrayList<File>();
+	List<File> file_list = new ArrayList<FileData>();
 			
 	//hash to data
 	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	

@@ -142,6 +142,8 @@ public class MasterServerNode extends ServerNode {
 			}
 		}
 	}
+<<<<<<< HEAD
+	
 	public void CreateFile(String filepath, String filename){
 		if (NamespaceMap.get(filepath) != null){
 			SendErrorMessageToClient();
@@ -157,7 +159,10 @@ public class MasterServerNode extends ServerNode {
 			chunkServer.DealWithMessage(newMessage);
 		}
 	}
+	public void CreateDirectory()
+=======
 	public void CreateDirectory(String filepath)
+>>>>>>> a2b99fd4a22c50daccb5bfa665231f6c692a2d0e
 	{
 		if (NamespaceMap.containsKey(filepath)) { // directory exists
 			NamespaceNode dir = NamespaceMap.get(filepath); // node of directory to create subdirectories in

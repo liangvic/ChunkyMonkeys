@@ -164,17 +164,10 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public void test1(Integer numOfDir) // recursively creates the specified num of
+	/*public void test1(Integer numOfDir, String filepath) // recursively creates the specified num of
 										// directories
 	{
-		if(numOfDir > 0) 
-		{
-			Message message = new Message(msgType.CREATEDIRECTORY);
-			master.DealWithMessage(message);
-			--numOfDir;
-			test1(numOfDir);
-		}
-		/*Socket sock;
+		Socket sock;
 		try {
 			Properties prop = new Properties();
 			prop.load(new FileInputStream("config/config.properties"));
@@ -195,7 +188,34 @@ public class ClientServerNode extends ServerNode {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}*/
+		}
+	}*/
+	
+	public void CCreateDirectory(String filepath)
+	{
+		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
+		master.DealWithMessage(message);
+	}
+	
+	public void test1(String filepath, int NumFolders){
+		int count = 1;
+		if (NumFolders > 1)
+			helper(filepath, count*2, NumFolders);
+		if (NumFolders > 2)
+			helper(filepath, count*2+1, NumFolders);
+	}
+	
+	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
+		if (folderName <= NumMaxFolders){
+			String newfilepath1 = parentfilepath + File.pathSeparator + folderName;
+			CCreateDirectory(newfilepath1);
+			helper (newfilepath1, folderName*2, NumMaxFolders);
+		}
+		if (folderName + 1 <= NumMaxFolders){
+			String newfilepath2 = parentfilepath + File.pathSeparator + folderName;
+			CCreateDirectory(newfilepath2);
+			helper (newfilepath2, folderName*2 + 1, NumMaxFolders);
+		}
 	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
