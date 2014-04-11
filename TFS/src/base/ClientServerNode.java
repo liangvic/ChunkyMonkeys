@@ -197,25 +197,28 @@ public class ClientServerNode extends ServerNode {
 		master.DealWithMessage(message);
 	}
 	
-	public void test1(String filepath, int NumFolders){
+	public void test1(int NumFolders){
 		int count = 1;
-		if (NumFolders > 1)
-			helper(filepath, count*2, NumFolders);
-		if (NumFolders > 2)
-			helper(filepath, count*2+1, NumFolders);
+		CCreateDirectory("1");
+		if (NumFolders > 1) 
+		{
+			helper("1", count*2, NumFolders);
+		}
+		if (NumFolders > 2) 
+		{
+			helper("1", count*2+1, NumFolders);
+		}
 	}
 	
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders){		
-		if (folderName <= NumMaxFolders){
-			String newfilepath1 = parentfilepath + File.pathSeparator + folderName;
-			CCreateDirectory(newfilepath1);
-			helper (newfilepath1, folderName*2, NumMaxFolders);
+		if (folderName <= NumMaxFolders)
+		{
+			String newfilepath = parentfilepath + File.pathSeparator + folderName;
+			CCreateDirectory(newfilepath);
+			helper (newfilepath, folderName*2, NumMaxFolders);
+			helper (newfilepath, folderName*2 + 1, NumMaxFolders);
 		}
-		if (folderName + 1 <= NumMaxFolders){
-			String newfilepath2 = parentfilepath + File.pathSeparator + folderName;
-			CCreateDirectory(newfilepath2);
-			helper (newfilepath2, folderName*2 + 1, NumMaxFolders);
-		}
+		
 	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by

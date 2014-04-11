@@ -159,16 +159,16 @@ public class MasterServerNode extends ServerNode {
 	}
 	public void CreateDirectory(String filepath)
 	{
-		if (NamespaceMap.containsKey(filepath)) { // directory exists
-			NamespaceNode dir = NamespaceMap.get(filepath); // node of directory to create subdirectories in
+		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			NamespaceNode newNode = new NamespaceNode();
-
 			NamespaceMap.put(filepath, newNode);
 			// TODO: set chunkData data
 			// TODO: message chunk servers
+			File file = new File(filepath);
+			file.mkdirs();
 			SendSuccessMessageToClient();
 		}
-		else // invalid directory path
+		else // directory already exists
 		{
 			SendErrorMessageToClient();
 		}
