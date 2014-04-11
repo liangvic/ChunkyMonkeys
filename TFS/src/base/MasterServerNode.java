@@ -158,6 +158,8 @@ public class MasterServerNode extends ServerNode {
 			// finally delete directory wanted to delete
 			NamespaceMap.remove(filePath);
 
+			tfsLogger.LogMsg("Deleted directory in " + filePath);
+			
 			ClearChunkServerMapFile();
 			ClearNamespaceMapFile();
 			
@@ -401,9 +403,11 @@ public class MasterServerNode extends ServerNode {
 	
 	public void LoadChunkServerMap()
 	{
-		String path = "dataStorage/MData_ChunkServerMap.txt";
+		System.out.println("Trying to read file");
+		//String path = "dataStorage/MData_ChunkServerMap.txt";
 		try {
-			FileReader fr = new FileReader(path);
+			File file = new File("dataStorage/MData_ChunkServerMap.txt");
+			FileReader fr = new FileReader(file);
 			BufferedReader textReader = new BufferedReader(fr);
 			String textLine;
 			
@@ -438,13 +442,14 @@ public class MasterServerNode extends ServerNode {
 				}
 				
 				//hash
-				List<Integer> hash = new ArrayList<Integer>();
+				/*List<Integer> hash = new ArrayList<Integer>();
 				String n_tempHash = data[newIndexCounter++];
 				for(int i=0;i<n_tempHash.length();i++)
 				{
 					hash.add(Character.getNumericValue(n_tempHash.charAt(i)));//adds at end
 				}
-				n_tempHash = hash.toString();
+				n_tempHash = hash.toString();*/
+				String n_hash = data[newIndexCounter++];
 				
 				//count
 				int n_count = Integer.parseInt(data[newIndexCounter++]);
@@ -466,8 +471,9 @@ public class MasterServerNode extends ServerNode {
 
 				ChunkMetadata newMetaData = new ChunkMetadata(n_fileName,n_index,n_version,n_count);
 				newMetaData.listOfLocations = locations;
-//				newMetaData.chunkHash = Integer.parseInt(n_tempHash);
+
 				newMetaData.chunkHash = n_fileName+n_index;
+
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
@@ -484,9 +490,10 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void LoadNamespaceMap() {
-		String path = "dataStorage/MData_NamespaceMap.txt";
+		//String path = "dataStorage/MData_NamespaceMap.txt";
 		try {
-			FileReader fr = new FileReader(path);
+			File file = new File("dataStorage/MData_NamespaceMap.txt");
+			FileReader fr = new FileReader(file);
 			BufferedReader textReader = new BufferedReader(fr);
 
 			String textLine;
@@ -543,7 +550,7 @@ public class MasterServerNode extends ServerNode {
 			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); //true tells to append data.
 		    out = new BufferedWriter(fstream);
 		    System.out.println("Writing out to file");
-		    out.write("");
+		    out.write(" ");
 		    out.close();
 		}
 		catch (IOException e)
