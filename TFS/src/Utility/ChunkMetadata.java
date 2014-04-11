@@ -8,7 +8,7 @@ public class ChunkMetadata{
 	}
 	int versionNumber;
 	List<chunkLocation> listOfLocations = new ArrayList<chunkLocation>();
-	public List<Character> chunkHash = new ArrayList<Character>();
+	public List<Integer> chunkHash = new ArrayList<Integer>();
 	int referenceCount;
 	public class chunkLocation{
 		String chunkIP;

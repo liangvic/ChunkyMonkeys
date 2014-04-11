@@ -21,7 +21,7 @@ public class ChunkServerNode extends ServerNode{
     	int checksum; //??
     	int chunkVersion;
     	String location;
-    	List<Character> chunkHash = new ArrayList<Character>();
+    	List<Integer> chunkHash = new ArrayList<Integer>();
     	List<Character> data = new ArrayList<Character>();
     }
     

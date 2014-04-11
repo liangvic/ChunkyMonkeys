@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 
 import Utility.ChunkMetadata;
+import Utility.ChunkMetadata.chunkLocation;
 import Utility.Message;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -17,6 +18,96 @@ public class MasterServerNode extends ServerNode {
 
 	Map<String,ChunkMetadata> chunkServerMap = new HashMap<String,ChunkMetadata>();
 	Map<String,NamespaceNode> NamespaceMap = new HashMap<String,NamespaceNode>();
+	
+	public MasterServerNode()
+	{
+		LoadChunkServerMap();
+		LoadNamespaceMap();
+	}
+	
+	public void LoadChunkServerMap()
+	{
+		String path = "/dataStorage/MData_ChunkServerMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY VERSION# SIZEOF_LOCATIONLIST 
+				//CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
+				//CHUNKHASH
+				//REFERENCECOUNT
+				String[] data = textLine.split("\t");
+				String key;
+				key = data[0];
+				
+				int version = Integer.parseInt(data[1]);
+				
+				List<chunkLocation> locations = new ArrayList<chunkLocation>();
+				int locationSize = locations.size();
+				
+				List<Integer> hash = new ArrayList<Integer>();
+				int count;
+				
+				for(int i= 1; i< data.length;i++)
+				{
+					children.add(data[i]);
+				}
+				
+				NamespaceNode addingNode = new NamespaceNode();
+				addingNode.children = children;
+				
+				NamespaceMap.put(key, addingNode);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void LoadNamespaceMap()
+	{
+		String path = "/dataStorage/MData_NamespaceMap.txt";
+		try {
+			FileReader fr = new FileReader(path);
+			BufferedReader textReader = new BufferedReader(fr);
+			
+			String textLine;
+			
+			while((textLine = textReader.readLine())!= null)
+			{
+				//STRUCTURE///
+				//KEY CHILD CHILD CHILD ...//
+				String[] data = textLine.split("\t");
+				String key;
+				List<String> children = new ArrayList<String>();
+				key = data[0];
+				for(int i= 1; i< data.length;i++)
+				{
+					children.add(data[i]);
+				}
+				
+				NamespaceNode addingNode = new NamespaceNode();
+				addingNode.children = children;
+				
+				NamespaceMap.put(key, addingNode);
+			}
+			textReader.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
