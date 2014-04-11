@@ -1,9 +1,13 @@
 package base;
 
+import Utility.ChunkMetadata;
+
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
@@ -15,26 +19,29 @@ public class ChunkServerNode extends ServerNode{
 	public ClientServerNode client;
 	public MasterServerNode master;
 	
-	String clientSentence;
-    String capitalizedSentence;
+	public class ChunkMetaData{
+		int version;
+		int filenumber;
+		int byteoffset;
+		int size;
+	}
+
+	public class File{
+		int fileNumber;
+		int spaceLeft;
+		byte[] data;
+	}
 	
-    public class listMetaData{
-    	int checksum; //??
-    	int chunkVersion;
-    	ChunkLocation location;
-    	List<Character> chunkHash = new ArrayList<Character>();
-    	List<Byte> data = new ArrayList<Byte>();
-    }
+	List<File> file_list = new ArrayList<File>();
+			
+	//hash to data
+	Map<Integer, ChunkMetaData> chunkMap = new HashMap<Integer, ChunkMetaData>();	
+	 
     
-    //TODO: check if we are using a list as data structure
-    //Map<ChunkMetadata,char[]> chunkMap = new HashMap<ChunkMetadata,char[]>();
-    List<listMetaData> files = new ArrayList<listMetaData>();
-    
-    
-    public static void main(String argv[]) throws Exception
+    /* public static void main(String argv[]) throws Exception
     {
        
-       /*ServerSocket welcomeSocket = new ServerSocket(6789);
+       ServerSocket welcomeSocket = new ServerSocket(6789);
 
        while(true)
        {
@@ -46,8 +53,8 @@ public class ChunkServerNode extends ServerNode{
           System.out.println("Received: " + clientSentence);
           capitalizedSentence = clientSentence.toUpperCase() + '\n';
           outToClient.writeBytes(capitalizedSentence);
-       }*/
-    }
+       }
+    }*/
     
     public void DealWithMessage(Message message)
 	{
@@ -63,7 +70,7 @@ public class ChunkServerNode extends ServerNode{
     public void ReadChunks(ChunkMetadata metadata){
     	List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
     	for(ChunkLocation messageLocation: metadata.listOfLocations){
-    		for(listMetaData fileData: files){
+    		for(File fileData: file_list){
     			if((fileData.location.chunkIP == messageLocation.chunkIP) && (fileData.location.chunkPort == messageLocation.chunkPort)){
     				fileMetaData.add(fileData.data);
     			}
@@ -89,7 +96,7 @@ public class ChunkServerNode extends ServerNode{
     	{
     		files.remove(chunkToDelete);
     		Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
-    		successMessageToMaster.success = msgSuccess.SUCCESS;
+    		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
     		master.DealWithMessage(successMessageToMaster);
     	}
     }
