@@ -35,7 +35,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 	//hash to data
 
-	Map<Integer, ChunkMetadata> chunkMap = new HashMap<Integer, ChunkMetadata>();	
+	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();	
 
 
 
@@ -104,7 +104,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public void AddNewBlankChunk(ChunkMetadata metadata){
 		//TODO: have to create new Chunkmetadata and copy over metadata
-		chunkMap.put(metadata.chunkHash, metadata);
+		chunkMap.put(metadata.filename, metadata);
 		File current = file_list.get(metadata.filenumber);
 		metadata.byteoffset = current.spaceOccupied;
 		metadata.size = 0;
@@ -210,7 +210,7 @@ public class ChunkServerNode extends ServerNode {
 				newMetaData.filenumber = n_fileNumber;
 				newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
-				chunkMap.put(Integer.parseInt(key), newMetaData);
+				chunkMap.put(key, newMetaData);
 			}
 			textReader.close();
 		} catch (FileNotFoundException e) {
@@ -222,7 +222,7 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
-	public void WritePersistentServerNodeMap(int chunkHash, ChunkMetadata chunkmd)
+	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
 		String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		//STRUCTURE///
@@ -240,7 +240,7 @@ public class ChunkServerNode extends ServerNode {
 		{
 			FileWriter fstream = new FileWriter(fileToWriteTo, true); //true tells to append data.
 			out = new BufferedWriter(fstream);
-			out.write(chunkHash+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
+			out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 			for(int i=0;i<chunkmd.listOfLocations.size();i++)
 			{
 				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t" + chunkmd.listOfLocations.get(i).chunkPort+ "\t");
