@@ -9,8 +9,10 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,19 +96,35 @@ public class ChunkServerNode extends ServerNode {
 		//			}
 		//		}
 		//		
-		System.out.println("file #s "+file_list.size());
 		for(TFSFile fileData:file_list){
-
 			if(metadata.filenumber == fileData.fileNumber){
-				System.out.println("filenumbers "+metadata.filenumber);
-
+				System.out.println("Reading from file number "+metadata.filenumber);
+				System.out.println("Reading array size is "+metadata.size +" with byteoffset: "+metadata.byteoffset);
+				System.out.println("File occupied space: "+fileData.spaceOccupied);
+				try {
+					String ogDecoded = new String(Arrays.copyOfRange(fileData.data, 1, 19), "UTF-8");
+					System.out.println("about to read chunk. string reads: "+ogDecoded);
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				byte[] dataINeed = new byte[metadata.size];
 				// check byte offset
+				int offSetIndex = metadata.byteoffset;
 				for (int i = 0; i < metadata.size; i++) {
-					dataINeed[i] = fileData.data[metadata.byteoffset + i];
+					dataINeed[i] = fileData.data[offSetIndex];
+					offSetIndex++;
 				}
-
-				System.out.println("readchunksize: "+dataINeed.length);
+				
+				try {
+					String decoded = new String(Arrays.copyOfRange(dataINeed, 0, 18), "UTF-8");
+					System.out.println("just read chunk. string reads: "+decoded);
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
 				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
 
 				break;
@@ -151,27 +169,62 @@ public class ChunkServerNode extends ServerNode {
 
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray) {
 
-		chunkMap.put(metadata.chunkHash, metadata);
+		
+		
+		TFSFile current = new TFSFile(0);
 		//Get the corresponding file number
-		TFSFile current = file_list.get(metadata.filenumber);
-		metadata.byteoffset = current.spaceOccupied;
-		metadata.size = byteArray.length;
+		for(TFSFile tf:file_list){
+			if(tf.fileNumber == metadata.filenumber)
+				current = tf;
+		}
+		System.out.println("File #: "+current.fileNumber);
+		System.out.println("Metadata correct file #: "+metadata.filenumber);
+		
 		current.data[current.spaceOccupied] = (byte) metadata.size;
 		current.spaceOccupied++;
-		System.out.println("original length: "+current.data.length);
+		System.out.println("occupied length: "+current.spaceOccupied);
 		System.out.println("add length: "+byteArray.length);
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		try { // appends byteArray to the end of current.data
-			outputStream.write(current.data);
-			outputStream.write(byteArray);
-		} catch (IOException e) {
-			e.printStackTrace();
+		
+		metadata.byteoffset = current.spaceOccupied;
+		metadata.size = byteArray.length;
+		
+		
+		for(int i=0;i<byteArray.length;i++){
+			current.data[current.spaceOccupied] = byteArray[i];
+			current.spaceOccupied++;
 		}
-		current.data = outputStream.toByteArray(); // does this create a new
-													// correct file or append(it
-													// shouldn't append)
-		current.data[current.spaceOccupied + metadata.size] = (byte) metadata.size;
-		current.spaceOccupied = current.data.length;
+		
+//		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//		try { // appends byteArray to the end of current.data
+//			
+//			outputStream.write(current.data);
+//			System.out.println(" output stream size is "+outputStream.size()+" now adding the new data");
+//			outputStream.write(byteArray);
+//			current.spaceOccupied+=byteArray.length;
+//			System.out.println(" done.output stream size is now "+outputStream.size());
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		current.data = outputStream.toByteArray(); // does this create a new
+//													// correct file or append(it
+//													// shouldn't append)
+//		current.spaceOccupied+=byteArray.length;
+		current.data[current.spaceOccupied] = (byte) metadata.size;
+		current.spaceOccupied++;
+//		current.spaceOccupied = current.data.length;
+		
+		try {
+			String decoded;
+			decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
+			System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
+			
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		chunkMap.put(metadata.chunkHash, metadata);
+		
 		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
 		newMessage.addressedTo = serverType.MASTER;
