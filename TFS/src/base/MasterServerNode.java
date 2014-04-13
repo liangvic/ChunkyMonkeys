@@ -309,8 +309,8 @@ public class MasterServerNode extends ServerNode {
 		WritePersistentChunkServerMap(hashstring,
 				chunkServerMap.get(hashstring));
 		
-		Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
-		client.DealWithMessage(metadataMsg);
+		//Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+		//client.DealWithMessage(metadataMsg);
 		return newMetaData;
 		//client.AppendToChunkServer(hashstring, myServer);
 		//client.AppendToChunkServer(newMetaData, chunkServer);

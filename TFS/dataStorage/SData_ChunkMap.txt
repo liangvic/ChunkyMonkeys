@@ -8,3 +8,9 @@
 1\2\File21	1	0	1\2\File21	0	1\2\File2	1	28	1	4
 1\2\File31	1	0	1\2\File31	0	1\2\File3	1	32	1	4
 1\2\4\image.jpg1	1	0	1\2\4\image.jpg1	0	image.jpg	1	36	1	9523635
+1\2\4\newImage.jpg1	1	0	1\2\4\newImage.jpg1	0	newImage.jpg	4	0	1	9523635
+1\2\newestImage.jpg1	1	0	1\2\newestImage.jpg1	0	newestImage.jpg	2	0	1	9523635
+1\3\6\image4.jpg1	1	0	1\3\6\image4.jpg1	0	image4.jpg	3	0	1	9523635
+1\3\6\ex.txt1	1	0	1\3\6\ex.txt1	0	ex.txt	2	0	1	12
+1\2\tryingAgain.txt1	1	0	1\2\tryingAgain.txt1	0	tryingAgain.txt	1	0	1	12
+1\2\exIn.txt1	1	0	1\2\exIn.txt1	0	exIn.txt	3	0	1	12

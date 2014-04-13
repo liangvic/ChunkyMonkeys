@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public class TFSFile {
 		int fileNumber = 1;
+		String fileName = "dataStorage/File1.txt";
 		int spaceOccupied = 0;
 		byte[] data = new byte[67108864];
 		
@@ -182,7 +184,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		
+		WriteDataToFile(current,byteArray);//outputStream.toByteArray());
 		master.DealWithMessage(newMessage);
 	}
 
@@ -408,6 +410,21 @@ public class ChunkServerNode extends ServerNode {
 
 			out.close();
 			fstream.close();
+		}
+		catch (IOException e)
+		{
+			System.err.println("Error: " + e.getMessage());
+		}
+
+	}
+	
+	public void WriteDataToFile(TFSFile file, byte[] data)
+	{
+		//BufferedWriter out = null;
+		OutputStream os = null;
+		try{
+			os = new FileOutputStream(new File(file.fileName));
+			os.write(data);
 		}
 		catch (IOException e)
 		{

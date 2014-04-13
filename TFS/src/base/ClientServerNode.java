@@ -2,6 +2,9 @@ package base;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import Utility.ChunkMetadata;
@@ -157,6 +160,7 @@ public class ClientServerNode extends ServerNode {
 				// convert array of bytes into file
 				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
 				fileOuputStream.write(finalByteArray);
+				//fileOuputStream.write(dataMessage.fileData);
 				fileOuputStream.close();
 
 				System.out.println("Done");
@@ -408,8 +412,15 @@ public class ClientServerNode extends ServerNode {
 		FileInputStream fileInputStream = null;
 		File localFile = new File(localPath);
 		byte[] byteFile = new byte[(int) localFile.length()];
-
+		
 		// convert file into array of bytes
+		/*Path path = Paths.get(localPath);
+		try {
+			byteFile = Files.readAllBytes(path);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 		try {
 			fileInputStream = new FileInputStream(localFile);
 			fileInputStream.read(byteFile);
