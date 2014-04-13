@@ -181,7 +181,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	public void DeleteChunk(ChunkMetadata metadata) {
-		ChunkMetadata chunkToDelete = null;
+		String chunkToDelete = null;
     	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 		  {
     		System.out.println(entry.getValue().filename + " " + metadata.filename);
@@ -189,53 +189,52 @@ public class ChunkServerNode extends ServerNode {
     		{
     			for(TFSFile f: file_list)
     			{
+    				System.out.println(entry.getValue().filenumber + " " + f.fileNumber);
     				if(f.fileNumber == entry.getValue().filenumber)
     				{
     					for(int i=0;i<entry.getValue().size;i++)
     					{
-    						f.data[i+entry.getValue().byteoffset] = 0; //need to change later
+    						f.data[i+entry.getValue().byteoffset] = 0; //TODO:need to change later
     					}
+    					f.spaceOccupied -= entry.getValue().size;
     				}
     			}
-    			chunkToDelete = metadata;
+    			chunkToDelete = entry.getKey();
     			
     			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
         		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
         		master.DealWithMessage(successMessageToMaster);
         		
-        		/*int index = 1;
-        		while(chunkMap.containsKey(chunkToDelete.filename))
-        		{
-        			chunkMap.remove(entry.getValue());
-        			index++;
-        		}*/
-        		System.out.println("File name is: "+chunkToDelete.filename);
-        		chunkMap.remove(chunkToDelete.filename);
         		break;
     		}
 		  }
-    	/*int index = 1;
-    	if(chunkToDelete != null)
-    	{
-    		while(chunkMap.containsKey(chunkToDelete.+index))
-    		{
-    			chunkMap.remove(chunkToDelete);
-    		}
-    				
-    	}*/
-    	
-    		
-				Message successMessageToMaster = new Message(
-						msgType.DELETEDIRECTORY);
-				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-				master.DealWithMessage(successMessageToMaster);
-			
-
-
 		if (chunkToDelete != null) {
 			chunkMap.remove(chunkToDelete);
+			
+			ClearChunkMap();
+			for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
+			  {
+				 WritePersistentServerNodeMap(entry.getKey(),entry.getValue());
+			  }
 		}
-
+	}
+	
+	public void ClearChunkMap() {
+		BufferedWriter out = null;
+		try {
+			File file = new File("dataStorage/SData_ChunkMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); // true
+																				// tells
+																				// to
+																				// append
+			// data.
+			out = new BufferedWriter(fstream);
+			System.out.println("Writing out to file");
+			out.write("");
+			out.close();
+		} catch (IOException e) {
+			System.err.println("Error: " + e.getMessage());
+		}
 	}
 
 	public void LoadServerNodeMap() {

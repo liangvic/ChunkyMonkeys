@@ -19,7 +19,7 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	// private static ServerSocket welcomeSocket;
-
+	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	TFSLogger tfsLogger = new TFSLogger();
@@ -199,29 +199,32 @@ public class MasterServerNode extends ServerNode {
 
 	public void deleteAllChildNodes(String startingNodeFilePath) {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
-			NamespaceMap.remove(startingNodeFilePath);
-
+			//initially start at chunk index 1
 			int chunkIndex = 1;
-			String hashPath = startingNodeFilePath + chunkIndex;
-			if(chunkServerMap.containsKey(startingNodeFilePath))
+			String chunkServerKey = startingNodeFilePath;// + chunkIndex;
+			
+			// Send message to client server to erase data IF IS FILE
+			if(NamespaceMap.get(startingNodeFilePath).type == nodeType.FILE)
 			{
-				chunkServerMap.remove(startingNodeFilePath);
+				while(chunkServerMap.containsKey(chunkServerKey))
+				{
+					System.out.println("Going to delete the value");
+					// sending protocol
+					Message clientMessage = new Message(msgType.DELETEDIRECTORY);
+					clientMessage.chunkClass = chunkServerMap.get(chunkServerKey);
+					chunkServer.DealWithMessage(clientMessage);
+					
+					//delete the file from master's chunk server map
+					chunkServerMap.remove(chunkServerKey);
+					
+					//increment for checking if there are more chunks
+					chunkIndex++;
+					chunkServerKey = startingNodeFilePath + chunkIndex;
+				}
 			}
-				// Send message to client server to erase data
-				Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-
-				clientMessage.chunkClass = chunkServerMap.get(hashPath); // does
-																			// NS
-																			// tree
-				chunkServerMap.remove(hashPath);
-				
-				// sending protocol
-				//chunkServer.DealWithMessage(clientMessage);
-				//chunkIndex++;
-				//hashPath = startingNodeFilePath + chunkIndex;
-				
-				
-
+			
+			//remove the FILE or DIRECTORY from namespace map
+			NamespaceMap.remove(startingNodeFilePath);
 			return;
 		} else {
 			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children
@@ -231,7 +234,6 @@ public class MasterServerNode extends ServerNode {
 			}
 			NamespaceMap.get(startingNodeFilePath).children.clear();
 			NamespaceMap.remove(startingNodeFilePath);
-			
 		}
 	}
 
