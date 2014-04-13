@@ -76,6 +76,10 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test7"):
+					if (tokens.length == 2)
+						test7(tokens[1].toString());
+					else
+						throw new Exception();
 					break;
 				case ("X"):
 					System.exit(0);
@@ -569,6 +573,13 @@ public class ClientServerNode extends ServerNode {
 	public void ExpectChunkNumberForRead(int i) {
 		System.out.println("expecting "+i+" chunks");
 		chunkCountToExpect = i;
+	}
+	
+	public void test7(String filepath)
+	{
+		Message m = new Message(msgType.COUNTFILES, filepath);
+		m.sender = serverType.CLIENT;
+		master.DealWithMessage(m);
 	}
 
 }

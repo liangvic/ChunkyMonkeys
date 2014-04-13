@@ -20,6 +20,7 @@ import java.util.Map;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
@@ -83,6 +84,8 @@ public class ChunkServerNode extends ServerNode {
 			}
 			else
 				AppendToFile(message.chunkClass, message.fileData);
+		} else if (message.type == msgType.COUNTFILES) {
+			CountNumInFile(message.chunkClass);
 		}
 	}
 
@@ -139,7 +142,7 @@ public class ChunkServerNode extends ServerNode {
 	public void AddNewBlankChunk(ChunkMetadata metadata) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
 		try{
-		chunkMap.put(metadata.filename, metadata);
+		chunkMap.put(metadata.chunkHash, metadata);
 		TFSFile current = file_list.get(1);
 		metadata.byteoffset = current.spaceOccupied;
 
@@ -151,7 +154,7 @@ public class ChunkServerNode extends ServerNode {
 			file_list.get(1).data[current.spaceOccupied+ i] = buf[i-1];
 		current.spaceOccupied += s.length();
 
-		WritePersistentServerNodeMap(metadata.filename, metadata);
+		WritePersistentServerNodeMap(metadata.chunkHash, metadata);
 
 		//WritePersistentServerFileData();
 		}
@@ -230,37 +233,108 @@ public class ChunkServerNode extends ServerNode {
 		newMessage.addressedTo = serverType.MASTER;
 		newMessage.sender = serverType.CHUNKSERVER;
 		
+		//appending on
+		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
+		
 		master.DealWithMessage(newMessage);
 	}
 
 	public void DeleteChunk(ChunkMetadata metadata) {
-		ChunkMetadata chunkToDelete = null;
-		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {
-			if (entry.getValue().filename == metadata.filename) {
-				for (TFSFile f : file_list) {
-					if (f.fileNumber == entry.getValue().filenumber) {
-						for (int i = 0; i < entry.getValue().size; i++) {
-							f.data[i + entry.getValue().byteoffset] = 0; // need
-																			// to
-																			// change
-																			// later
+		String chunkToDelete = null;
+    	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
+		  {
+    		//System.out.println(entry.getValue().filename + " " + metadata.filename);
+    		if(entry.getValue().chunkHash == metadata.chunkHash)
+    		{
+    			for(TFSFile f: file_list)
+    			{
+    				//System.out.println(entry.getValue().filenumber + " " + f.fileNumber);
+    				if(f.fileNumber == entry.getValue().filenumber)
+    				{
+    					for(int i=0;i<entry.getValue().size;i++)
+    					{
+    						f.data[i+entry.getValue().byteoffset] = 0; //TODO:need to change later
+    					}
+    					f.spaceOccupied -= entry.getValue().size;
+    				}
+    			}
+    			chunkToDelete = entry.getKey();
+    			
+    			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
+        		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
+        		master.DealWithMessage(successMessageToMaster);
+        		
+        		break;
+    		}
+		  }
+		if (chunkToDelete != null) {
+			chunkMap.remove(chunkToDelete);
+			
+			ClearChunkMap();
+			for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
+			  {
+				 WritePersistentServerNodeMap(entry.getKey(),entry.getValue());
+			  }
+		}
+	}
+
+	public void CountNumInFile(ChunkMetadata metadata)
+	{
+		int numCounted = 0;
+		String chunkSizeString = null;
+		int chunkSize;
+
+		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
+		{
+			if(entry.getValue().filename == metadata.filename)
+			{
+				for(TFSFile f: file_list)
+				{
+					if(f.fileNumber == entry.getValue().filenumber)
+					{
+						for(int i = 0;i<f.data.length; )
+						{
+							for(int j=i;j<4+i;j++)
+							{
+								chunkSizeString += (char)f.data[j];
+							}
+							chunkSize = Integer.parseInt(chunkSizeString);
+							i += chunkSize;
+							numCounted++;
 						}
+						
+						Message successMessageToMaster = new Message(msgType.COUNTFILES);
+						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
+						successMessageToMaster.countedLogicalFiles = numCounted;
+						successMessageToMaster.filePath = metadata.filename;
+						master.DealWithMessage(successMessageToMaster);
+						break;
 					}
 				}
-				chunkToDelete = metadata;
-
-				Message successMessageToMaster = new Message(
-						msgType.DELETEDIRECTORY);
-				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-				master.DealWithMessage(successMessageToMaster);
 				break;
 			}
 		}
 
-		if (chunkToDelete != null) {
-			chunkMap.remove(chunkToDelete);
+	}
+	
+/////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
+	
+	public void ClearChunkMap() {
+		BufferedWriter out = null;
+		try {
+			File file = new File("dataStorage/SData_ChunkMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); // true
+																				// tells
+																				// to
+																				// append
+			// data.
+			out = new BufferedWriter(fstream);
+			//System.out.println("Writing out to file");
+			out.write("");
+			out.close();
+		} catch (IOException e) {
+			System.err.println("Error: " + e.getMessage());
 		}
-
 	}
 
 	public void LoadServerNodeMap() {

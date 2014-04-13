@@ -19,7 +19,7 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	// private static ServerSocket welcomeSocket;
-
+	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	TFSLogger tfsLogger = new TFSLogger();
@@ -130,6 +130,17 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
+		else if(inputMessage.type == msgType.COUNTFILES)
+		{
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				FindFile(inputMessage.filePath);
+			}
+			else if (inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
+			}
+		}
 
 	}
 
@@ -175,7 +186,7 @@ public class MasterServerNode extends ServerNode {
 			// finally delete directory wanted to delete
 			NamespaceMap.remove(filePath);
 
-			tfsLogger.LogMsg("Deleted directory in " + filePath);
+			tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
 			ClearChunkServerMapFile();
 			ClearNamespaceMapFile();
@@ -199,28 +210,33 @@ public class MasterServerNode extends ServerNode {
 
 	public void deleteAllChildNodes(String startingNodeFilePath) {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
-			NamespaceMap.remove(startingNodeFilePath);
-
+			//initially start at chunk index 1
 			int chunkIndex = 1;
-			String hashPath = startingNodeFilePath + chunkIndex;
-			while (chunkServerMap.containsKey(hashPath)) {
-				// Send message to client server to erase data
-				Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-
-				clientMessage.chunkClass = chunkServerMap.get(hashPath); // does
-																			// NS
-																			// tree
-
-				chunkServerMap.remove(hashPath);
-				
-				// sending protocol
-				chunkServer.DealWithMessage(clientMessage);
-				chunkIndex++;
-				hashPath = startingNodeFilePath + chunkIndex;
-				
-				
+			String chunkServerKey = startingNodeFilePath + chunkIndex;
+			
+			// Send message to client server to erase data IF IS FILE
+			if(NamespaceMap.get(startingNodeFilePath).type == nodeType.FILE)
+			{
+				while(chunkServerMap.containsKey(chunkServerKey))
+				{
+					//System.out.println("Going to delete the value");
+					// sending protocol
+					Message clientMessage = new Message(msgType.DELETEDIRECTORY);
+					clientMessage.chunkClass = chunkServerMap.get(chunkServerKey);
+					chunkServer.DealWithMessage(clientMessage);
+					
+					//delete the file from master's chunk server map
+					chunkServerMap.remove(chunkServerKey);
+					
+					//increment for checking if there are more chunks
+					chunkIndex++;
+					chunkServerKey = startingNodeFilePath + chunkIndex;
+				}
 			}
-
+			
+			//remove the FILE or DIRECTORY from namespace map
+			NamespaceMap.remove(startingNodeFilePath);
+			//tfsLogger.LogMsg("Created file " + startingNodeFilePath);
 			return;
 		} else {
 			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children
@@ -230,15 +246,6 @@ public class MasterServerNode extends ServerNode {
 			}
 			NamespaceMap.get(startingNodeFilePath).children.clear();
 			NamespaceMap.remove(startingNodeFilePath);
-			int chunkIndex = 1;
-			String hashPath = startingNodeFilePath + chunkIndex;
-			while (chunkServerMap.containsKey(hashPath)) {
-				chunkServerMap.remove(hashPath);
-				
-				chunkIndex++;
-				hashPath = startingNodeFilePath + chunkIndex;
-			}
-			
 		}
 	}
 
@@ -292,7 +299,18 @@ public class MasterServerNode extends ServerNode {
 		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
 		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 		
-		//Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
+		//need to update children to, so have to clear and write again
+		for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+		  {
+			  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+		  }
+		//only appending on
+		WritePersistentChunkServerMap(hashstring,
+				chunkServerMap.get(hashstring));
+		
+		Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+		client.DealWithMessage(metadataMsg);
 		return newMetaData;
 		//client.AppendToChunkServer(hashstring, myServer);
 		//client.AppendToChunkServer(newMetaData, chunkServer);
@@ -321,9 +339,11 @@ public class MasterServerNode extends ServerNode {
 
 				Random rand = new Random();
 				newChunk.filenumber = 1; //only use one for now
-				chunkServerMap.put(newName, newChunk);
+				newChunk.chunkHash = hashstring;
+				chunkServerMap.put(hashstring, newChunk);
 
 				Message newMessage = new Message(msgType.CREATEFILE, newChunk);
+				newMessage.chunkClass.filename = newName;
 				try {
 					chunkServer.DealWithMessage(newMessage);
 
@@ -332,8 +352,8 @@ public class MasterServerNode extends ServerNode {
 				}
 
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
-				WritePersistentChunkServerMap(newName,
-						chunkServerMap.get(newName));
+				WritePersistentChunkServerMap(hashstring,
+						chunkServerMap.get(hashstring));
 				SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
 				tfsLogger.LogMsg("Created file " + newName);
 				
@@ -395,17 +415,36 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 
-	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
+	public void FindFile(String filepath)
 	{
-		if(chunkServerMap.size()==0)
+		int index = 1;
+		String chunkServerMapKey = filepath + index;
+		if(NamespaceMap.containsKey(filepath))
 		{
-			System.out.println("NOthing in map!!!");
+			ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
+			
+			while(chunkServerMap.containsKey(chunkServerMapKey)){
+				chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
+				Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
+				newMessage.chunkClass.filename = filepath;
+				try {
+					chunkServer.DealWithMessage(newMessage);
+
+				} catch (Exception e) {
+					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
+				}
+			}
 		}
 		else
 		{
-			System.out.println("There are " + chunkServerMap.size());
+			System.out.println("File does not exist...");
 		}
-		
+	}
+	
+	/////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
+	
+	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
+	{
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
 		
 		//STRUCTURE///
@@ -461,6 +500,7 @@ public class MasterServerNode extends ServerNode {
 					out.write(nsNode.children.get(i) + "\t");
 				}
 			}
+			
 
 			out.newLine();
 			out.close();
@@ -612,7 +652,7 @@ public class MasterServerNode extends ServerNode {
 																				// append
 			// data.
 			out = new BufferedWriter(fstream);
-			System.out.println("Writing out to file");
+			//System.out.println("Writing out to file");
 			out.write("");
 			out.close();
 		} catch (IOException e) {
@@ -627,7 +667,7 @@ public class MasterServerNode extends ServerNode {
 		   File file = new File("dataStorage/MData_NamespaceMap.txt");
 			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); //true tells to append data.
 		    out = new BufferedWriter(fstream);
-		    System.out.println("Writing out to file");
+		    //System.out.println("Writing out to file");
 		    out.write("");
 		    out.close();
 		}catch (IOException e) {
