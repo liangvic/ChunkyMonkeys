@@ -37,7 +37,7 @@ public class Message implements Serializable{
 	}
 //	List<Character> filePath = new ArrayList<Character>();
 
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE};
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, COUNTFILES};
 	public msgType type;
 	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
 	public msgSuccess success;
@@ -51,4 +51,5 @@ public class Message implements Serializable{
 	public int chunkindex;
 	public ChunkMetadata chunkClass;
 	public byte[] fileData;
+	public int countedLogicalFiles;
 }
