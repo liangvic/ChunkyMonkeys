@@ -135,6 +135,13 @@ public class MasterServerNode extends ServerNode {
 			if(inputMessage.sender == serverType.CLIENT) {
 				AppendToTFSFile(inputMessage);
 			}
+			else if(inputMessage.sender == serverType.CHUNKSERVER) {
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+				}
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " append failed");
+			}
 		}
 		else if(inputMessage.type == msgType.COUNTFILES)
 		{

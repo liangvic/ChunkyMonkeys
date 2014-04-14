@@ -362,7 +362,7 @@ public class ChunkServerNode extends ServerNode {
 			}			
 			chunkMap.put(metadata.chunkHash, metadata);
 			
-			Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
+			Message newMessage = new Message(msgType.APPENDTOTFSFILE, metadata);
 			newMessage.success = msgSuccess.REQUESTSUCCESS;
 			newMessage.addressedTo = serverType.MASTER;
 			newMessage.sender = serverType.CHUNKSERVER;
