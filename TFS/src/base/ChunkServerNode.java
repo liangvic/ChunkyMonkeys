@@ -287,7 +287,7 @@ public class ChunkServerNode extends ServerNode {
 		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 		{
 			if(entry.getValue().filename == metadata.filename)
-			{
+			{//Find the ChunkMetadata
 				for(TFSFile f: file_list)
 				{
 					if(f.fileNumber == entry.getValue().filenumber)

@@ -594,6 +594,7 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test4 <local> <filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
 		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");
 		System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
+		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
 	public void ExpectChunkNumberForRead(int i) {
 		System.out.println("expecting "+i+" chunks");
@@ -602,6 +603,7 @@ public class ClientServerNode extends ServerNode {
 	
 	public void test7(String filepath)
 	{
+		System.out.println("Test7 Path: "+filepath);
 		Message m = new Message(msgType.COUNTFILES, filepath);
 		m.sender = serverType.CLIENT;
 		master.DealWithMessage(m);

@@ -430,22 +430,30 @@ public class MasterServerNode extends ServerNode {
 	public void FindFile(String filepath)
 	{
 		int index = 1;
+		int logicalFilesCount = 0;
 		String chunkServerMapKey = filepath + index;
 		if(NamespaceMap.containsKey(filepath))
 		{
 			ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
 			
 			while(chunkServerMap.containsKey(chunkServerMapKey)){
+				logicalFilesCount++;
 				chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
 				Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
 				newMessage.chunkClass.filename = filepath;
-				try {
-					chunkServer.DealWithMessage(newMessage);
-
-				} catch (Exception e) {
-					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
-				}
+//				try {
+//					chunkServer.DealWithMessage(newMessage);
+//
+//				} catch (Exception e) {
+//					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
+//				}
+				index++;
+				chunkServerMapKey = filepath + index;
 			}
+			if(logicalFilesCount ==1)
+				System.out.println("There is " + logicalFilesCount + " logical file in " + filepath);
+			else
+				System.out.println("There are " + logicalFilesCount + " logical files in " + filepath);
 		}
 		else
 		{
