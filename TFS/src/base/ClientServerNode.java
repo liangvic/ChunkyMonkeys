@@ -580,11 +580,11 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public void test6(String filePath, String localPath){
-		CAppendToTFSFile(filePath, localPath);
+	public void test6(String localPath, String filePath){
+		CAppendToTFSFile(localPath, filePath);
 	}
 	
-	public void CAppendToTFSFile(String filePath, String localPath){
+	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
 		Message m = new Message(msgType.APPENDTOTFSFILE, filePath);
 		localPathToCreateFile = localPath;
@@ -621,6 +621,7 @@ public class ClientServerNode extends ServerNode {
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
 		msg.chunkClass = cm;
+		msg.chunkClass.size = (int) file.length();
 		chunkServer.DealWithMessage(msg);
 	}
 	public void printCommands(){

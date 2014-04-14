@@ -330,16 +330,15 @@ public class ChunkServerNode extends ServerNode {
 			ChunkMetadata metadata = message.chunkClass;
 			byte[] byteArray = message.fileData;
 			TFSFile current =  file_list.get(metadata.filenumber);
+			System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
 			System.out.println("File #: "+current.fileNumber);
-			System.out.println("Metadata correct file #: "+ metadata.filenumber);
-			
-			if (current.spaceOccupied + metadata.size > current.data.length){
-				System.out.println("Not enough space on curent file");
-				throw new Exception();
+			System.out.println("Metadata correct file #: "+metadata.filenumber);
+			ByteBuffer.allocate(4).putInt(metadata.size).array();
+			byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(metadata.size).array();
+			for(int i=0;i<4;i++){
+				current.data[current.spaceOccupied] = fourBytesBefore[i];
+				current.spaceOccupied++;
 			}
-				
-			current.data[current.spaceOccupied] = (byte) metadata.size;
-			current.spaceOccupied++;
 			System.out.println("occupied length: "+current.spaceOccupied);
 			System.out.println("add length: "+byteArray.length);
 			
@@ -351,20 +350,11 @@ public class ChunkServerNode extends ServerNode {
 				current.spaceOccupied++;
 			}
 
-			current.data[current.spaceOccupied] = (byte) metadata.size;
-			current.spaceOccupied++;
-//			current.spaceOccupied = current.data.length;
-			
-			try {
-				String decoded;
-				decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
-				System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
-				
-			} catch (UnsupportedEncodingException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
+			byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(metadata.size).array();
+			for(int i=0;i<4;i++){
+				current.data[current.spaceOccupied] = fourBytesAfter[i];
+				current.spaceOccupied++;
+			}			
 			chunkMap.put(metadata.chunkHash, metadata);
 			
 			Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
@@ -376,7 +366,6 @@ public class ChunkServerNode extends ServerNode {
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 			
 			master.DealWithMessage(newMessage);
-			
 		}
 		catch(Exception e) {
 			e.printStackTrace();

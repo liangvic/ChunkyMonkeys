@@ -1,0 +1,12 @@
+Apr 13, 2014 10:50:49 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 13, 2014 10:50:49 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 13, 2014 10:50:49 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 13, 2014 10:58:42 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\Poppy.txt
+Apr 13, 2014 11:03:25 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\Poppy.txt
+Apr 13, 2014 11:08:20 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\Poopy.txt

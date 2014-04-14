@@ -461,7 +461,7 @@ public class MasterServerNode extends ServerNode {
 				}
 			}
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
-			newChunk.filenumber = 1; //only use one for now
+			newChunk.filenumber = 0; //only use one for now
 			newChunk.chunkHash = hashString;
 			chunkServerMap.put(hashString, newChunk);
 			WritePersistentChunkServerMap(hashString,
@@ -471,12 +471,12 @@ public class MasterServerNode extends ServerNode {
 		else
 		{
 			// create file
-			NamespaceMap.put(hashString, new NamespaceNode(nodeType.FILE));
+			NamespaceMap.put(filepath, new NamespaceNode(nodeType.FILE));
 			File filePath = new File(filepath);
 			String parentPath = filePath.getParent();
 			String parent;
 			if (parentPath == null) {
-				parent = filepath;
+				return null;
 			} else {
 				parent = parentPath;
 			}
@@ -493,7 +493,7 @@ public class MasterServerNode extends ServerNode {
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			tfsLogger.LogMsg("Created file " + filepath);
-			return null;
+			return newChunk;
 		}
 	}
 
