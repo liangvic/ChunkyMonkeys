@@ -296,10 +296,11 @@ public class ChunkServerNode extends ServerNode {
 						{
 							for(int j=i;j<4+i;j++)
 							{
-								chunkSizeString += (char)f.data[j];
+								chunkSizeString += (char)f.data[j]; //possibly should be byte
 							}
 							chunkSize = Integer.parseInt(chunkSizeString);
 							i += chunkSize;
+							i += 8; // to discard the 2 4-byte size storage at beginning & end
 							numCounted++;
 						}
 						
