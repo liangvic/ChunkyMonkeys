@@ -250,6 +250,7 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void ReadFile(Message inputMessage) {
+		//Implement Later
 		int indexCounter = 1;
 		System.out.println("trying to read "+inputMessage.filePath + indexCounter);
 		if (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
@@ -285,7 +286,16 @@ public class MasterServerNode extends ServerNode {
 		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
 		newMetaData.filenumber = rand.nextInt(5);
-		newMetaData.byteoffset = 0;
+		//do a check to see what the offset is
+		int targetFileNumber = newMetaData.filenumber;
+		int largestOffSet = 0;
+		
+		for(String key: chunkServerMap.keySet()){
+			if(chunkServerMap.get(key).filenumber == targetFileNumber)
+				if(chunkServerMap.get(key).byteoffset>largestOffSet)
+					largestOffSet = chunkServerMap.get(key).byteoffset;
+		}
+		newMetaData.byteoffset = largestOffSet;
 		newMetaData.size = inputMessage.fileData.length;
 		
 		
