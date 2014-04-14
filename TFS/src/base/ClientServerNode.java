@@ -91,7 +91,7 @@ public class ClientServerNode extends ServerNode {
 					throw new Exception();
 				}
 			} catch (Exception e) {
-				System.out.println("Invalid OP or Parameters. \n");
+				System.out.println("Unable to Complete Request\n");
 			}
 		} while (input != "X" || input != "x");
 
@@ -568,7 +568,9 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test1 <numfolders>			i.e. Test1 7");
 		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
 		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
-		//System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
+		System.out.println("Test4 <local> <filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
+		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");
+		System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
 	}
 	public void ExpectChunkNumberForRead(int i) {
 		System.out.println("expecting "+i+" chunks");
