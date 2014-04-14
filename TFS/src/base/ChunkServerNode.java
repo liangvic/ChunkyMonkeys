@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.io.WriteAbortedException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +53,9 @@ public class ChunkServerNode extends ServerNode {
 		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
-
+		
+		LoadServerNodeMap();
+		LoadFileData();
 	}
 
 	// hash to data
@@ -247,7 +250,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		
+		WriteDataToFile(current, current.data);
 		master.DealWithMessage(newMessage);
 	}
 
@@ -495,11 +498,12 @@ public class ChunkServerNode extends ServerNode {
 			
 			try {
 				Path path1 = Paths.get(path);
-				byte[] testData = Files.readAllBytes(path1);
+				byte[] testData = new byte[entry.getValue().size+8];
+				testData = Files.readAllBytes(path1);
 				byte[] fileSize = new byte[4];
 				for(int i = 0; i<4;i++)
 				{
-					fileSize[i] = testData[entry.getValue().byteoffset+ i];
+					fileSize[i] = testData[entry.getValue().byteoffset + i];
 				}
 				fileToStoreInto.spaceOccupied = java.nio.ByteBuffer.wrap(fileSize).getInt();
 				byte[] data = new byte[entry.getValue().size];
