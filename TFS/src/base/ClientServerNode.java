@@ -92,6 +92,7 @@ public class ClientServerNode extends ServerNode {
 				}
 			} catch (Exception e) {
 				System.out.println("Invalid OP or Parameters. \n");
+				e.printStackTrace();
 			}
 		} while (input != "X" || input != "x");
 
@@ -429,7 +430,7 @@ public class ClientServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
+		//System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
 		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
 		System.out.println("metadata hash "+cm.chunkHash);		

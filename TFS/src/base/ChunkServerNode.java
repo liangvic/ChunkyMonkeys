@@ -174,12 +174,15 @@ public class ChunkServerNode extends ServerNode {
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray) {
 
 		
-		
+		System.out.println("FOUND THE FILE!");
 		TFSFile current = new TFSFile(0);
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
 			if(tf.fileNumber == metadata.filenumber)
+			{
 				current = tf;
+				
+			}
 		}
 		System.out.println("File #: "+current.fileNumber);
 		System.out.println("Metadata correct file #: "+metadata.filenumber);
@@ -429,6 +432,39 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	public void LoadFileData()
+	{
+		for(int i = 0; i<=5;i++)
+		{
+			
+		}
+		
+		
+		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {
+		    String key = entry.getKey();
+		    Object value = entry.getValue();
+		
+		    TFSFile fileToStoreInto = file_list.get(entry.getValue().filenumber);
+		    String path = "dataStorage/File" + entry.getValue().filenumber+".txt";
+			
+			try {
+				FileReader fr = new FileReader(path);
+				BufferedReader textReader = new BufferedReader(fr);
+				textReader.read(fileToStoreInto.data, entry.getValue().byteoffset, entry.getValue().size);
+				fileToStoreInto.data;
+				fileToStoreInto.spaceOccupied = 
+				
+				textReader.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
 
 	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
