@@ -156,9 +156,9 @@ public class ClientServerNode extends ServerNode {
 				File file = new File(localPathToCreateFile);
 				file.createNewFile();
 				// convert array of bytes into file
-				String decoded = new String(dataMessage.fileData, "UTF-8");
+//				String decoded = new String(dataMessage.fileData, "UTF-8");
 				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
-				System.out.println("Writing" + dataMessage.fileData + "string is: "+decoded);
+//				System.out.println("Writing" + dataMessage.fileData + "string is: "+decoded);
 				fileOuputStream.write(finalByteArray);
 				fileOuputStream.close();
 
@@ -444,12 +444,6 @@ public class ClientServerNode extends ServerNode {
 		byte[] byteFile = convertFileToBytes(localPath);
 		ChunkMetadata cm;	
 		String decodedString = "string";
-		try {
-			decodedString = new String(byteFile, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
 		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
