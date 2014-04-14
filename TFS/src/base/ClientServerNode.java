@@ -394,6 +394,24 @@ public class ClientServerNode extends ServerNode {
 		//CAppendToFile2(filePath, byteFile);
 	}
 	
+	public byte[] convertFileToBytes(String localPath)
+	{
+		FileInputStream fileInputStream = null;
+		File localFile = new File(localPath);
+		
+		byte[] byteFile = new byte[(int) localFile.length()];
+
+		// convert file into array of bytes
+		try {
+			fileInputStream = new FileInputStream(localFile);
+			fileInputStream.read(byteFile);
+			fileInputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return byteFile;
+	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
@@ -408,6 +426,7 @@ public class ClientServerNode extends ServerNode {
 
 //		CCreateFile(filePath); // empty file created
 
+		/*
 		FileInputStream fileInputStream = null;
 		File localFile = new File(localPath);
 		
@@ -420,7 +439,9 @@ public class ClientServerNode extends ServerNode {
 			fileInputStream.close();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}*/
+		
+		byte[] byteFile = convertFileToBytes(localPath);
 		ChunkMetadata cm;	
 		String decodedString = "string";
 		try {
