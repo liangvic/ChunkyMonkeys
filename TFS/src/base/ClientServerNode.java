@@ -138,6 +138,8 @@ public class ClientServerNode extends ServerNode {
 			
 		} else if (message.type == msgType.PRINTFILEDATA) {
 			msgPrintFileData(message);
+		} else if (message.type == msgType.APPENDTOTFSFILE) {
+			ReadLocalFile(message);
 		}
 	}
 
@@ -578,13 +580,49 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public void test6(String filePath, String localPath){
-		//CAppendToFile(Strin);
-		
+	public void test6(String localPath, String filePath){
+		CAppendToTFSFile(localPath, filePath);
 	}
 	
-	public void CAppendToFile(String filePath, String localPath){
-	
+	public void CAppendToTFSFile(String localPath, String filePath){
+		int index = filePath.lastIndexOf('\\');
+		Message m = new Message(msgType.APPENDTOTFSFILE, filePath);
+		localPathToCreateFile = localPath;
+		m.fileName = filePath.substring(index + 1);
+		m.sender = serverType.CLIENT;
+		master.DealWithMessage(m);
+	}
+	public void ReadLocalFile(Message message) {
+		FileInputStream fileInputStream = null;
+		File file = new File(localPathToCreateFile);
+		byte[] byteFile = new byte[(int) file.length()];
+
+		// convert file into array of bytes
+		try {
+			fileInputStream = new FileInputStream(file);
+			fileInputStream.read(byteFile);
+			fileInputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		ChunkMetadata cm = message.chunkClass;	
+		String decodedString = "string";
+		try {
+			decodedString = new String(byteFile, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
+		/*cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
+		//now chunkServer will be set
+		System.out.println("metadata hash "+cm.chunkHash);*/
+		Message msg = new Message(msgType.APPENDTOTFSFILE, byteFile);
+		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.sender = serverType.CLIENT;
+		msg.chunkClass = cm;
+		msg.chunkClass.size = (int) file.length();
+		chunkServer.DealWithMessage(msg);
 	}
 	public void printCommands(){
 		System.out.println("Format closely follows that of in the Assignment Page");
