@@ -280,7 +280,7 @@ public class MasterServerNode extends ServerNode {
 
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		System.out.println("burrito: "+inputMessage.fileName);
+		//System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
@@ -298,6 +298,7 @@ public class MasterServerNode extends ServerNode {
 		newMetaData.byteoffset = largestOffSet;
 		newMetaData.size = inputMessage.fileData.length;
 		
+		
 		//add to hashmap
 		chunkServerMap.put(hashstring, newMetaData);
 		//create a new namespace node
@@ -307,6 +308,7 @@ public class MasterServerNode extends ServerNode {
 		
 		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
 		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+		//System.out.println("Got to the file");
 		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 		
 		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
@@ -348,7 +350,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 1; //only use one for now
+				newChunk.filenumber = 0; //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 

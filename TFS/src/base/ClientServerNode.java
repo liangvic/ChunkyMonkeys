@@ -91,6 +91,8 @@ public class ClientServerNode extends ServerNode {
 					throw new Exception();
 				}
 			} catch (Exception e) {
+
+				e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
 		} while (input != "X" || input != "x");
@@ -444,7 +446,13 @@ public class ClientServerNode extends ServerNode {
 		byte[] byteFile = convertFileToBytes(localPath);
 		ChunkMetadata cm;	
 		String decodedString = "string";
-		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
+		try {
+			decodedString = new String(byteFile, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
 		System.out.println("metadata hash "+cm.chunkHash);		
