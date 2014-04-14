@@ -41,6 +41,8 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	List<TFSFile> file_list = new ArrayList<TFSFile>();
+	
+
 
 	public ChunkServerNode() {
 		for (int i = 1; i <= 5; i++){
@@ -94,6 +96,10 @@ public class ChunkServerNode extends ServerNode {
 		} else if (message.type == msgType.COUNTFILES) {
 			CountNumInFile(message.chunkClass);
 		}
+		else if (message.type == msgType.WRITETONEWFILE)
+		{
+			//WriteToNewFile(message.chunkClass, message.fileData);
+		}
 	}
 
 	public void ReadChunks(ChunkMetadata metadata){
@@ -108,16 +114,11 @@ public class ChunkServerNode extends ServerNode {
 		//		
 		for(TFSFile fileData:file_list){
 			if(metadata.filenumber == fileData.fileNumber){
+				System.out.println("Available file byte size: "+(fileData.data.length-fileData.spaceOccupied));
 				System.out.println("Reading from file number "+metadata.filenumber);
 				System.out.println("Reading array size is "+metadata.size +" with byteoffset: "+metadata.byteoffset);
 				System.out.println("File occupied space: "+fileData.spaceOccupied);
-				try {
-					String ogDecoded = new String(Arrays.copyOfRange(fileData.data, 1, 19), "UTF-8");
-					System.out.println("about to read chunk. string reads: "+ogDecoded);
-				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
 				
 				byte[] dataINeed = new byte[metadata.size];
 				// check byte offset
@@ -127,13 +128,7 @@ public class ChunkServerNode extends ServerNode {
 					offSetIndex++;
 				}
 				
-				try {
-					String decoded = new String(Arrays.copyOfRange(dataINeed, 0, 18), "UTF-8");
-					System.out.println("just read chunk. string reads: "+decoded);
-				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				
 				
 				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
 
@@ -179,19 +174,21 @@ public class ChunkServerNode extends ServerNode {
 
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray) {
 
-		
-		
 		TFSFile current = new TFSFile(0);
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
 			if(tf.fileNumber == metadata.filenumber)
 				current = tf;
 		}
+		System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
 		System.out.println("File #: "+current.fileNumber);
 		System.out.println("Metadata correct file #: "+metadata.filenumber);
-		
-		current.data[current.spaceOccupied] = (byte) metadata.size;
-		current.spaceOccupied++;
+		ByteBuffer.allocate(4).putInt(metadata.size).array();
+		byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		for(int i=0;i<4;i++){
+			current.data[current.spaceOccupied] = fourBytesBefore[i];
+			current.spaceOccupied++;
+		}
 		System.out.println("occupied length: "+current.spaceOccupied);
 		System.out.println("add length: "+byteArray.length);
 		
@@ -219,19 +216,22 @@ public class ChunkServerNode extends ServerNode {
 //													// correct file or append(it
 //													// shouldn't append)
 //		current.spaceOccupied+=byteArray.length;
-		current.data[current.spaceOccupied] = (byte) metadata.size;
-		current.spaceOccupied++;
+		byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		for(int i=0;i<4;i++){
+			current.data[current.spaceOccupied] = fourBytesAfter[i];
+			current.spaceOccupied++;
+		}
 //		current.spaceOccupied = current.data.length;
 		
-		try {
-			String decoded;
-			decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
-			System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
-			
-		} catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		try {
+//			String decoded;
+//			decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
+//			System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
+//			
+//		} catch (UnsupportedEncodingException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		
 		chunkMap.put(metadata.chunkHash, metadata);
 		
@@ -303,10 +303,11 @@ public class ChunkServerNode extends ServerNode {
 						{
 							for(int j=i;j<4+i;j++)
 							{
-								chunkSizeString += (char)f.data[j];
+								chunkSizeString += (char)f.data[j]; //possibly should be byte
 							}
 							chunkSize = Integer.parseInt(chunkSizeString);
 							i += chunkSize;
+							i += 8; // to discard the 2 4-byte size storage at beginning & end
 							numCounted++;
 						}
 						

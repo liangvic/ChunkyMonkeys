@@ -256,6 +256,7 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void ReadFile(Message inputMessage) {
+		//Implement Later
 		int indexCounter = 1;
 		System.out.println("trying to read "+inputMessage.filePath + indexCounter);
 		if (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
@@ -285,14 +286,24 @@ public class MasterServerNode extends ServerNode {
 
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		System.out.println("burrito: "+inputMessage.fileName);
+		//System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
 		newMetaData.filenumber = rand.nextInt(5);
-		newMetaData.byteoffset = 0;
+		//do a check to see what the offset is
+		int targetFileNumber = newMetaData.filenumber;
+		int largestOffSet = 0;
+		
+		for(String key: chunkServerMap.keySet()){
+			if(chunkServerMap.get(key).filenumber == targetFileNumber)
+				if(chunkServerMap.get(key).byteoffset>largestOffSet)
+					largestOffSet = chunkServerMap.get(key).byteoffset;
+		}
+		newMetaData.byteoffset = largestOffSet;
 		newMetaData.size = inputMessage.fileData.length;
+		
 		
 		//add to hashmap
 		chunkServerMap.put(hashstring, newMetaData);
@@ -303,6 +314,7 @@ public class MasterServerNode extends ServerNode {
 		
 		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
 		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+		//System.out.println("Got to the file");
 		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 		
 		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
@@ -344,7 +356,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 1; //only use one for now
+				newChunk.filenumber = 0; //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 
