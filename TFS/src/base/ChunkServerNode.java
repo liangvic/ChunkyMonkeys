@@ -236,6 +236,8 @@ public class ChunkServerNode extends ServerNode {
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		
+		
+		
 		master.DealWithMessage(newMessage);
 	}
 
