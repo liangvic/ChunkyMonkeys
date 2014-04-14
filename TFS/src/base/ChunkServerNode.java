@@ -31,7 +31,7 @@ public class ChunkServerNode extends ServerNode {
 	public MasterServerNode master;
 
 	public class TFSFile {
-		int fileNumber = 1;
+		int fileNumber = 0;
 		int spaceOccupied = 0;
 		byte[] data = new byte[67108864];
 		
@@ -47,7 +47,8 @@ public class ChunkServerNode extends ServerNode {
 		for (int i = 1; i <= 5; i++){
 			file_list.add(new TFSFile(i));
 		}
-
+		LoadServerNodeMap();
+		LoadFileData();
 	}
 
 	// hash to data
@@ -434,25 +435,30 @@ public class ChunkServerNode extends ServerNode {
 
 	public void LoadFileData()
 	{
-		for(int i = 0; i<=5;i++)
-		{
-			
-		}
-		
-		
-		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {
-		    String key = entry.getKey();
-		    Object value = entry.getValue();
-		
+		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {		
 		    TFSFile fileToStoreInto = file_list.get(entry.getValue().filenumber);
-		    String path = "dataStorage/File" + entry.getValue().filenumber+".txt";
+		    String path = "dataStorage/File" + entry.getValue().filenumber;
 			
 			try {
 				FileReader fr = new FileReader(path);
 				BufferedReader textReader = new BufferedReader(fr);
-				textReader.read(fileToStoreInto.data, entry.getValue().byteoffset, entry.getValue().size);
-				fileToStoreInto.data;
-				fileToStoreInto.spaceOccupied = 
+				char[] readData = new char[entry.getValue().size+entry.getValue().byteoffset];
+				textReader.read(readData, 0, entry.getValue().size + entry.getValue().byteoffset);
+				
+				char[] fileSize = new char[4];
+				for(int i = 0; i<4;i++)
+				{
+					fileSize[i] = readData[entry.getValue().byteoffset+ i];
+				}
+				byte[] newBytes = new String(fileSize).getBytes("UTF-8");
+				fileToStoreInto.spaceOccupied = java.nio.ByteBuffer.wrap(newBytes).getInt();//need to fix?? 
+				
+				char[] data = new char[entry.getValue().size];
+				for(int i = 4; i<entry.getValue().size;i++)
+				{
+					 data[i-4] = readData[entry.getValue().byteoffset+i];
+				}
+				fileToStoreInto.data = new String(data).getBytes();
 				
 				textReader.close();
 			} catch (FileNotFoundException e) {
@@ -513,7 +519,7 @@ public class ChunkServerNode extends ServerNode {
 		//BufferedWriter out = null;
 		OutputStream os = null;
 		try{
-			os = new FileOutputStream(new File("dataStorage/File1.txt"));//"dataStorage/File"+file.fileNumber+".txt"));
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
 			os.write(data);
 			os.close();
 		}

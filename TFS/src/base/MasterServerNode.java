@@ -340,7 +340,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 1; //only use one for now
+				newChunk.filenumber = 0; //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 
