@@ -130,6 +130,12 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
+		else if(inputMessage.type == msgType.APPENDTOTFSFILE)
+		{
+			if(inputMessage.sender == serverType.CLIENT) {
+				AppendToTFSFile(inputMessage);
+			}
+		}
 		else if(inputMessage.type == msgType.COUNTFILES)
 		{
 			if(inputMessage.sender == serverType.CLIENT)
@@ -413,6 +419,70 @@ public class MasterServerNode extends ServerNode {
 		 * catch (IOException e) { // TODO Auto-generated catch block
 		 * e.printStackTrace(); }
 		 */
+	}
+	
+	public void AppendToTFSFile(Message message)
+	{
+		ChunkMetadata chunkData = GetTFSFile(message.filePath);
+		if(chunkData != null) {
+			Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+			Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+			chunkServer.DealWithMessage(m1);
+			client.DealWithMessage(m2);
+		}
+		else {
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
+		}
+	}
+	
+	public ChunkMetadata GetTFSFile(String filepath)
+	{
+		int index = 1;
+		String hashString = filepath + index;
+		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
+		{
+			for(int i = 2; i < chunkServerMap.size(); ++i) {
+				hashString = filepath + i;
+				index = i;
+				if(!chunkServerMap.containsKey(hashString)) {
+					break;
+				}
+			}
+			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
+			newChunk.filenumber = 1; //only use one for now
+			newChunk.chunkHash = hashString;
+			chunkServerMap.put(hashString, newChunk);
+			WritePersistentChunkServerMap(hashString,
+					chunkServerMap.get(hashString));
+			return newChunk;
+		}
+		else
+		{
+			// create file
+			NamespaceMap.put(hashString, new NamespaceNode(nodeType.FILE));
+			File filePath = new File(filepath);
+			String parentPath = filePath.getParent();
+			String parent;
+			if (parentPath == null) {
+				parent = filepath;
+			} else {
+				parent = parentPath;
+			}
+			NamespaceMap.get(parent).children.add(filepath);
+
+			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
+
+			//Random rand = new Random();
+			newChunk.filenumber = 1; //only use one for now
+			newChunk.chunkHash = hashString;
+			chunkServerMap.put(hashString, newChunk);
+
+			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
+			WritePersistentChunkServerMap(hashString,
+					chunkServerMap.get(hashString));
+			tfsLogger.LogMsg("Created file " + filepath);
+			return null;
+		}
 	}
 
 	public void FindFile(String filepath)

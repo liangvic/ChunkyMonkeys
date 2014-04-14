@@ -84,6 +84,13 @@ public class ChunkServerNode extends ServerNode {
 			}
 			else
 				AppendToFile(message.chunkClass, message.fileData);
+		} else if (message.type == msgType.APPENDTOTFSFILE) {
+			if(message.sender == serverType.MASTER) {
+				chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+			}
+			else if (message.sender == serverType.CLIENT) {
+				AppendToTFSFile(message);
+			}
 		} else if (message.type == msgType.COUNTFILES) {
 			CountNumInFile(message.chunkClass);
 		}
@@ -315,6 +322,65 @@ public class ChunkServerNode extends ServerNode {
 			}
 		}
 
+	}
+	
+	void AppendToTFSFile(Message message) {
+		try {
+			ChunkMetadata metadata = message.chunkClass;
+			byte[] byteArray = message.fileData;
+			TFSFile current =  file_list.get(metadata.filenumber);
+			System.out.println("File #: "+current.fileNumber);
+			System.out.println("Metadata correct file #: "+ metadata.filenumber);
+			
+			if (current.spaceOccupied + metadata.size > current.data.length){
+				System.out.println("Not enough space on curent file");
+				throw new Exception();
+			}
+				
+			current.data[current.spaceOccupied] = (byte) metadata.size;
+			current.spaceOccupied++;
+			System.out.println("occupied length: "+current.spaceOccupied);
+			System.out.println("add length: "+byteArray.length);
+			
+			metadata.byteoffset = current.spaceOccupied;
+			metadata.size = byteArray.length;
+			
+			for(int i=0;i<byteArray.length;i++){
+				current.data[current.spaceOccupied] = byteArray[i];
+				current.spaceOccupied++;
+			}
+
+			current.data[current.spaceOccupied] = (byte) metadata.size;
+			current.spaceOccupied++;
+//			current.spaceOccupied = current.data.length;
+			
+			try {
+				String decoded;
+				decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
+				System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
+				
+			} catch (UnsupportedEncodingException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
+			chunkMap.put(metadata.chunkHash, metadata);
+			
+			Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
+			newMessage.success = msgSuccess.REQUESTSUCCESS;
+			newMessage.addressedTo = serverType.MASTER;
+			newMessage.sender = serverType.CHUNKSERVER;
+			
+			//appending on
+			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
+			
+			master.DealWithMessage(newMessage);
+			
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			System.out.println("AppendToTFSFile failed");
+		}
 	}
 	
 /////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
