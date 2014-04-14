@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -235,7 +236,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		
+		WriteDataToFile(current,current.data);
 		
 		
 		master.DealWithMessage(newMessage);
@@ -463,6 +464,22 @@ public class ChunkServerNode extends ServerNode {
 
 			out.close();
 			fstream.close();
+		}
+		catch (IOException e)
+		{
+			System.err.println("Error: " + e.getMessage());
+		}
+
+	}
+	
+	public void WriteDataToFile(TFSFile file, byte[] data)
+	{
+		//BufferedWriter out = null;
+		OutputStream os = null;
+		try{
+			os = new FileOutputStream(new File("dataStorage/File1.txt"));//"dataStorage/File"+file.fileNumber+".txt"));
+			os.write(data);
+			os.close();
 		}
 		catch (IOException e)
 		{
