@@ -25,6 +25,7 @@ public class MasterServerNode extends ServerNode {
 	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	
 	TFSLogger tfsLogger = new TFSLogger();
 
 	
@@ -950,4 +951,6 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	
+	public class ServerData
 }
