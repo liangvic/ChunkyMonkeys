@@ -9,8 +9,13 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.io.WriteAbortedException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,10 +50,12 @@ public class ChunkServerNode extends ServerNode {
 
 
 	public ChunkServerNode() {
-		for (int i = 1; i <= 5; i++){
+		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
-
+		
+		LoadServerNodeMap();
+		LoadFileData();
 	}
 
 	// hash to data
@@ -113,6 +120,7 @@ public class ChunkServerNode extends ServerNode {
 		//		}
 		//		
 		for(TFSFile fileData:file_list){
+			System.out.println(fileData.fileNumber + " finding number " + metadata.filenumber);
 			if(metadata.filenumber == fileData.fileNumber){
 				System.out.println("Available file byte size: "+(fileData.data.length-fileData.spaceOccupied));
 				System.out.println("Reading from file number "+metadata.filenumber);
@@ -120,7 +128,7 @@ public class ChunkServerNode extends ServerNode {
 				System.out.println("File occupied space: "+fileData.spaceOccupied);
 				
 				
-				byte[] dataINeed = new byte[metadata.size];
+				byte[] dataINeed = new byte[metadata.size+4];
 				// check byte offset
 				int offSetIndex = metadata.byteoffset;
 				for (int i = 0; i < metadata.size; i++) {
@@ -242,7 +250,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		
+		WriteDataToFile(current, current.data);
 		master.DealWithMessage(newMessage);
 	}
 
@@ -294,7 +302,7 @@ public class ChunkServerNode extends ServerNode {
 		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 		{
 			if(entry.getValue().filename == metadata.filename)
-			{
+			{//Find the ChunkMetadata
 				for(TFSFile f: file_list)
 				{
 					if(f.fileNumber == entry.getValue().filenumber)
@@ -325,23 +333,20 @@ public class ChunkServerNode extends ServerNode {
 
 	}
 	
-	void AppendToTFSFile(Message message) {
+	void AppendToTFSFile(Message message) { // Test 6
 		try {
 			ChunkMetadata metadata = message.chunkClass;
 			byte[] byteArray = message.fileData;
 			TFSFile current =  file_list.get(metadata.filenumber);
+			System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
 			System.out.println("File #: "+current.fileNumber);
-			System.out.println("Metadata correct file #: "+ metadata.filenumber);
-			
-			if (current.spaceOccupied + metadata.size > current.data.length){
-				System.out.println("Not enough space on curent file");
-				throw new Exception();
+			System.out.println("Metadata correct file #: "+metadata.filenumber);
+			ByteBuffer.allocate(4).putInt(metadata.size).array();
+			byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(metadata.size).array();
+			for(int i=0;i<4;i++){
+				current.data[current.spaceOccupied] = fourBytesBefore[i];
+				current.spaceOccupied++;
 			}
-				
-			current.data[current.spaceOccupied] = (byte) metadata.size;
-			current.spaceOccupied++;
-			System.out.println("occupied length: "+current.spaceOccupied);
-			System.out.println("add length: "+byteArray.length);
 			
 			metadata.byteoffset = current.spaceOccupied;
 			metadata.size = byteArray.length;
@@ -351,32 +356,24 @@ public class ChunkServerNode extends ServerNode {
 				current.spaceOccupied++;
 			}
 
-			current.data[current.spaceOccupied] = (byte) metadata.size;
-			current.spaceOccupied++;
-//			current.spaceOccupied = current.data.length;
-			
-			try {
-				String decoded;
-				decoded = new String(Arrays.copyOfRange(current.data, 1, 19), "UTF-8");
-				System.out.println("String reads "+decoded+" -spacedoccupied is "+current.spaceOccupied );
-				
-			} catch (UnsupportedEncodingException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
+			byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(metadata.size).array();
+			for(int i=0;i<4;i++){
+				current.data[current.spaceOccupied] = fourBytesAfter[i];
+				current.spaceOccupied++;
+			}			
+			System.out.println("occupied length: "+current.spaceOccupied);
+			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 			
-			Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
+			Message newMessage = new Message(msgType.APPENDTOTFSFILE, metadata);
 			newMessage.success = msgSuccess.REQUESTSUCCESS;
 			newMessage.addressedTo = serverType.MASTER;
 			newMessage.sender = serverType.CHUNKSERVER;
 			
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-			
+			WriteDataToFile(current, byteArray);
 			master.DealWithMessage(newMessage);
-			
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -398,17 +395,26 @@ public class ChunkServerNode extends ServerNode {
 			out = new BufferedWriter(fstream);
 			//System.out.println("Writing out to file");
 			out.write("");
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
 	public void LoadServerNodeMap() {
 		String path = "dataStorage/SData_ChunkMap.txt";
+		BufferedReader textReader = null;
 		try {
 			FileReader fr = new FileReader(path);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 			String textLine;
 
 			while ((textLine = textReader.readLine()) != null) {
@@ -483,7 +489,7 @@ public class ChunkServerNode extends ServerNode {
 				newMetaData.size = n_size;
 				chunkMap.put(key, newMetaData);
 			}
-			textReader.close();
+
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -491,8 +497,50 @@ public class ChunkServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
+	public void LoadFileData()
+	{
+		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {		
+		    TFSFile fileToStoreInto = file_list.get(entry.getValue().filenumber);
+		    String path = "dataStorage/File" + entry.getValue().filenumber;
+			
+			try {
+				Path path1 = Paths.get(path);
+				byte[] testData = new byte[entry.getValue().size+8];
+				testData = Files.readAllBytes(path1);
+				byte[] fileSize = new byte[4];
+				for(int i = 0; i<4;i++)
+				{
+					fileSize[i] = testData[entry.getValue().byteoffset + i];
+				}
+				fileToStoreInto.spaceOccupied = java.nio.ByteBuffer.wrap(fileSize).getInt();
+				byte[] data = new byte[entry.getValue().size];
+				for(int i = 4; i<entry.getValue().size-4;i++)
+				{
+					 data[i-4] = testData[entry.getValue().byteoffset+i];
+				}
+				fileToStoreInto.data = data;
+				
+				
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
@@ -508,10 +556,12 @@ public class ChunkServerNode extends ServerNode {
 		//INDEX
 		//SIZE
 		BufferedWriter out = null;
+		File file = null;
+		FileWriter fstream = null;
 		try  
 		{
-			File file = new File("dataStorage/SData_ChunkMap.txt");
-			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
+			file = new File("dataStorage/SData_ChunkMap.txt");
+			fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 
 			out = new BufferedWriter(fstream);
 			out.write(key + "\t" + chunkmd.versionNumber + "\t"
@@ -525,13 +575,46 @@ public class ChunkServerNode extends ServerNode {
 			out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t"
 					+ chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
-
-			out.close();
-			fstream.close();
 		}
 		catch (IOException e)
 		{
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+				fstream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	}
+	
+	public void WriteDataToFile(TFSFile file, byte[] data)
+	{
+		//BufferedWriter out = null;
+		OutputStream os = null;
+		try{
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
+			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
+			os.write(data);
+			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
+		}
+		catch (IOException e)
+		{
+			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				os.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}

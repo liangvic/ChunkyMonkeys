@@ -130,10 +130,17 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
-		else if(inputMessage.type == msgType.APPENDTOTFSFILE)
+		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
 				AppendToTFSFile(inputMessage);
+			}
+			else if(inputMessage.sender == serverType.CHUNKSERVER) {
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+				}
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " append failed");
 			}
 		}
 		else if(inputMessage.type == msgType.COUNTFILES)
@@ -453,15 +460,17 @@ public class MasterServerNode extends ServerNode {
 		String hashString = filepath + index;
 		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
 		{
-			for(int i = 2; i < chunkServerMap.size(); ++i) {
-				hashString = filepath + i;
-				index = i;
+			for(int i = 1; i <= chunkServerMap.size(); i++) {
+				index++;
+				hashString = filepath + index;
 				if(!chunkServerMap.containsKey(hashString)) {
 					break;
 				}
 			}
+			System.out.println("INDEX: "+index);
+			System.out.println("HASHSTRING: "+hashString);
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
-			newChunk.filenumber = 1; //only use one for now
+			newChunk.filenumber = 0; //only use one for now
 			newChunk.chunkHash = hashString;
 			chunkServerMap.put(hashString, newChunk);
 			WritePersistentChunkServerMap(hashString,
@@ -471,12 +480,12 @@ public class MasterServerNode extends ServerNode {
 		else
 		{
 			// create file
-			NamespaceMap.put(hashString, new NamespaceNode(nodeType.FILE));
+			NamespaceMap.put(filepath, new NamespaceNode(nodeType.FILE));
 			File filePath = new File(filepath);
 			String parentPath = filePath.getParent();
 			String parent;
 			if (parentPath == null) {
-				parent = filepath;
+				return null;
 			} else {
 				parent = parentPath;
 			}
@@ -493,29 +502,37 @@ public class MasterServerNode extends ServerNode {
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			tfsLogger.LogMsg("Created file " + filepath);
-			return null;
+			return newChunk;
 		}
 	}
 
 	public void FindFile(String filepath)
 	{
 		int index = 1;
+		int logicalFilesCount = 0;
 		String chunkServerMapKey = filepath + index;
 		if(NamespaceMap.containsKey(filepath))
 		{
 			ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
 			
 			while(chunkServerMap.containsKey(chunkServerMapKey)){
+				logicalFilesCount++;
 				chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
 				Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
 				newMessage.chunkClass.filename = filepath;
-				try {
-					chunkServer.DealWithMessage(newMessage);
-
-				} catch (Exception e) {
-					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
-				}
+//				try {
+//					chunkServer.DealWithMessage(newMessage);
+//
+//				} catch (Exception e) {
+//					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
+//				}
+				index++;
+				chunkServerMapKey = filepath + index;
 			}
+			if(logicalFilesCount ==1)
+				System.out.println("There is " + logicalFilesCount + " logical file in " + filepath);
+			else
+				System.out.println("There are " + logicalFilesCount + " logical files in " + filepath);
 		}
 		else
 		{
@@ -540,10 +557,12 @@ public class MasterServerNode extends ServerNode {
 		//INDEX
 		//SIZE
 		BufferedWriter out = null;
+		File file = null;
+		FileWriter ofstream = null;
 		try  
 		{
-			File file = new File("dataStorage/MData_ChunkServerMap.txt");
-		    FileWriter ofstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
+			file = new File("dataStorage/MData_ChunkServerMap.txt");
+		    ofstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 		    out = new BufferedWriter(ofstream);
 		    out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
@@ -553,13 +572,20 @@ public class MasterServerNode extends ServerNode {
 		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
 		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
 		    out.newLine();
-		    
-		    out.close();
-		    ofstream.close();
 		}
 		catch (IOException e)
 		{
 		    System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+				ofstream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -585,18 +611,27 @@ public class MasterServerNode extends ServerNode {
 			
 
 			out.newLine();
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void LoadChunkServerMap()
 	{	
+		BufferedReader textReader = null;
 		try {
 			File file = new File("dataStorage/MData_ChunkServerMap.txt");
 			FileReader fr = new FileReader(file);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 			String textLine;
 
 			while ((textLine = textReader.readLine()) != null) {
@@ -670,7 +705,7 @@ public class MasterServerNode extends ServerNode {
 				
 				chunkServerMap.put(key, newMetaData);
 			}
-			textReader.close();
+	
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -678,14 +713,24 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void LoadNamespaceMap() {
 		// String path = "dataStorage/MData_NamespaceMap.txt";
+		BufferedReader textReader = null;
 		try {
 			File file = new File("dataStorage/MData_NamespaceMap.txt");
 			FileReader fr = new FileReader(file);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 
 			String textLine;
 
@@ -714,13 +759,22 @@ public class MasterServerNode extends ServerNode {
 
 				NamespaceMap.put(key, addingNode);
 			}
-			textReader.close();
+			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -736,9 +790,17 @@ public class MasterServerNode extends ServerNode {
 			out = new BufferedWriter(fstream);
 			//System.out.println("Writing out to file");
 			out.write("");
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -751,9 +813,17 @@ public class MasterServerNode extends ServerNode {
 		    out = new BufferedWriter(fstream);
 		    //System.out.println("Writing out to file");
 		    out.write("");
-		    out.close();
 		}catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
