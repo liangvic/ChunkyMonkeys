@@ -130,7 +130,7 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
-		else if(inputMessage.type == msgType.APPENDTOTFSFILE)
+		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
 				AppendToTFSFile(inputMessage);
@@ -460,13 +460,15 @@ public class MasterServerNode extends ServerNode {
 		String hashString = filepath + index;
 		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
 		{
-			for(int i = 2; i < chunkServerMap.size(); ++i) {
-				hashString = filepath + i;
-				index = i;
+			for(int i = 1; i <= chunkServerMap.size(); i++) {
+				index++;
+				hashString = filepath + index;
 				if(!chunkServerMap.containsKey(hashString)) {
 					break;
 				}
 			}
+			System.out.println("INDEX: "+index);
+			System.out.println("HASHSTRING: "+hashString);
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
 			newChunk.filenumber = 0; //only use one for now
 			newChunk.chunkHash = hashString;
