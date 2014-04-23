@@ -498,7 +498,18 @@ public class MasterServerNode extends ServerNode {
 		//TODO: NEED TO ADD IN THE LOCK CHECKING
 		//if(AddExclusiveParentLocks(inputMessage.filePath, opID))
 		//{
-			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+
+			if(inputMessage.type == msgType.WRITETONEWFILE)
+			{
+				ChunkMetadata testExistence = chunkServerMap.get(hashstring);
+				if(testExistence != null)
+				{
+					//System.out.println("MSN AssignChunkServer: Filepath exists.");
+					return null;
+				}
+			}
+			//AssignChunkServer(inputMessage)
 			//System.out.println("burrito: "+inputMessage.fileName);
 			ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 			//newMetaData.listOfLocations = 0;
@@ -540,7 +551,7 @@ public class MasterServerNode extends ServerNode {
 			WritePersistentChunkServerMap(hashstring,
 					chunkServerMap.get(hashstring));
 			
-			Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+			Message metadataMsg = new Message(msgType.WRITETONEWFILE, newMetaData);
 			client.DealWithMessage(metadataMsg);
 			return newMetaData;
 			//client.AppendToChunkServer(hashstring, myServer);
