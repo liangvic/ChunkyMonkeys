@@ -204,13 +204,6 @@ public class ClientServerNode extends ServerNode {
 	}
 
 	public void test2(String filepath, int nFiles) {
-		// Create N files in a directory and its subdirectories until the leaf
-		// subdirectories.
-		// Example: Test2 1\2 3
-		// Assuming the directory structure from the Test1 example above,
-		// this Test would create 5 files in each directory 1\2, 1\2\4 and
-		// 1\2\5.
-		// The files in each directory would be named File1, File2, and File3.
 		if (master.NamespaceMap.get(filepath) != null) {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
@@ -228,14 +221,6 @@ public class ClientServerNode extends ServerNode {
 			}
 		}
 
-		/*
-		 * System.out.println(master.NamespaceMap.size()); Iterator it =
-		 * master.NamespaceMap.entrySet().iterator(); while (it.hasNext()) {
-		 * Map.Entry pairs = (Map.Entry) it.next();
-		 * System.out.println(pairs.getKey() + " = " +
-		 * master.NamespaceMap.get(pairs.getKey()).children.size());
-		 * it.remove(); // avoids a ConcurrentModificationException }
-		 */
 
 	}
 
