@@ -79,7 +79,7 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-		operationID++;
+		operationID++; //used to differentiate operations
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 			MDeleteDirectory(inputMessage.filePath,operationID);
@@ -161,6 +161,18 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
+	public void RemoveParentLocks(int opID)
+	{
+		for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+		{
+			//if this operation previously made the lock
+			if(entry.getValue().lockData.operationID == opID)
+			{
+				entry.getValue().lockData.lockStatus = lockType.NONE;
+			}
+		}
+	}
+	
 	public boolean AddExclusiveParentLocks(String filePath, int opID)
 	{
 		String[] tokens = filePath.split(File.pathSeparator);
@@ -180,17 +192,21 @@ public class MasterServerNode extends ServerNode {
 					NamespaceMap.get(parentPath).lockData.operationID = opID;
 				}
 			}
-			if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
+			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
+					NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
+			{
+				if(parentPath == filePath)
+				{
+					RemoveParentLocks(opID);
+					SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+					return false;
+				}
+				//if not the final node, allow it to pass
+			}
+			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
 						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
 			{
-				for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-				{
-					//if this operation previously made the lock
-					if(entry.getValue().lockData.operationID == opID)
-					{
-						entry.getValue().lockData.lockStatus = lockType.NONE;
-					}
-				}
+				RemoveParentLocks(opID);
 				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 				return false;
 			}
@@ -257,7 +273,7 @@ public class MasterServerNode extends ServerNode {
 					  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 				  }
 				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
-				RemoveParentLocks(filePath,opID);
+				RemoveParentLocks(opID);
 			}
 		} else // the filepath is not in the directory. Send error!
 		{
