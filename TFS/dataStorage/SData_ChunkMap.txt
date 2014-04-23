@@ -1,2 +1,1 @@
-1\bb.txt1	1	0	1\bb.txt1	0	bb.txt	3	4	1	70
-1\bb.txt1	1	0	1\bb.txt1	0	1\bb.txt	0	4	1	70
+1\bb.txt1	1	0	1\bb.txt1	0	bb.txt	1	4	1	70
