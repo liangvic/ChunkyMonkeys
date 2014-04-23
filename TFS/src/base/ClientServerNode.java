@@ -208,13 +208,6 @@ public class ClientServerNode extends ServerNode {
 	}
 
 	public void test2(String filepath, int nFiles) {
-		// Create N files in a directory and its subdirectories until the leaf
-		// subdirectories.
-		// Example: Test2 1\2 3
-		// Assuming the directory structure from the Test1 example above,
-		// this Test would create 5 files in each directory 1\2, 1\2\4 and
-		// 1\2\5.
-		// The files in each directory would be named File1, File2, and File3.
 		if (master.NamespaceMap.get(filepath) != null) {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
@@ -232,14 +225,6 @@ public class ClientServerNode extends ServerNode {
 			}
 		}
 
-		/*
-		 * System.out.println(master.NamespaceMap.size()); Iterator it =
-		 * master.NamespaceMap.entrySet().iterator(); while (it.hasNext()) {
-		 * Map.Entry pairs = (Map.Entry) it.next();
-		 * System.out.println(pairs.getKey() + " = " +
-		 * master.NamespaceMap.get(pairs.getKey()).children.size());
-		 * it.remove(); // avoids a ConcurrentModificationException }
-		 */
 
 	}
 
@@ -628,10 +613,9 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test1 <numfolders>			i.e. Test1 7");
 		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
 		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
-		System.out.println("Test4 <local> <filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
-		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");
-		System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
-		System.out.println("Test7 <TFSfile> 	i.e. Test7 Picture.haystack");
+		System.out.println("Test4 <local> <TFS filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
+		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		System.out.println("Test6 <local> <TFS filepath> 		i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
+		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
 	public void ExpectChunkNumberForRead(int i) {
 		System.out.println("expecting "+i+" chunks");

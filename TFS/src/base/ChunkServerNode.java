@@ -333,7 +333,7 @@ public class ChunkServerNode extends ServerNode {
 
 	}
 	
-	void AppendToTFSFile(Message message) {
+	void AppendToTFSFile(Message message) { // Test 6
 		try {
 			ChunkMetadata metadata = message.chunkClass;
 			byte[] byteArray = message.fileData;
@@ -347,8 +347,6 @@ public class ChunkServerNode extends ServerNode {
 				current.data[current.spaceOccupied] = fourBytesBefore[i];
 				current.spaceOccupied++;
 			}
-			System.out.println("occupied length: "+current.spaceOccupied);
-			System.out.println("add length: "+byteArray.length);
 			
 			metadata.byteoffset = current.spaceOccupied;
 			metadata.size = byteArray.length;
@@ -363,16 +361,18 @@ public class ChunkServerNode extends ServerNode {
 				current.data[current.spaceOccupied] = fourBytesAfter[i];
 				current.spaceOccupied++;
 			}			
+			System.out.println("occupied length: "+current.spaceOccupied);
+			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 			
-			Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
+			Message newMessage = new Message(msgType.APPENDTOTFSFILE, metadata);
 			newMessage.success = msgSuccess.REQUESTSUCCESS;
 			newMessage.addressedTo = serverType.MASTER;
 			newMessage.sender = serverType.CHUNKSERVER;
 			
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-			
+			WriteDataToFile(current, byteArray);
 			master.DealWithMessage(newMessage);
 		}
 		catch(Exception e) {
