@@ -24,6 +24,7 @@ public class MasterServerNode extends ServerNode {
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	TFSLogger tfsLogger = new TFSLogger();
 
+	
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
