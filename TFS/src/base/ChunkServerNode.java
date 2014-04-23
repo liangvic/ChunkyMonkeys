@@ -263,7 +263,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		WriteDataToFile(current, current.data);
+		WriteDataToFile(current, byteArray/*current.data*/);
 		master.DealWithMessage(newMessage);
 	}
 
@@ -637,7 +637,7 @@ public class ChunkServerNode extends ServerNode {
 		//BufferedWriter out = null;
 		OutputStream os = null;
 		try{
-			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
 			os.write(data);
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());

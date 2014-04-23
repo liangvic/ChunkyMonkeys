@@ -1,0 +1,194 @@
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 10:36:38 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 10:37:59 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 10:53:57 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 10:54:02 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 11:00:40 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 11:00:48 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 11:05:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 11:05:31 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 11:13:15 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 11:13:19 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\4
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2\5
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\6
+Apr 22, 2014 11:14:47 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\3\7
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File1
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File2
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\4\File3
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File1
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File2
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\5\File3
+Apr 22, 2014 11:14:50 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File1
+Apr 22, 2014 11:14:51 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File2
+Apr 22, 2014 11:14:51 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\2\File3
+Apr 22, 2014 11:15:06 PM Utility.TFSLogger LogMsg
+FINE: Deleted directory and all directories/files below 1\2
