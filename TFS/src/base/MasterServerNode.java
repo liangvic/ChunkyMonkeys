@@ -19,6 +19,8 @@ public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
 	public ChunkServerNode chunkServer;
 
+	int operationID = 0;
+	
 	// private static ServerSocket welcomeSocket;
 	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
@@ -77,9 +79,10 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
+		operationID++;
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
-			MDeleteDirectory(inputMessage.filePath);
+			MDeleteDirectory(inputMessage.filePath,operationID);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 				// SendSuccessMessageToClient();
@@ -158,6 +161,44 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
+	public boolean AddExclusiveParentLocks(String filePath, int opID)
+	{
+		String[] tokens = filePath.split(File.pathSeparator);
+		String parentPath = tokens[0];
+		for(int i=1;i<tokens.length-1;i++)
+		{
+			if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+			{
+				if(parentPath != filePath)
+				{
+					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
+					NamespaceMap.get(parentPath).lockData.operationID = opID;
+				}
+				else
+				{
+					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
+					NamespaceMap.get(parentPath).lockData.operationID = opID;
+				}
+			}
+			if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
+						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
+			{
+				for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				{
+					//if this operation previously made the lock
+					if(entry.getValue().lockData.operationID == opID)
+					{
+						entry.getValue().lockData.lockStatus = lockType.NONE;
+					}
+				}
+				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				return false;
+			}
+			parentPath = parentPath + "\\" + tokens[i]; 
+		}
+		return true;
+	}
+
 	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
@@ -168,22 +209,13 @@ public class MasterServerNode extends ServerNode {
 		client.DealWithMessage(errorMessage);
 	}
 
-	public void MDeleteDirectory(String filePath) {
+	public void MDeleteDirectory(String filePath, int opID) {
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
-			if(NamespaceMap.get(filePath).lockStatus == lockType.NONE)
+			
+			if(AddExclusiveParentLocks(filePath, opID))
 			{
-				//data to lock this node and all above it
-				File path = new File(filePath);
-				String parentPath = path.getParent();
-				while(parentPath != null)
-				{
-					NamespaceMap.get(parentPath).lockStatus = lockType.EXCLUSIVE;
-					path = new File(parentPath);
-					parentPath = path.getParent();
-				}
-				
 				if (NamespaceMap.get(filePath).children.size() > 0) {
 					// recursively going through the tree and deleting all
 					// files/directories below
@@ -191,7 +223,7 @@ public class MasterServerNode extends ServerNode {
 				}
 				
 				String[] tokens = filePath.split(File.pathSeparator);
-				parentPath = tokens[0];
+				String parentPath = tokens[0];
 				for(int i=1;i<tokens.length-1;i++)
 				{
 					parentPath = parentPath + "\\" + tokens[i]; 
@@ -225,13 +257,8 @@ public class MasterServerNode extends ServerNode {
 					  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 				  }
 				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				RemoveParentLocks(filePath,opID);
 			}
-			else //if a lock is set to either SHARED or EXCLUSIVE
-			{
-				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
-				return;
-			}
-			
 		} else // the filepath is not in the directory. Send error!
 		{
 			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
