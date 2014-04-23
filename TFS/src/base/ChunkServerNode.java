@@ -98,9 +98,11 @@ public class ChunkServerNode extends ServerNode {
 				AppendToFile(message.chunkClass, message.fileData);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
 			if(message.sender == serverType.MASTER) {
+				System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
 				chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 			}
 			else if (message.sender == serverType.CLIENT) {
+				System.out.println("Calling AppendToTSFFile Method");
 				AppendToTFSFile(message);
 			}
 		} else if (message.type == msgType.COUNTFILES) {

@@ -377,9 +377,7 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		//System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
-		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
 		newMetaData.filenumber = rand.nextInt(5);
@@ -398,6 +396,7 @@ public class MasterServerNode extends ServerNode {
 		
 		//add to hashmap
 		chunkServerMap.put(hashstring, newMetaData);
+		System.out.println("Master: got the newMetaData: "+newMetaData.filename);
 		//create a new namespace node
 		//filename and get parent, add child.
 		
@@ -584,14 +583,13 @@ public class MasterServerNode extends ServerNode {
 			String parentPath = filePath.getParent();
 			String parent;
 			if (parentPath == null) {
+				System.out.println("Can not find parent path");
 				return null;
 			} else {
 				parent = parentPath;
 			}
 			NamespaceMap.get(parent).children.add(filepath);
-
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
-
 			//Random rand = new Random();
 			newChunk.filenumber = 1; //only use one for now
 			newChunk.chunkHash = hashString;

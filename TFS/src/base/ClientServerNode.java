@@ -40,6 +40,12 @@ public class ClientServerNode extends ServerNode {
 			String[] tokens = input.split(delim);
 			try {
 				switch (tokens[0]) {
+				case ("Unit1"):
+					if (tokens.length == 3)
+						unit1(Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
+					else
+						throw new Exception();
+					break;
 				case ("Test1"):
 					if (tokens.length == 2)
 						test1(Integer.parseInt(tokens[1]));
@@ -343,6 +349,39 @@ public class ClientServerNode extends ServerNode {
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
+	public void unit1(int NumFolders, int numSubDirectories){
+		List<String> queue = new ArrayList<String>();
+//		CCreateDirectory("1");
+		System.out.println("Creating 1");
+		
+		String parentfilepath = "1";
+		int folderName = 2;
+		String newfilepath = parentfilepath + "\\" + folderName;
+		int subDirectoryCounter = 0;
+		while(folderName<=NumFolders){
+			subDirectoryCounter++;
+			if(subDirectoryCounter>numSubDirectories){
+				subDirectoryCounter=1;
+//				parentfilepath = newfilepath;
+				parentfilepath = queue.get(0);
+				for(int i=1;i<queue.size();i++){
+					queue.set(i-1,  queue.get(i));
+				}
+				queue.remove(queue.size()-1);
+			}
+		
+			newfilepath = parentfilepath + "\\" + folderName;
+//			CCreateDirectory("1");
+			System.out.println("Creating "+newfilepath);
+			queue.add(newfilepath);
+			folderName++;
+			
+			
+		}
+		
+	}
+	
+	
 	/**
 	 * @param filepath
 	 */
@@ -379,6 +418,22 @@ public class ClientServerNode extends ServerNode {
 			helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
 		}
 
+	}
+	
+	public void unit1helper(String parentfilepath, int folderName, int NumMaxFolders, int NumSubdirectories){
+		if(folderName<=NumMaxFolders){
+			for(int i=1;i<=NumSubdirectories;i++){
+				String newfilepath = parentfilepath + "\\" + folderName+1;
+				CCreateDirectory(newfilepath);
+			}
+		}
+		
+		if (folderName <= NumMaxFolders) {
+			String newfilepath = parentfilepath + "\\" + folderName;
+			CCreateDirectory(newfilepath);
+			helper(newfilepath, folderName * 2, NumMaxFolders);
+			helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
+		}
 	}
 
 	/**
