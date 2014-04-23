@@ -7,6 +7,7 @@ import java.util.*;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
@@ -168,51 +169,68 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void MDeleteDirectory(String filePath) {
-
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
-			if (NamespaceMap.get(filePath).children.size() > 0) {
-				// recursively going through the tree and deleting all
-				// files/directories below
-				deleteAllChildNodes(filePath);
-			}
-			
-			String[] tokens = filePath.split(File.pathSeparator);
-			String parentPath = tokens[0];
-			for(int i=1;i<tokens.length-1;i++)
+			if(NamespaceMap.get(filePath).lockStatus == lockType.NONE)
 			{
-				parentPath = parentPath + "\\" + tokens[i]; 
-			}
-			
-			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-			  {
-				for(int i=0;i<entry.getValue().children.size();i++)
+				//data to lock this node and all above it
+				File path = new File(filePath);
+				String parentPath = path.getParent();
+				while(parentPath != null)
 				{
-					if(entry.getValue().children.get(i).contains(parentPath))
-					{
-						entry.getValue().children.remove(i);
-					}
+					NamespaceMap.get(parentPath).lockStatus = lockType.EXCLUSIVE;
+					path = new File(parentPath);
+					parentPath = path.getParent();
 				}
-			  }
-			
-			// finally delete directory wanted to delete
-			NamespaceMap.remove(filePath);
+				
+				if (NamespaceMap.get(filePath).children.size() > 0) {
+					// recursively going through the tree and deleting all
+					// files/directories below
+					deleteAllChildNodes(filePath);
+				}
+				
+				String[] tokens = filePath.split(File.pathSeparator);
+				parentPath = tokens[0];
+				for(int i=1;i<tokens.length-1;i++)
+				{
+					parentPath = parentPath + "\\" + tokens[i]; 
+				}
+				
+				for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				  {
+					for(int i=0;i<entry.getValue().children.size();i++)
+					{
+						if(entry.getValue().children.get(i).contains(parentPath))
+						{
+							entry.getValue().children.remove(i);
+						}
+					}
+				  }
+				
+				// finally delete directory wanted to delete
+				NamespaceMap.remove(filePath);
 
-			tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
+				tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
-			ClearChunkServerMapFile();
-			ClearNamespaceMapFile();
-			
-			for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap.entrySet())
-			  {
-				 WritePersistentChunkServerMap(entry.getKey(),entry.getValue());
-			  }
-			  for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-			  {
-				  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
-			  }
-			SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				ClearChunkServerMapFile();
+				ClearNamespaceMapFile();
+				
+				for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap.entrySet())
+				  {
+					 WritePersistentChunkServerMap(entry.getKey(),entry.getValue());
+				  }
+				  for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				  {
+					  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+				  }
+				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+			}
+			else //if a lock is set to either SHARED or EXCLUSIVE
+			{
+				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				return;
+			}
 			
 		} else // the filepath is not in the directory. Send error!
 		{

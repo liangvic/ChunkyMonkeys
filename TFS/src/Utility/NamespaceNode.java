@@ -11,4 +11,6 @@ public class NamespaceNode {
 		type = t;
 	}
 	//file access permissions?
+	public static enum lockType { NONE, SHARED, EXCLUSIVE }
+	public lockType lockStatus = lockType.NONE;
 }
