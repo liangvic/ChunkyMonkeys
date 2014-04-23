@@ -431,18 +431,18 @@ public class ClientServerNode extends ServerNode {
 		}*/
 		
 		byte[] byteFile = convertFileToBytes(localPath);
-		ChunkMetadata cm;	
-		String decodedString = "string";
-		try {
-			decodedString = new String(byteFile, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+//		String decodedString = "string";
+//		try {
+//			decodedString = new String(byteFile, "UTF-8");
+//		} catch (UnsupportedEncodingException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 
-		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
+		ChunkMetadata cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
-		System.out.println("metadata hash "+cm.chunkHash);		
+		System.out.println("New chunkmetadata hash "+cm.chunkHash);		
 		CAppendToFile(cm, filePath, byteFile); //now sends to chunkServer
 		
 		/*
@@ -524,10 +524,17 @@ public class ClientServerNode extends ServerNode {
 	}
 
 	public void test5(String filePath, String localPath) {
+		//Check if inputs are NULL
 		if (filePath == null || localPath == null) {
 			System.out.println("Detected null values, please reenter query");
 			return;
 		}
+		
+		localPathToCreateFile = localPath;
+		Message m = new Message(msgType.READFILE, filePath);
+		m.sender = serverType.CLIENT;
+		master.DealWithMessage(m);
+
 		// Step 1 connect to the master
 		// String masterIP = "68.181.174.149";
 		// int masterPort = 8111;
@@ -555,14 +562,6 @@ public class ClientServerNode extends ServerNode {
 		// masterIP);
 		// System.exit(1);
 		// }
-		localPathToCreateFile = localPath;
-		Message m = new Message(msgType.READFILE, filePath);
-		m.sender = serverType.CLIENT;
-		master.DealWithMessage(m);
-
-		// Step 4 recieves the master message
-		// Step 5 send a request to the chunkserver
-
 	}
 
 	public void test6(String localPath, String filePath){
