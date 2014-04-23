@@ -9,9 +9,12 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.WriteAbortedException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,6 +80,23 @@ public class ChunkServerNode extends ServerNode {
 	 * + clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
 	 * '\n'; outToClient.writeBytes(capitalizedSentence); } }
 	 */
+	
+	public void WILLBEMAIN() throws Exception {
+		try { 
+			ServerSocket serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+			Message m;
+			while((m = (Message)ois.readObject()) != null) {
+				DealWithMessage(m);
+			}
+		} catch (IOException e) {
+			System.out
+					.println("Exception caught when trying to listen on port "
+							+ myPortNumber + " or listening for a connection");
+			System.out.println(e.getMessage());
+		}
+	}
 
 	/**
 	 * @param message
