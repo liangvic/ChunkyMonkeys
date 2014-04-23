@@ -23,6 +23,23 @@ public class ClientServerNode extends ServerNode {
 	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
+	
+	public void WILLBEMAIN() throws Exception {
+		try { 
+			ServerSocket serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+			Message m;
+			while((m = (Message)ois.readObject()) != null) {
+				DealWithMessage(m);
+			}
+		} catch (IOException e) {
+			System.out
+					.println("Exception caught when trying to listen on port "
+							+ myPortNumber + " or listening for a connection");
+			System.out.println(e.getMessage());
+		}
+	}
 
 	/**
 	 * @throws Exception

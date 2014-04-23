@@ -53,25 +53,27 @@ public class MasterServerNode extends ServerNode {
 
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
+		//int portNumber = 8111;
 
-		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);
-				Socket clientSocket = serverSocket.accept();
+		try { 
+			ServerSocket serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
 				/*
 				 * PrintWriter out = new
 				 * PrintWriter(clientSocket.getOutputStream(), true);
 				 * BufferedReader in = new BufferedReader( new
 				 * InputStreamReader(clientSocket.getInputStream()));
 				 */
-				ObjectInputStream in = new ObjectInputStream(
-						clientSocket.getInputStream());) {
+			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+			Message m;
+			while((m = (Message)ois.readObject()) != null) {
+				DealWithMessage(m);
+			}
 			/*
 			 * String inputLine; while ((inputLine = in.readLine()) != null) {
 			 * //out.println(inputLine); DealWithMessage(inputLine); //separate
 			 * message to deal with input }
 			 */
-
-			Message receivedMessage = (Message) in.readObject();
-			DealWithMessage(receivedMessage);
 		} catch (IOException e) {
 			System.out
 					.println("Exception caught when trying to listen on port "
