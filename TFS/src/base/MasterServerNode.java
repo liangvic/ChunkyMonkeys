@@ -555,10 +555,12 @@ public class MasterServerNode extends ServerNode {
 		//INDEX
 		//SIZE
 		BufferedWriter out = null;
+		File file = null;
+		FileWriter ofstream = null;
 		try  
 		{
-			File file = new File("dataStorage/MData_ChunkServerMap.txt");
-		    FileWriter ofstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
+			file = new File("dataStorage/MData_ChunkServerMap.txt");
+		    ofstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 		    out = new BufferedWriter(ofstream);
 		    out.write(key+"\t"+chunkmd.versionNumber+"\t"+chunkmd.listOfLocations.size()+"\t");
 		    for(int i=0;i<chunkmd.listOfLocations.size();i++)
@@ -568,13 +570,20 @@ public class MasterServerNode extends ServerNode {
 		    out.write(chunkmd.chunkHash + "\t" +chunkmd.referenceCount + "\t" + chunkmd.filename + "\t");
 		    out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t" + chunkmd.index + "\t" + chunkmd.size);
 		    out.newLine();
-		    
-		    out.close();
-		    ofstream.close();
 		}
 		catch (IOException e)
 		{
 		    System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+				ofstream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -600,18 +609,27 @@ public class MasterServerNode extends ServerNode {
 			
 
 			out.newLine();
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void LoadChunkServerMap()
 	{	
+		BufferedReader textReader = null;
 		try {
 			File file = new File("dataStorage/MData_ChunkServerMap.txt");
 			FileReader fr = new FileReader(file);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 			String textLine;
 
 			while ((textLine = textReader.readLine()) != null) {
@@ -685,7 +703,7 @@ public class MasterServerNode extends ServerNode {
 				
 				chunkServerMap.put(key, newMetaData);
 			}
-			textReader.close();
+	
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -693,14 +711,24 @@ public class MasterServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void LoadNamespaceMap() {
 		// String path = "dataStorage/MData_NamespaceMap.txt";
+		BufferedReader textReader = null;
 		try {
 			File file = new File("dataStorage/MData_NamespaceMap.txt");
 			FileReader fr = new FileReader(file);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 
 			String textLine;
 
@@ -729,13 +757,22 @@ public class MasterServerNode extends ServerNode {
 
 				NamespaceMap.put(key, addingNode);
 			}
-			textReader.close();
+			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -751,9 +788,17 @@ public class MasterServerNode extends ServerNode {
 			out = new BufferedWriter(fstream);
 			//System.out.println("Writing out to file");
 			out.write("");
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -766,9 +811,17 @@ public class MasterServerNode extends ServerNode {
 		    out = new BufferedWriter(fstream);
 		    //System.out.println("Writing out to file");
 		    out.write("");
-		    out.close();
 		}catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
