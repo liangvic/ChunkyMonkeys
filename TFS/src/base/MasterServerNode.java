@@ -6,6 +6,8 @@ import java.util.*;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
+import Utility.Config;
+import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
@@ -20,25 +22,39 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	int operationID = 0;
-	
 	// private static ServerSocket welcomeSocket;
 	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
-	
+	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>(); 
 	TFSLogger tfsLogger = new TFSLogger();
 
+	public class ServerData{
+		String IP;
+		int clientPort;
+		int serverPort;
+		int TTL; //time to last ping - the last time it pinged master
+		serverStatus status; 
+		
+		public ServerData(String nIP, int nClientPort, int nServerPort){
+			IP = nIP;
+			clientPort = nClientPort;
+			serverPort = nServerPort;
+			status = null;
+			TTL = 0;
+		}
+	}
 	
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
+		LoadServerData();
 	}
 
 	// Don't call on this for now; using monolith structure
 	public void WILLBEMAIN() throws Exception {
-		int portNumber = 8111;
 
-		try (ServerSocket serverSocket = new ServerSocket(portNumber);
+		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);
 				Socket clientSocket = serverSocket.accept();
 				/*
 				 * PrintWriter out = new
@@ -59,7 +75,7 @@ public class MasterServerNode extends ServerNode {
 		} catch (IOException e) {
 			System.out
 					.println("Exception caught when trying to listen on port "
-							+ portNumber + " or listening for a connection");
+							+ myPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		/*
@@ -78,6 +94,9 @@ public class MasterServerNode extends ServerNode {
 		 * clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
 		 * '\n'; outToClient.writeBytes(capitalizedSentence); }
 		 */
+		//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+		//TODO: Deal with Server Pings
+		//TODO: Send updated chunkserver data to re-connected servers
 	}
 
 	/**
@@ -951,7 +970,15 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	
-	public class ServerData{
+	public void LoadServerData(){
+		for (int i = 2; i <= 5; i++){
+		String IP = Config.prop.getProperty("IP" + i);
+		int clientPort = Integer.parseInt(Config.prop.getProperty("PORT" + i + "_CLIENT"));
+		int serverPort = Integer.parseInt(Config.prop.getProperty("PORT" + i + "_SERVER"));
+		ServerData temp = new ServerData(IP, clientPort, serverPort);
+		ServerMap.put(IP, temp);
+		System.out.println("Server at IP " + IP + " added to network");
+		System.out.println("ClientPort: " + clientPort + "\t ServerPort: " + serverPort);
+		}
 	}
 	}

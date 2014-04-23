@@ -24,6 +24,8 @@ import java.util.Map;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
+import Utility.HeartBeat;
+import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
@@ -75,7 +77,10 @@ public class ChunkServerNode extends ServerNode {
 	 * outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 	 * clientSentence = inFromClient.readLine(); System.out.println("Received: "
 	 * + clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
-	 * '\n'; outToClient.writeBytes(capitalizedSentence); } }
+	 * '\n'; outToClient.writeBytes(capitalizedSentence); }
+	 * 
+	 *  //TODO:Timer that send out pings at regular intervals
+	 * }
 	 */
 
 	/**
@@ -657,5 +662,12 @@ public class ChunkServerNode extends ServerNode {
 		}
 
 	}
-
+	
+	/**
+	 * TODO: Sends ping to Master telling it it's still alive and kicking
+	 */
+	public void PingMaster (){
+		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
+		master.DealWithMessage(ping);
+	}
 }
