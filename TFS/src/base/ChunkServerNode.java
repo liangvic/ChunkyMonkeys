@@ -395,17 +395,26 @@ public class ChunkServerNode extends ServerNode {
 			out = new BufferedWriter(fstream);
 			//System.out.println("Writing out to file");
 			out.write("");
-			out.close();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
 	public void LoadServerNodeMap() {
 		String path = "dataStorage/SData_ChunkMap.txt";
+		BufferedReader textReader = null;
 		try {
 			FileReader fr = new FileReader(path);
-			BufferedReader textReader = new BufferedReader(fr);
+			textReader = new BufferedReader(fr);
 			String textLine;
 
 			while ((textLine = textReader.readLine()) != null) {
@@ -480,13 +489,22 @@ public class ChunkServerNode extends ServerNode {
 				newMetaData.size = n_size;
 				chunkMap.put(key, newMetaData);
 			}
-			textReader.close();
+
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally
+		{
+			try {
+				textReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -538,10 +556,12 @@ public class ChunkServerNode extends ServerNode {
 		//INDEX
 		//SIZE
 		BufferedWriter out = null;
+		File file = null;
+		FileWriter fstream = null;
 		try  
 		{
-			File file = new File("dataStorage/SData_ChunkMap.txt");
-			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
+			file = new File("dataStorage/SData_ChunkMap.txt");
+			fstream = new FileWriter(file.getAbsoluteFile(), true); //true tells to append data.
 
 			out = new BufferedWriter(fstream);
 			out.write(key + "\t" + chunkmd.versionNumber + "\t"
@@ -555,13 +575,20 @@ public class ChunkServerNode extends ServerNode {
 			out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t"
 					+ chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
-
-			out.close();
-			fstream.close();
 		}
 		catch (IOException e)
 		{
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				out.close();
+				fstream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}
@@ -575,11 +602,19 @@ public class ChunkServerNode extends ServerNode {
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
 			os.write(data);
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
-			os.close();
 		}
 		catch (IOException e)
 		{
 			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				os.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}

@@ -1,3 +1,0 @@
-1\2\test.txt1	1	0	1\2\test.txt1	0	1\2\test.txt	0	0	1	0
-1\2\test.txt2	1	0	1\2\test.txt2	0	1\2\test.txt	0	0	2	0
-1\2\test.txt3	1	0	1\2\test.txt3	0	1\2\test.txt	0	0	3	0
