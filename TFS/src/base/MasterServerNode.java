@@ -265,32 +265,31 @@ public class MasterServerNode extends ServerNode {
 	public void ReadFile(Message inputMessage) {
 		//Implement Later
 		int indexCounter = 1;
-		System.out.println("trying to read "+inputMessage.filePath + indexCounter);
-		if (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
-			// master extracts the chunkclass from the filepath key
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ indexCounter);
-			System.out.println("hoho lets see here "+cm.chunkHash);
-			Message returnMessage = new Message(msgType.READFILE, cm);
-			returnMessage.success = msgSuccess.REQUESTSUCCESS;
-			client.DealWithMessage(returnMessage);
-		}
-		else{
-			System.out.println("doesnt exist");
+		System.out.println("Master: trying to read "+inputMessage.filePath + indexCounter);
+		if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
+			System.out.println("Master: doesnt exist");
 			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
 			return;
 		}
+		
 		// check if the file contains multiple chunk indexes
 		indexCounter++;
 		while (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath
-					+ indexCounter);
+//			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath + indexCounter);
+//			Message returnMessage = new Message(msgType.READFILE, cm);
+//			returnMessage.success = msgSuccess.REQUESTSUCCESS;
+//			System.out.println("Master: found chunk number "+indexCounter +" of file. its hash is "+cm.chunkHash);
+//			client.DealWithMessage(returnMessage);
+			indexCounter++;
+		}
+		client.ExpectChunkNumberForRead(indexCounter - 1);
+		for(int i=1;i<indexCounter;i++){
+			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
+			System.out.println("Master: first chunkhash is "+cm.chunkHash);
 			Message returnMessage = new Message(msgType.READFILE, cm);
 			returnMessage.success = msgSuccess.REQUESTSUCCESS;
 			client.DealWithMessage(returnMessage);
-			indexCounter++;
 		}
-		System.out.println("M: There is no file index "+indexCounter);
-//		client.ExpectChunkNumberForRead(indexCounter - 1);
 	}
 
 	public ChunkMetadata AssignChunkServer(Message inputMessage){

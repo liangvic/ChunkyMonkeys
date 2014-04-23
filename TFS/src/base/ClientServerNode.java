@@ -146,11 +146,13 @@ public class ClientServerNode extends ServerNode {
 	public void msgPrintFileData(Message dataMessage) {
 		System.out.println("    Get message to print file data");
 		chunkReadsRecieved++;
-		chunkCountToExpect = 1;
+		//hard coded
+//		chunkCountToExpect = 2;
 		for (byte b : dataMessage.fileData)
 			readFileData.add(b);
 		System.out.print(localPathToCreateFile);
 		if (chunkReadsRecieved == chunkCountToExpect) {
+			System.out.println("Client: recieved all "+chunkCountToExpect+ " chunks. Now writing file");
 			System.out.print(dataMessage.fileData);
 			byte[] finalByteArray = new byte[readFileData.size()];
 			for (int n = 0; n < readFileData.size(); n++)
@@ -159,10 +161,7 @@ public class ClientServerNode extends ServerNode {
 			try {
 				File file = new File(localPathToCreateFile);
 				file.createNewFile();
-				// convert array of bytes into file
-//				String decoded = new String(dataMessage.fileData, "UTF-8");
 				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
-//				System.out.println("Writing" + dataMessage.fileData + "string is: "+decoded);
 				fileOuputStream.write(finalByteArray);
 				fileOuputStream.close();
 
@@ -172,6 +171,7 @@ public class ClientServerNode extends ServerNode {
 			}
 			chunkCountToExpect = 99;
 			chunkReadsRecieved = 0;
+			readFileData.clear();
 		}
 
 	}
@@ -526,7 +526,7 @@ public class ClientServerNode extends ServerNode {
 	public void test5(String filePath, String localPath) {
 		//Check if inputs are NULL
 		if (filePath == null || localPath == null) {
-			System.out.println("Detected null values, please reenter query");
+			System.out.println("FilePath or localPath are null values, please reenter query");
 			return;
 		}
 		
@@ -618,7 +618,7 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
 	public void ExpectChunkNumberForRead(int i) {
-		System.out.println("expecting "+i+" chunks");
+		System.out.println("Client: Expecting "+i+" chunks");
 		chunkCountToExpect = i;
 	}
 	
