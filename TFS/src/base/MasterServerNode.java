@@ -6,6 +6,8 @@ import java.util.*;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
+import Utility.Config;
+import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
@@ -20,16 +22,33 @@ public class MasterServerNode extends ServerNode {
 	public ChunkServerNode chunkServer;
 
 	int operationID = 0;
-	
 	// private static ServerSocket welcomeSocket;
 	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>(); 
 	TFSLogger tfsLogger = new TFSLogger();
 
+	public class ServerData{
+		String IP;
+		int clientPort;
+		int serverPort;
+		int TTL; //time to last ping - the last time it pinged master
+		serverStatus status; 
+		
+		public ServerData(String nIP, int nClientPort, int nServerPort){
+			IP = nIP;
+			clientPort = nClientPort;
+			serverPort = nServerPort;
+			status = null;
+			TTL = 0;
+		}
+	}
+	
 	public MasterServerNode() {
 		LoadChunkServerMap();
 		LoadNamespaceMap();
+		LoadServerData();
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -77,6 +96,9 @@ public class MasterServerNode extends ServerNode {
 		 * clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
 		 * '\n'; outToClient.writeBytes(capitalizedSentence); }
 		 */
+		//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+		//TODO: Deal with Server Pings
+		//TODO: Send updated chunkserver data to re-connected servers
 	}
 
 	/**
@@ -88,6 +110,7 @@ public class MasterServerNode extends ServerNode {
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 			MDeleteDirectory(inputMessage.filePath,operationID);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
+			RemoveParentLocks(inputMessage.filePath);
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 				// SendSuccessMessageToClient();
 			} else {
@@ -96,12 +119,13 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
 			if (inputMessage.sender == serverType.CLIENT) {
 				try {
-					CreateDirectory(inputMessage.filePath);
+					CreateDirectory(inputMessage.filePath,operationID);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+				RemoveParentLocks(inputMessage.filePath);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 					System.out.println("Directory " + " creation successful");
 				} else if (inputMessage.success == msgSuccess.REQUESTERROR) {
@@ -112,8 +136,9 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.CREATEFILE) {
 			if (inputMessage.sender == serverType.CLIENT)
 				CreateFile(inputMessage.filePath, inputMessage.fileName,
-						inputMessage.chunkindex);
+						inputMessage.chunkindex, operationID);
 			else if (inputMessage.sender == serverType.CHUNKSERVER) {
+				RemoveParentLocks(inputMessage.filePath);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
 					System.out.println("File "
 							+ inputMessage.chunkClass.filename
@@ -123,14 +148,23 @@ public class MasterServerNode extends ServerNode {
 							+ inputMessage.chunkClass.filename
 							+ " creation failed");
 			}
-		} else if (inputMessage.type == msgType.READFILE && inputMessage.sender == serverType.CLIENT) {
-			ReadFile(inputMessage);
+		} else if (inputMessage.type == msgType.READFILE) {
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				ReadFile(inputMessage, operationID);
+			}
+			else if (inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				RemoveParentLocks(inputMessage.filePath);
+				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+			}
 		}
 		else if(inputMessage.type == msgType.APPENDTOFILE)
 		{
 			if(inputMessage.sender == serverType.CLIENT)
-				AssignChunkServer(inputMessage);
+				AssignChunkServer(inputMessage);//, operationID);
 			else if (inputMessage.sender == serverType.CHUNKSERVER){
+				RemoveParentLocks(inputMessage.filePath);
 				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
 				}
@@ -141,9 +175,10 @@ public class MasterServerNode extends ServerNode {
 		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
-				AppendToTFSFile(inputMessage);
+				AppendToTFSFile(inputMessage, operationID);
 			}
 			else if(inputMessage.sender == serverType.CHUNKSERVER) {
+				RemoveParentLocks(inputMessage.filePath);
 				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
 				}
@@ -155,79 +190,147 @@ public class MasterServerNode extends ServerNode {
 		{
 			if(inputMessage.sender == serverType.CLIENT)
 			{
-				FindFile(inputMessage.filePath);
+				FindFile(inputMessage.filePath, operationID);
 			}
 			else if (inputMessage.sender == serverType.CHUNKSERVER)
 			{
+				RemoveParentLocks(inputMessage.filePath);
 				System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 			}
 		}
 
 	}
-
 	/**
-	 * @param successMessage
+	 * 
+	 * @param opID
 	 */
-	public void RemoveParentLocks(int opID)
+	public void RemoveParentLocks(String filePath)
 	{
+		int opID = 0;
+		if(NamespaceMap.containsKey(filePath))
+		{
+			opID = NamespaceMap.get(filePath).lockData.operationID;
+		}
+		
 		for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
 		{
 			//if this operation previously made the lock
-			if(entry.getValue().lockData.operationID == opID)
-			{
-				entry.getValue().lockData.lockStatus = lockType.NONE;
-			}
+				if(entry.getValue().lockData.operationID == opID)
+				{
+					entry.getValue().lockData.lockStatus = lockType.NONE;
+				}
 		}
 	}
 	
+	/**
+	 * 
+	 * @param filePath
+	 * @param opID
+	 * @return
+	 */
 	public boolean AddExclusiveParentLocks(String filePath, int opID)
 	{
 		String[] tokens = filePath.split(File.pathSeparator);
 		String parentPath = tokens[0];
 		for(int i=1;i<tokens.length-1;i++)
 		{
-			if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+			if(NamespaceMap.containsKey(filePath))
 			{
-				if(parentPath != filePath)
+				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
 				{
-					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
-					NamespaceMap.get(parentPath).lockData.operationID = opID;
+					if(parentPath != filePath)
+					{
+						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
+						NamespaceMap.get(parentPath).lockData.operationID = opID;
+					}
+					else
+					{
+						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
+						NamespaceMap.get(parentPath).lockData.operationID = opID;
+					}
 				}
-				else
+				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
+						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
 				{
-					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
-					NamespaceMap.get(parentPath).lockData.operationID = opID;
+					if(parentPath == filePath)
+					{
+						RemoveParentLocks(filePath);
+						SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+						return false;
+					}
+					//if not the final node, allow it to pass
 				}
-			}
-			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
-					NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
-			{
-				if(parentPath == filePath)
+				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
+							NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
 				{
-					RemoveParentLocks(opID);
+					RemoveParentLocks(parentPath);
 					SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 					return false;
 				}
-				//if not the final node, allow it to pass
+				parentPath = parentPath + "\\" + tokens[i]; 
 			}
-			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
-			{
-				RemoveParentLocks(opID);
-				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
-				return false;
-			}
-			parentPath = parentPath + "\\" + tokens[i]; 
 		}
 		return true;
 	}
-
+	
+	/**
+	 * 
+	 * @param filePath
+	 * @param opID
+	 * @return
+	 */
+	
+	public boolean AddSharedParentLocks(String filePath, int opID)
+	{
+		String[] tokens = filePath.split(File.pathSeparator);
+		String parentPath = tokens[0];
+		for(int i=1;i<tokens.length-1;i++)
+		{
+			if(NamespaceMap.containsKey(filePath))
+			{
+				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+				{
+					if(parentPath != filePath)
+					{
+						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_SHARED;
+						NamespaceMap.get(parentPath).lockData.operationID = opID;
+					}
+					else
+					{
+						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.SHARED;
+						NamespaceMap.get(parentPath).lockData.operationID = opID;
+					}
+				}
+				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
+						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
+				{
+					if(parentPath == filePath)
+					{
+						RemoveParentLocks(filePath);
+						return false;
+					}
+					//if not the final node, allow it to pass
+				}
+				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
+				{
+					RemoveParentLocks(parentPath);
+					return false;
+				}
+				parentPath = parentPath + "\\" + tokens[i]; 
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * @param successMessage
+	 */
 	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
-	/**
+	/** 
 	 * @param errorMessage
 	 */
 	public void SendErrorMessageToClient(Message errorMessage) {
@@ -236,7 +339,9 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	/**
+	 * 
 	 * @param filePath
+	 * @param opID
 	 */
 	public void MDeleteDirectory(String filePath, int opID) {
 		if (NamespaceMap.containsKey(filePath)) {
@@ -286,7 +391,11 @@ public class MasterServerNode extends ServerNode {
 					  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 				  }
 				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
-				RemoveParentLocks(opID);
+			}
+			else
+			{
+				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				return;
 			}
 		} else // the filepath is not in the directory. Send error!
 		{
@@ -340,100 +449,121 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	/**
+	 * 
 	 * @param inputMessage
+	 * @param opID
 	 */
-	public void ReadFile(Message inputMessage) {
-		//Implement Later
-		int indexCounter = 1;
-		System.out.println("Master: trying to read "+inputMessage.filePath + indexCounter);
-		if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
-			System.out.println("Master: doesnt exist");
-			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
-			return;
-		}
-		
-		// check if the file contains multiple chunk indexes
-		indexCounter++;
-		while (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
-//			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath + indexCounter);
-//			Message returnMessage = new Message(msgType.READFILE, cm);
-//			returnMessage.success = msgSuccess.REQUESTSUCCESS;
-//			System.out.println("Master: found chunk number "+indexCounter +" of file. its hash is "+cm.chunkHash);
-//			client.DealWithMessage(returnMessage);
+	public void ReadFile(Message inputMessage, int opID) {
+		if(AddSharedParentLocks(inputMessage.filePath, opID))
+		{
+			//Implement Later
+			int indexCounter = 1;
+			System.out.println("Master: trying to read "+inputMessage.filePath + indexCounter);
+			if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
+				System.out.println("Master: doesnt exist");
+				SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
+				return;
+			}
+			
+			// check if the file contains multiple chunk indexes
 			indexCounter++;
+			while (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
+//				ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath + indexCounter);
+//				Message returnMessage = new Message(msgType.READFILE, cm);
+//				returnMessage.success = msgSuccess.REQUESTSUCCESS;
+//				System.out.println("Master: found chunk number "+indexCounter +" of file. its hash is "+cm.chunkHash);
+//				client.DealWithMessage(returnMessage);
+				indexCounter++;
+			}
+			client.ExpectChunkNumberForRead(indexCounter - 1);
+			for(int i=1;i<indexCounter;i++){
+				ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
+				System.out.println("Master: first chunkhash is "+cm.chunkHash);
+				Message returnMessage = new Message(msgType.READFILE, cm);
+				returnMessage.success = msgSuccess.REQUESTSUCCESS;
+				client.DealWithMessage(returnMessage);
+			}
+			
 		}
-		client.ExpectChunkNumberForRead(indexCounter - 1);
-		for(int i=1;i<indexCounter;i++){
-			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
-			System.out.println("Master: first chunkhash is "+cm.chunkHash);
-			Message returnMessage = new Message(msgType.READFILE, cm);
-			returnMessage.success = msgSuccess.REQUESTSUCCESS;
-			client.DealWithMessage(returnMessage);
+		else
+		{
+			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
 		}
 	}
 
 	/**
+	 * 
 	 * @param inputMessage
 	 * @return
 	 */
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
-		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		//System.out.println("burrito: "+inputMessage.fileName);
-		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
-		//newMetaData.listOfLocations = 0;
-		newMetaData.chunkHash = hashstring;
-		Random rand = new Random();
-		newMetaData.filenumber = rand.nextInt(5);
-		//do a check to see what the offset is
-		int targetFileNumber = newMetaData.filenumber;
-		int largestOffSet = 0;
-		
-		for(String key: chunkServerMap.keySet()){
-			if(chunkServerMap.get(key).filenumber == targetFileNumber)
-				if(chunkServerMap.get(key).byteoffset>largestOffSet)
-					largestOffSet = chunkServerMap.get(key).byteoffset;
-		}
-		newMetaData.byteoffset = largestOffSet;
-		newMetaData.size = inputMessage.fileData.length;
-		
-		
-		//add to hashmap
-		chunkServerMap.put(hashstring, newMetaData);
-		//create a new namespace node
-		//filename and get parent, add child.
-		
-		
-		
-		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
-		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
-		//System.out.println("Got to the file");
-		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
-		
-		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
-		//need to update children to, so have to clear and write again
-		for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-		  {
-			  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
-		  }
-		//only appending on
-		WritePersistentChunkServerMap(hashstring,
-				chunkServerMap.get(hashstring));
-		
-		Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
-		client.DealWithMessage(metadataMsg);
-		return newMetaData;
-		//client.AppendToChunkServer(hashstring, myServer);
-		//client.AppendToChunkServer(newMetaData, chunkServer);
+		//TODO: NEED TO ADD IN THE LOCK CHECKING
+		//if(AddExclusiveParentLocks(inputMessage.filePath, opID))
+		//{
+			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+			//System.out.println("burrito: "+inputMessage.fileName);
+			ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
+			//newMetaData.listOfLocations = 0;
+			newMetaData.chunkHash = hashstring;
+			Random rand = new Random();
+			newMetaData.filenumber = rand.nextInt(5);
+			//do a check to see what the offset is
+			int targetFileNumber = newMetaData.filenumber;
+			int largestOffSet = 0;
+			
+			for(String key: chunkServerMap.keySet()){
+				if(chunkServerMap.get(key).filenumber == targetFileNumber)
+					if(chunkServerMap.get(key).byteoffset>largestOffSet)
+						largestOffSet = chunkServerMap.get(key).byteoffset;
+			}
+			newMetaData.byteoffset = largestOffSet;
+			newMetaData.size = inputMessage.fileData.length;
+			
+			
+			//add to hashmap
+			chunkServerMap.put(hashstring, newMetaData);
+			//create a new namespace node
+			//filename and get parent, add child.
+			
+			
+			
+			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+			NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+			//System.out.println("Got to the file");
+			NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
+			
+			ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
+			//need to update children to, so have to clear and write again
+			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+			  {
+				  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+			  }
+			//only appending on
+			WritePersistentChunkServerMap(hashstring,
+					chunkServerMap.get(hashstring));
+			
+			Message metadataMsg = new Message(msgType.APPENDTOFILE, newMetaData);
+			client.DealWithMessage(metadataMsg);
+			return newMetaData;
+			//client.AppendToChunkServer(hashstring, myServer);
+			//client.AppendToChunkServer(newMetaData, chunkServer);
+		/*}
+		else
+		{
+			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, inputMessage.filePath));
+			return null;
+		}*/
 		
 		
 	}
-	
 	/**
+	 * 
 	 * @param filepath
 	 * @param filename
 	 * @param index
+	 * @param opID
 	 */
-	public void CreateFile(String filepath, String filename, int index){
+	public void CreateFile(String filepath, String filename, int index, int opID){
 		System.out.println("CREATING FILE");
 		String newfilename = filepath + "\\" + filename;
 		String hashstring = newfilename + index;
@@ -443,70 +573,88 @@ public class MasterServerNode extends ServerNode {
 				|| NamespaceMap.get(filepath).type == nodeType.FILE) {
 			SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 		} else {
+			if(AddExclusiveParentLocks(filepath, opID))
+			{
+				String newName = filepath + "\\" + filename;
+				if (NamespaceMap.get(newfilename) == null) {
+					NamespaceMap.put(newName, new NamespaceNode(nodeType.FILE));
 
-			String newName = filepath + "\\" + filename;
-			if (NamespaceMap.get(newfilename) == null) {
-				NamespaceMap.put(newName, new NamespaceNode(nodeType.FILE));
+					NamespaceMap.get(filepath).children.add(newName);
 
-				NamespaceMap.get(filepath).children.add(newName);
+					ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
-				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
+					Random rand = new Random();
+					newChunk.filenumber = rand.nextInt(5); //only use one for now
+					newChunk.chunkHash = hashstring;
+					chunkServerMap.put(hashstring, newChunk);
 
-				Random rand = new Random();
-				newChunk.filenumber = rand.nextInt(5); //only use one for now
-				newChunk.chunkHash = hashstring;
-				chunkServerMap.put(hashstring, newChunk);
+					Message newMessage = new Message(msgType.CREATEFILE, newChunk);
+					newMessage.chunkClass.filename = newName;
+					try {
+						chunkServer.DealWithMessage(newMessage);
 
-				Message newMessage = new Message(msgType.CREATEFILE, newChunk);
-				newMessage.chunkClass.filename = newName;
-				try {
-					chunkServer.DealWithMessage(newMessage);
+					} catch (Exception e) {
+						SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
+					}
 
-				} catch (Exception e) {
+					WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
+					WritePersistentChunkServerMap(hashstring,
+							chunkServerMap.get(hashstring));
+					SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
+					tfsLogger.LogMsg("Created file " + newName);
+					
+				} else {
 					SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
-				}
-
-				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
-				WritePersistentChunkServerMap(hashstring,
-						chunkServerMap.get(hashstring));
-				SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
-				tfsLogger.LogMsg("Created file " + newName);
-				
-			} else {
-				SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
+				}	
 			}
+			else
+			{
+				SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
 
+			}
+			
 		}
 	}
 
 	/**
+	 * 
 	 * @param filepath
+	 * @param opID
 	 */
-	public void CreateDirectory(String filepath) {
+	public void CreateDirectory(String filepath, int opID) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			File path = new File(filepath);
-			String parentPath = path.getParent();
-			String parent;
-			if (parentPath == null) {
-				parent = filepath;
-			} else {
-				parent = parentPath;
+			if(AddExclusiveParentLocks(filepath, opID))
+			{
+				File path = new File(filepath);
+				String parentPath = path.getParent();
+				String parent;
+				if (parentPath == null) {
+					parent = filepath;
+				} else {
+					parent = parentPath;
+				}
+				if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
+					// parent directory does not exist
+					SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
+					return;
+				} else if (NamespaceMap.containsKey(parent)) {
+					NamespaceMap.get(parent).children.add(filepath);
+				}
+
+				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
+				NamespaceMap.put(filepath, newNode);
+				SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY,
+						filepath));
+				tfsLogger.LogMsg("Created directory " + filepath);
+
+				WritePersistentNamespaceMap(filepath, newNode);
+				System.out.println("output " + opID);
 			}
-			if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
-				// parent directory does not exist
+			else
+			{
 				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
-				return;
-			} else if (NamespaceMap.containsKey(parent)) {
-				NamespaceMap.get(parent).children.add(filepath);
 			}
-
-			NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
-			NamespaceMap.put(filepath, newNode);
-			SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY,
-					filepath));
-			tfsLogger.LogMsg("Created directory " + filepath);
-
-			WritePersistentNamespaceMap(filepath, newNode);
+			
 		} else // directory already exists
 		{
 			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
@@ -534,18 +682,27 @@ public class MasterServerNode extends ServerNode {
 	}
 	
 	/**
+	 * 
 	 * @param message
+	 * @param opID
 	 */
-	public void AppendToTFSFile(Message message)
+	public void AppendToTFSFile(Message message, int opID)
 	{
-		ChunkMetadata chunkData = GetTFSFile(message.filePath);
-		if(chunkData != null) {
-			Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
-			Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
-			chunkServer.DealWithMessage(m1);
-			client.DealWithMessage(m2);
+		if(AddExclusiveParentLocks(message.filePath, opID))
+		{
+			ChunkMetadata chunkData = GetTFSFile(message.filePath);
+			if(chunkData != null) {
+				Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+				Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+				chunkServer.DealWithMessage(m1);
+				client.DealWithMessage(m2);
+			}
+			else {
+				SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
+			}
 		}
-		else {
+		else
+		{
 			SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
 		}
 	}
@@ -607,39 +764,44 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	/**
+	 * 
 	 * @param filepath
+	 * @param opID
 	 */
-	public void FindFile(String filepath)
+	public void FindFile(String filepath, int opID)
 	{
-		int index = 1;
-		int logicalFilesCount = 0;
-		String chunkServerMapKey = filepath + index;
-		if(NamespaceMap.containsKey(filepath))
+		if(AddSharedParentLocks(filepath, opID))
 		{
-			ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
-			
-			while(chunkServerMap.containsKey(chunkServerMapKey)){
-				logicalFilesCount++;
-				chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
-				Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
-				newMessage.chunkClass.filename = filepath;
-//				try {
-//					chunkServer.DealWithMessage(newMessage);
-//
-//				} catch (Exception e) {
-//					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
-//				}
-				index++;
-				chunkServerMapKey = filepath + index;
+			int index = 1;
+			int logicalFilesCount = 0;
+			String chunkServerMapKey = filepath + index;
+			if(NamespaceMap.containsKey(filepath))
+			{
+				ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
+				
+				while(chunkServerMap.containsKey(chunkServerMapKey)){
+					logicalFilesCount++;
+					chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
+					Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
+					newMessage.chunkClass.filename = filepath;
+//					try {
+//						chunkServer.DealWithMessage(newMessage);
+	//
+//					} catch (Exception e) {
+//						SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
+//					}
+					index++;
+					chunkServerMapKey = filepath + index;
+				}
+				if(logicalFilesCount ==1)
+					System.out.println("There is " + logicalFilesCount + " logical file in " + filepath);
+				else
+					System.out.println("There are " + logicalFilesCount + " logical files in " + filepath);
 			}
-			if(logicalFilesCount ==1)
-				System.out.println("There is " + logicalFilesCount + " logical file in " + filepath);
 			else
-				System.out.println("There are " + logicalFilesCount + " logical files in " + filepath);
-		}
-		else
-		{
-			System.out.println("File does not exist...");
+			{
+				System.out.println("File does not exist...");
+			}
 		}
 	}
 	
@@ -950,4 +1112,15 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-}
+	public void LoadServerData(){
+		for (int i = 2; i <= 5; i++){
+		String IP = Config.prop.getProperty("IP" + i);
+		int clientPort = Integer.parseInt(Config.prop.getProperty("PORT" + i + "_CLIENT"));
+		int serverPort = Integer.parseInt(Config.prop.getProperty("PORT" + i + "_SERVER"));
+		ServerData temp = new ServerData(IP, clientPort, serverPort);
+		ServerMap.put(IP, temp);
+		System.out.println("Server at IP " + IP + " added to network");
+		System.out.println("ClientPort: " + clientPort + "\t ServerPort: " + serverPort);
+		}
+	}
+	}
