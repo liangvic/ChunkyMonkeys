@@ -3,6 +3,10 @@ package Utility;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 
+ *
+ */
 public class NamespaceNode {
 	public static enum nodeType{ DIRECTORY, FILE}
 	public nodeType type;

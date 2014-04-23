@@ -75,6 +75,9 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 
+	/**
+	 * @param inputMessage
+	 */
 	public void DealWithMessage(Message inputMessage) {
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
@@ -157,16 +160,25 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param successMessage
+	 */
 	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
+	/**
+	 * @param errorMessage
+	 */
 	public void SendErrorMessageToClient(Message errorMessage) {
 		errorMessage.success = msgSuccess.REQUESTERROR;
 		client.DealWithMessage(errorMessage);
 	}
 
+	/**
+	 * @param filePath
+	 */
 	public void MDeleteDirectory(String filePath) {
 
 		if (NamespaceMap.containsKey(filePath)) {
@@ -221,6 +233,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param startingNodeFilePath
+	 */
 	public void deleteAllChildNodes(String startingNodeFilePath) {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			//initially start at chunk index 1
@@ -262,6 +277,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param inputMessage
+	 */
 	public void ReadFile(Message inputMessage) {
 		//Implement Later
 		int indexCounter = 1;
@@ -291,6 +309,10 @@ public class MasterServerNode extends ServerNode {
 //		client.ExpectChunkNumberForRead(indexCounter - 1);
 	}
 
+	/**
+	 * @param inputMessage
+	 * @return
+	 */
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
 		//System.out.println("burrito: "+inputMessage.fileName);
@@ -343,6 +365,11 @@ public class MasterServerNode extends ServerNode {
 		
 	}
 	
+	/**
+	 * @param filepath
+	 * @param filename
+	 * @param index
+	 */
 	public void CreateFile(String filepath, String filename, int index){
 		System.out.println("CREATING FILE");
 		String newfilename = filepath + "\\" + filename;
@@ -363,7 +390,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 0; //only use one for now
+				newChunk.filenumber = rand.nextInt(5); //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 
@@ -389,6 +416,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void CreateDirectory(String filepath) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			File path = new File(filepath);
@@ -440,6 +470,9 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 	
+	/**
+	 * @param message
+	 */
 	public void AppendToTFSFile(Message message)
 	{
 		ChunkMetadata chunkData = GetTFSFile(message.filePath);
@@ -454,6 +487,10 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 	
+	/**
+	 * @param filepath
+	 * @return
+	 */
 	public ChunkMetadata GetTFSFile(String filepath)
 	{
 		int index = 1;
@@ -506,6 +543,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void FindFile(String filepath)
 	{
 		int index = 1;
@@ -542,6 +582,10 @@ public class MasterServerNode extends ServerNode {
 	
 	/////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
 	
+	/**
+	 * @param key
+	 * @param chunkmd
+	 */
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
 	{
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
@@ -580,6 +624,10 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param key
+	 * @param nsNode
+	 */
 	public void WritePersistentNamespaceMap(String key, NamespaceNode nsNode) {
 		// STRUCTURE///
 		// KEY TYPE CHILD CHILD CHILD ...//
@@ -608,6 +656,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	public void LoadChunkServerMap()
 	{	
 		try {
@@ -697,6 +748,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void LoadNamespaceMap() {
 		// String path = "dataStorage/MData_NamespaceMap.txt";
 		try {
@@ -741,6 +795,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void ClearChunkServerMapFile() {
 		BufferedWriter out = null;
 		try {
@@ -759,6 +816,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void ClearNamespaceMapFile() {
 		BufferedWriter out = null;
 		try  
