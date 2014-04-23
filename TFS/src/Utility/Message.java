@@ -4,6 +4,10 @@ import java.net.*;
 import java.util.*;
 import java.io.*; 
 
+/**
+ * Message class that gets passed between Nodes
+ *
+ */
 public class Message implements Serializable{
 	
 	public Message(msgType msgT){

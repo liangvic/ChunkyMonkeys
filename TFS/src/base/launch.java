@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.util.TimerTask;
 
 import Utility.ChunkMetadata;
+import Utility.Config;
 import Utility.NamespaceNode;
 import Utility.TFSLogger;
 import base.*;
@@ -16,6 +17,7 @@ import java.util.Timer;
 public class launch {
 
 	public static void main(String args[]) throws Exception {
+		Config.prop.load(new FileInputStream("config/config.properties"));
 		MasterServerNode master = new MasterServerNode();
 		ClientServerNode client = new ClientServerNode();
 		ChunkServerNode chunkServer = new ChunkServerNode();
@@ -50,10 +52,32 @@ public class launch {
 		
 		if (input == 1){
 			MasterServerNode master = new MasterServerNode(); 
+			master.myIP = Config.prop.getProperty("MASTERIP");
+			master.myPortNumber = Config.prop.getProperty("MASTERPORT");
 		}
 		else if (input == 2 ){
 			ClientServerNode client = new ClientServerNode(); 
 			client.TestInterface();
+			client.myIP = Config.prop.getProperty("IP2");
+			client.myPortNumber = Config.prop.getProperty("PORT2");
+		}
+		else if (input == 3) {
+			ClientServerNode client = new ClientServerNode(); 
+			client.TestInterface();
+			client.myIP = Config.prop.getProperty("IP3");
+			client.myPortNumber = Config.prop.getProperty("PORT3");
+		}
+		else if (input == 4) {
+			ClientServerNode client = new ClientServerNode(); 
+			client.TestInterface();
+			client.myIP = Config.prop.getProperty("IP4");
+			client.myPortNumber = Config.prop.getProperty("PORT4");
+		}
+		else if (input == 5) {
+			ClientServerNode client = new ClientServerNode(); 
+			client.TestInterface();
+			client.myIP = Config.prop.getProperty("IP5");
+			client.myPortNumber = Config.prop.getProperty("PORT5");
 		}
 		else{
 			System.out.println("Invalid Selection");

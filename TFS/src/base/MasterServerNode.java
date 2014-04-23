@@ -7,6 +7,7 @@ import java.util.*;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Message;
+import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
@@ -18,6 +19,8 @@ public class MasterServerNode extends ServerNode {
 	public ClientServerNode client;
 	public ChunkServerNode chunkServer;
 
+	int operationID = 0;
+	
 	// private static ServerSocket welcomeSocket;
 	//chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
@@ -75,10 +78,14 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 
+	/**
+	 * @param inputMessage
+	 */
 	public void DealWithMessage(Message inputMessage) {
+		operationID++; //used to differentiate operations
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
-			MDeleteDirectory(inputMessage.filePath);
+			MDeleteDirectory(inputMessage.filePath,operationID);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 				// SendSuccessMessageToClient();
@@ -157,63 +164,129 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param successMessage
+	 */
+	public void RemoveParentLocks(int opID)
+	{
+		for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+		{
+			//if this operation previously made the lock
+			if(entry.getValue().lockData.operationID == opID)
+			{
+				entry.getValue().lockData.lockStatus = lockType.NONE;
+			}
+		}
+	}
+	
+	public boolean AddExclusiveParentLocks(String filePath, int opID)
+	{
+		String[] tokens = filePath.split(File.pathSeparator);
+		String parentPath = tokens[0];
+		for(int i=1;i<tokens.length-1;i++)
+		{
+			if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+			{
+				if(parentPath != filePath)
+				{
+					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
+					NamespaceMap.get(parentPath).lockData.operationID = opID;
+				}
+				else
+				{
+					NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
+					NamespaceMap.get(parentPath).lockData.operationID = opID;
+				}
+			}
+			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
+					NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
+			{
+				if(parentPath == filePath)
+				{
+					RemoveParentLocks(opID);
+					SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+					return false;
+				}
+				//if not the final node, allow it to pass
+			}
+			else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
+						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
+			{
+				RemoveParentLocks(opID);
+				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				return false;
+			}
+			parentPath = parentPath + "\\" + tokens[i]; 
+		}
+		return true;
+	}
+
 	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
 		client.DealWithMessage(successMessage);
 	}
 
+	/**
+	 * @param errorMessage
+	 */
 	public void SendErrorMessageToClient(Message errorMessage) {
 		errorMessage.success = msgSuccess.REQUESTERROR;
 		client.DealWithMessage(errorMessage);
 	}
 
-	public void MDeleteDirectory(String filePath) {
-
+	/**
+	 * @param filePath
+	 */
+	public void MDeleteDirectory(String filePath, int opID) {
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
-			if (NamespaceMap.get(filePath).children.size() > 0) {
-				// recursively going through the tree and deleting all
-				// files/directories below
-				deleteAllChildNodes(filePath);
-			}
 			
-			String[] tokens = filePath.split(File.pathSeparator);
-			String parentPath = tokens[0];
-			for(int i=1;i<tokens.length-1;i++)
+			if(AddExclusiveParentLocks(filePath, opID))
 			{
-				parentPath = parentPath + "\\" + tokens[i]; 
-			}
-			
-			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-			  {
-				for(int i=0;i<entry.getValue().children.size();i++)
-				{
-					if(entry.getValue().children.get(i).contains(parentPath))
-					{
-						entry.getValue().children.remove(i);
-					}
+				if (NamespaceMap.get(filePath).children.size() > 0) {
+					// recursively going through the tree and deleting all
+					// files/directories below
+					deleteAllChildNodes(filePath);
 				}
-			  }
-			
-			// finally delete directory wanted to delete
-			NamespaceMap.remove(filePath);
+				
+				String[] tokens = filePath.split(File.pathSeparator);
+				String parentPath = tokens[0];
+				for(int i=1;i<tokens.length-1;i++)
+				{
+					parentPath = parentPath + "\\" + tokens[i]; 
+				}
+				
+				for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				  {
+					for(int i=0;i<entry.getValue().children.size();i++)
+					{
+						if(entry.getValue().children.get(i).contains(parentPath))
+						{
+							entry.getValue().children.remove(i);
+						}
+					}
+				  }
+				
+				// finally delete directory wanted to delete
+				NamespaceMap.remove(filePath);
 
-			tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
+				tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
-			ClearChunkServerMapFile();
-			ClearNamespaceMapFile();
-			
-			for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap.entrySet())
-			  {
-				 WritePersistentChunkServerMap(entry.getKey(),entry.getValue());
-			  }
-			  for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-			  {
-				  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
-			  }
-			SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
-			
+				ClearChunkServerMapFile();
+				ClearNamespaceMapFile();
+				
+				for (Map.Entry<String, ChunkMetadata> entry : chunkServerMap.entrySet())
+				  {
+					 WritePersistentChunkServerMap(entry.getKey(),entry.getValue());
+				  }
+				  for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				  {
+					  WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+				  }
+				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				RemoveParentLocks(opID);
+			}
 		} else // the filepath is not in the directory. Send error!
 		{
 			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
@@ -221,6 +294,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param startingNodeFilePath
+	 */
 	public void deleteAllChildNodes(String startingNodeFilePath) {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			//initially start at chunk index 1
@@ -262,6 +338,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param inputMessage
+	 */
 	public void ReadFile(Message inputMessage) {
 		//Implement Later
 		int indexCounter = 1;
@@ -292,6 +371,10 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param inputMessage
+	 * @return
+	 */
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
 		//System.out.println("burrito: "+inputMessage.fileName);
@@ -344,6 +427,11 @@ public class MasterServerNode extends ServerNode {
 		
 	}
 	
+	/**
+	 * @param filepath
+	 * @param filename
+	 * @param index
+	 */
 	public void CreateFile(String filepath, String filename, int index){
 		System.out.println("CREATING FILE");
 		String newfilename = filepath + "\\" + filename;
@@ -364,7 +452,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 0; //only use one for now
+				newChunk.filenumber = rand.nextInt(5); //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 
@@ -390,6 +478,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void CreateDirectory(String filepath) {
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			File path = new File(filepath);
@@ -441,6 +532,9 @@ public class MasterServerNode extends ServerNode {
 		 */
 	}
 	
+	/**
+	 * @param message
+	 */
 	public void AppendToTFSFile(Message message)
 	{
 		ChunkMetadata chunkData = GetTFSFile(message.filePath);
@@ -455,6 +549,10 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 	
+	/**
+	 * @param filepath
+	 * @return
+	 */
 	public ChunkMetadata GetTFSFile(String filepath)
 	{
 		int index = 1;
@@ -507,6 +605,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void FindFile(String filepath)
 	{
 		int index = 1;
@@ -543,6 +644,10 @@ public class MasterServerNode extends ServerNode {
 	
 	/////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
 	
+	/**
+	 * @param key
+	 * @param chunkmd
+	 */
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd)
 	{
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
@@ -590,6 +695,10 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param key
+	 * @param nsNode
+	 */
 	public void WritePersistentNamespaceMap(String key, NamespaceNode nsNode) {
 		// STRUCTURE///
 		// KEY TYPE CHILD CHILD CHILD ...//
@@ -626,6 +735,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	public void LoadChunkServerMap()
 	{	
 		BufferedReader textReader = null;
@@ -725,6 +837,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void LoadNamespaceMap() {
 		// String path = "dataStorage/MData_NamespaceMap.txt";
 		BufferedReader textReader = null;
@@ -779,6 +894,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void ClearChunkServerMapFile() {
 		BufferedWriter out = null;
 		try {
@@ -805,6 +923,9 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void ClearNamespaceMapFile() {
 		BufferedWriter out = null;
 		try  

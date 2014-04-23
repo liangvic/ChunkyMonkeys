@@ -78,6 +78,9 @@ public class ChunkServerNode extends ServerNode {
 	 * '\n'; outToClient.writeBytes(capitalizedSentence); } }
 	 */
 
+	/**
+	 * @param message
+	 */
 	public void DealWithMessage(Message message) {
 		if (message.type == msgType.DELETEDIRECTORY) {
 			DeleteChunk(message.chunkClass);
@@ -109,6 +112,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param metadata
+	 */
 	public void ReadChunks(ChunkMetadata metadata){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
 		//		for(ChunkLocation messageLocation: metadata.listOfLocations){
@@ -149,6 +155,9 @@ public class ChunkServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param metadata
+	 */
 	public void AddNewBlankChunk(ChunkMetadata metadata) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
 		try{
@@ -180,6 +189,10 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 
+	/**
+	 * @param metadata
+	 * @param byteArray
+	 */
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray) {
 
 		TFSFile current = new TFSFile(0);
@@ -250,10 +263,13 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		WriteDataToFile(current, current.data);
+		WriteDataToFile(current, byteArray/*current.data*/);
 		master.DealWithMessage(newMessage);
 	}
 
+	/**
+	 * @param metadata
+	 */
 	public void DeleteChunk(ChunkMetadata metadata) {
 		String chunkToDelete = null;
     	for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
@@ -293,6 +309,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param metadata
+	 */
 	public void CountNumInFile(ChunkMetadata metadata)
 	{
 		int numCounted = 0;
@@ -333,6 +352,9 @@ public class ChunkServerNode extends ServerNode {
 
 	}
 	
+	/**
+	 * @param message
+	 */
 	void AppendToTFSFile(Message message) { // Test 6
 		try {
 			ChunkMetadata metadata = message.chunkClass;
@@ -383,6 +405,9 @@ public class ChunkServerNode extends ServerNode {
 	
 /////////////////////////////WRITING TO PERSISTENT DATA///////////////////////////
 	
+	/**
+	 * 
+	 */
 	public void ClearChunkMap() {
 		BufferedWriter out = null;
 		try {
@@ -409,6 +434,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void LoadServerNodeMap() {
 		String path = "dataStorage/SData_ChunkMap.txt";
 		BufferedReader textReader = null;
@@ -508,6 +536,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void LoadFileData()
 	{
 		for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet()) {		
@@ -542,6 +573,10 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param key
+	 * @param chunkmd
+	 */
 	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
 		//String fileToWriteTo = "dataStorage/File" + chunkmd.filenumber;
@@ -593,12 +628,16 @@ public class ChunkServerNode extends ServerNode {
 
 	}
 	
+	/**
+	 * @param file
+	 * @param data
+	 */
 	public void WriteDataToFile(TFSFile file, byte[] data)
 	{
 		//BufferedWriter out = null;
 		OutputStream os = null;
 		try{
-			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
 			os.write(data);
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());

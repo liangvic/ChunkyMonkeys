@@ -1,5 +1,9 @@
 package Utility;
 
+/**
+ * 
+ *
+ */
 public class ChunkLocation {
 	public String chunkIP;
 	public int chunkPort;
