@@ -58,8 +58,10 @@ public class launch {
 		else if (input == 2 || input == 3 || input == 4 || input == 5 ){
 			client.TestInterface();
 			String IPkey = Config.prop.getProperty("IP" + input);
-			String portKey = Config.prop.getProperty("PORT" + input + "_CLIENT")
+			String portKeyClient = Config.prop.getProperty("PORT" + input + "_CLIENT");
+			String portKeyServer = Config.prop.getProperty("PORT" + input + "_SERVER")
 			ClientServerNode client = new ClientServerNode(); 
+			ChunkServerNode chunkServer = new ChunkServerNode();
 		}
 		else{
 			System.out.println("Invalid Selection");
