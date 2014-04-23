@@ -226,7 +226,7 @@ public class MasterServerNode extends ServerNode {
 		client.DealWithMessage(successMessage);
 	}
 
-	/**
+	/** 
 	 * @param errorMessage
 	 */
 	public void SendErrorMessageToClient(Message errorMessage) {
