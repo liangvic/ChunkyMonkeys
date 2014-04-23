@@ -285,9 +285,11 @@ public class MasterServerNode extends ServerNode {
 			ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath
 					+ indexCounter);
 			Message returnMessage = new Message(msgType.READFILE, cm);
+			returnMessage.success = msgSuccess.REQUESTSUCCESS;
 			client.DealWithMessage(returnMessage);
 			indexCounter++;
 		}
+		System.out.println("M: There is no file index "+indexCounter);
 //		client.ExpectChunkNumberForRead(indexCounter - 1);
 	}
 
