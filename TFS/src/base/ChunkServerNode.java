@@ -9,9 +9,12 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.WriteAbortedException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +27,8 @@ import java.util.Map;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
+import Utility.HeartBeat;
+import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
@@ -75,8 +80,28 @@ public class ChunkServerNode extends ServerNode {
 	 * outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 	 * clientSentence = inFromClient.readLine(); System.out.println("Received: "
 	 * + clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
-	 * '\n'; outToClient.writeBytes(capitalizedSentence); } }
+	 * '\n'; outToClient.writeBytes(capitalizedSentence); }
+	 * 
+	 *  //TODO:Timer that send out pings at regular intervals
+	 * }
 	 */
+	
+	public void WILLBEMAIN() throws Exception {
+		try { 
+			ServerSocket serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+			Message m;
+			while((m = (Message)ois.readObject()) != null) {
+				DealWithMessage(m);
+			}
+		} catch (IOException e) {
+			System.out
+					.println("Exception caught when trying to listen on port "
+							+ myPortNumber + " or listening for a connection");
+			System.out.println(e.getMessage());
+		}
+	}
 
 	/**
 	 * @param message
@@ -110,7 +135,11 @@ public class ChunkServerNode extends ServerNode {
 		}
 		else if (message.type == msgType.WRITETONEWFILE)
 		{
-			//WriteToNewFile(message.chunkClass, message.fileData);
+			if (message.chunkClass == null) {
+				System.out.println("chunkClass is null");
+			}
+			else
+				WriteToNewFile(message.chunkClass, message.fileData);
 		}
 	}
 
@@ -269,6 +298,55 @@ public class ChunkServerNode extends ServerNode {
 		master.DealWithMessage(newMessage);
 	}
 
+	public void WriteToNewFile(ChunkMetadata metadata, byte[] byteArray) {
+
+		TFSFile current = new TFSFile(0);
+		//Get the corresponding file number
+		for(TFSFile tf:file_list){
+			if(tf.fileNumber == metadata.filenumber)
+				current = tf;
+		}
+		System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
+		System.out.println("File #: "+current.fileNumber);
+		System.out.println("Metadata correct file #: "+metadata.filenumber);
+		ByteBuffer.allocate(4).putInt(metadata.size).array();
+		byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		for(int i=0;i<4;i++){
+			current.data[current.spaceOccupied] = fourBytesBefore[i];
+			current.spaceOccupied++;
+		}
+		System.out.println("occupied length: "+current.spaceOccupied);
+		System.out.println("add length: "+byteArray.length);
+		
+		metadata.byteoffset = current.spaceOccupied;
+		metadata.size = byteArray.length;
+		
+		
+		for(int i=0;i<byteArray.length;i++){
+			current.data[current.spaceOccupied] = byteArray[i];
+			current.spaceOccupied++;
+		}
+		
+		byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		for(int i=0;i<4;i++){
+			current.data[current.spaceOccupied] = fourBytesAfter[i];
+			current.spaceOccupied++;
+		}
+
+		
+		chunkMap.put(metadata.chunkHash, metadata);
+		
+		Message newMessage = new Message(msgType.WRITETONEWFILE, metadata);
+		newMessage.success = msgSuccess.REQUESTSUCCESS;
+		newMessage.addressedTo = serverType.MASTER;
+		newMessage.sender = serverType.CHUNKSERVER;
+		
+		//appending on
+		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
+		WriteDataToFile(current, current.data);
+		master.DealWithMessage(newMessage);
+	}
+	
 	/**
 	 * @param metadata
 	 */
@@ -659,5 +737,12 @@ public class ChunkServerNode extends ServerNode {
 		}
 
 	}
-
+	
+	/**
+	 * TODO: Sends ping to Master telling it it's still alive and kicking
+	 */
+	public void PingMaster (){
+		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
+		master.DealWithMessage(ping);
+	}
 }
