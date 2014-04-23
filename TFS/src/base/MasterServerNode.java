@@ -952,5 +952,6 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	
-	public class ServerData
-}
+	public class ServerData{
+	}
+	}
