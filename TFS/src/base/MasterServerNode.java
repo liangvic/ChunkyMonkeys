@@ -130,6 +130,19 @@ public class MasterServerNode extends ServerNode {
 					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
 			}
 		}
+		else if(inputMessage.type == msgType.APPENDTOTFSFILE)
+		{
+			if(inputMessage.sender == serverType.CLIENT) {
+				AppendToTFSFile(inputMessage);
+			}
+			else if(inputMessage.sender == serverType.CHUNKSERVER) {
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+				}
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " append failed");
+			}
+		}
 		else if(inputMessage.type == msgType.COUNTFILES)
 		{
 			if(inputMessage.sender == serverType.CLIENT)
@@ -250,6 +263,7 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void ReadFile(Message inputMessage) {
+		//Implement Later
 		int indexCounter = 1;
 		System.out.println("trying to read "+inputMessage.filePath + indexCounter);
 		if (chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
@@ -279,14 +293,24 @@ public class MasterServerNode extends ServerNode {
 
 	public ChunkMetadata AssignChunkServer(Message inputMessage){
 		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-		System.out.println("burrito: "+inputMessage.fileName);
+		//System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
 		newMetaData.filenumber = rand.nextInt(5);
-		newMetaData.byteoffset = 0;
+		//do a check to see what the offset is
+		int targetFileNumber = newMetaData.filenumber;
+		int largestOffSet = 0;
+		
+		for(String key: chunkServerMap.keySet()){
+			if(chunkServerMap.get(key).filenumber == targetFileNumber)
+				if(chunkServerMap.get(key).byteoffset>largestOffSet)
+					largestOffSet = chunkServerMap.get(key).byteoffset;
+		}
+		newMetaData.byteoffset = largestOffSet;
 		newMetaData.size = inputMessage.fileData.length;
+		
 		
 		//add to hashmap
 		chunkServerMap.put(hashstring, newMetaData);
@@ -297,6 +321,7 @@ public class MasterServerNode extends ServerNode {
 		
 		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
 		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+		//System.out.println("Got to the file");
 		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 		
 		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
@@ -338,7 +363,7 @@ public class MasterServerNode extends ServerNode {
 				ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 				Random rand = new Random();
-				newChunk.filenumber = 1; //only use one for now
+				newChunk.filenumber = 0; //only use one for now
 				newChunk.chunkHash = hashstring;
 				chunkServerMap.put(hashstring, newChunk);
 
@@ -414,26 +439,98 @@ public class MasterServerNode extends ServerNode {
 		 * e.printStackTrace(); }
 		 */
 	}
+	
+	public void AppendToTFSFile(Message message)
+	{
+		ChunkMetadata chunkData = GetTFSFile(message.filePath);
+		if(chunkData != null) {
+			Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+			Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
+			chunkServer.DealWithMessage(m1);
+			client.DealWithMessage(m2);
+		}
+		else {
+			SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
+		}
+	}
+	
+	public ChunkMetadata GetTFSFile(String filepath)
+	{
+		int index = 1;
+		String hashString = filepath + index;
+		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
+		{
+			for(int i = 2; i < chunkServerMap.size(); ++i) {
+				hashString = filepath + i;
+				index = i;
+				if(!chunkServerMap.containsKey(hashString)) {
+					break;
+				}
+			}
+			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
+			newChunk.filenumber = 0; //only use one for now
+			newChunk.chunkHash = hashString;
+			chunkServerMap.put(hashString, newChunk);
+			WritePersistentChunkServerMap(hashString,
+					chunkServerMap.get(hashString));
+			return newChunk;
+		}
+		else
+		{
+			// create file
+			NamespaceMap.put(filepath, new NamespaceNode(nodeType.FILE));
+			File filePath = new File(filepath);
+			String parentPath = filePath.getParent();
+			String parent;
+			if (parentPath == null) {
+				return null;
+			} else {
+				parent = parentPath;
+			}
+			NamespaceMap.get(parent).children.add(filepath);
+
+			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
+
+			//Random rand = new Random();
+			newChunk.filenumber = 1; //only use one for now
+			newChunk.chunkHash = hashString;
+			chunkServerMap.put(hashString, newChunk);
+
+			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
+			WritePersistentChunkServerMap(hashString,
+					chunkServerMap.get(hashString));
+			tfsLogger.LogMsg("Created file " + filepath);
+			return newChunk;
+		}
+	}
 
 	public void FindFile(String filepath)
 	{
 		int index = 1;
+		int logicalFilesCount = 0;
 		String chunkServerMapKey = filepath + index;
 		if(NamespaceMap.containsKey(filepath))
 		{
 			ChunkMetadata chunkDataFinding;// = NamespaceMap.get(filepath);
 			
 			while(chunkServerMap.containsKey(chunkServerMapKey)){
+				logicalFilesCount++;
 				chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
 				Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
 				newMessage.chunkClass.filename = filepath;
-				try {
-					chunkServer.DealWithMessage(newMessage);
-
-				} catch (Exception e) {
-					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
-				}
+//				try {
+//					chunkServer.DealWithMessage(newMessage);
+//
+//				} catch (Exception e) {
+//					SendErrorMessageToClient(new Message(msgType.COUNTFILES, filepath));
+//				}
+				index++;
+				chunkServerMapKey = filepath + index;
 			}
+			if(logicalFilesCount ==1)
+				System.out.println("There is " + logicalFilesCount + " logical file in " + filepath);
+			else
+				System.out.println("There are " + logicalFilesCount + " logical files in " + filepath);
 		}
 		else
 		{

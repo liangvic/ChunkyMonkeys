@@ -1,46 +1,14 @@
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\2
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\2\4
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\2\5
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\3
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\3\6
-Apr 13, 2014 5:37:02 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\3\7
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\4\File1
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\4\File2
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\4\File3
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\5\File1
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\5\File2
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\5\File3
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\File1
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\File2
-Apr 13, 2014 5:37:26 PM Utility.TFSLogger LogMsg
-FINE: Created file 1\2\File3
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\2
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\2\4
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\2\5
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\3
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
-FINE: Created directory 1\3\6
-Apr 13, 2014 5:49:54 PM Utility.TFSLogger LogMsg
+Apr 13, 2014 11:43:08 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\3\7

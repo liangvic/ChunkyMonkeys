@@ -91,6 +91,8 @@ public class ClientServerNode extends ServerNode {
 					throw new Exception();
 				}
 			} catch (Exception e) {
+
+				e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
 		} while (input != "X" || input != "x");
@@ -136,6 +138,8 @@ public class ClientServerNode extends ServerNode {
 			
 		} else if (message.type == msgType.PRINTFILEDATA) {
 			msgPrintFileData(message);
+		} else if (message.type == msgType.APPENDTOTFSFILE) {
+			ReadLocalFile(message);
 		}
 	}
 
@@ -156,9 +160,9 @@ public class ClientServerNode extends ServerNode {
 				File file = new File(localPathToCreateFile);
 				file.createNewFile();
 				// convert array of bytes into file
-				String decoded = new String(dataMessage.fileData, "UTF-8");
+//				String decoded = new String(dataMessage.fileData, "UTF-8");
 				FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
-				System.out.println("Writing" + dataMessage.fileData + "string is: "+decoded);
+//				System.out.println("Writing" + dataMessage.fileData + "string is: "+decoded);
 				fileOuputStream.write(finalByteArray);
 				fileOuputStream.close();
 
@@ -435,7 +439,7 @@ public class ClientServerNode extends ServerNode {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
+
 		cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
 		System.out.println("metadata hash "+cm.chunkHash);		
@@ -561,22 +565,58 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
-	public void test6(String filePath, String localPath){
-		//CAppendToFile(Strin);
-		
+	public void test6(String localPath, String filePath){
+		CAppendToTFSFile(localPath, filePath);
 	}
 	
-	public void CAppendToFile(String filePath, String localPath){
-	
+	public void CAppendToTFSFile(String localPath, String filePath){
+		int index = filePath.lastIndexOf('\\');
+		Message m = new Message(msgType.APPENDTOTFSFILE, filePath);
+		localPathToCreateFile = localPath;
+		m.fileName = filePath.substring(index + 1);
+		m.sender = serverType.CLIENT;
+		master.DealWithMessage(m);
+	}
+	public void ReadLocalFile(Message message) {
+		FileInputStream fileInputStream = null;
+		File file = new File(localPathToCreateFile);
+		byte[] byteFile = new byte[(int) file.length()];
+
+		// convert file into array of bytes
+		try {
+			fileInputStream = new FileInputStream(file);
+			fileInputStream.read(byteFile);
+			fileInputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		ChunkMetadata cm = message.chunkClass;	
+		String decodedString = "string";
+		try {
+			decodedString = new String(byteFile, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("writing bytefile: "+byteFile + " string is "+decodedString);
+		/*cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
+		//now chunkServer will be set
+		System.out.println("metadata hash "+cm.chunkHash);*/
+		Message msg = new Message(msgType.APPENDTOTFSFILE, byteFile);
+		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.sender = serverType.CLIENT;
+		msg.chunkClass = cm;
+		msg.chunkClass.size = (int) file.length();
+		chunkServer.DealWithMessage(msg);
 	}
 	public void printCommands(){
 		System.out.println("Format closely follows that of in the Assignment Page");
 		System.out.println("Test1 <numfolders>			i.e. Test1 7");
 		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
 		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
-		System.out.println("Test4 <local> <filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
-		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");
-		System.out.println("Test6 <TFSfile> <localfilepath> 	i.e. Test6 1\\File1.png C:\\MyDocument\\Pic.png");
+		System.out.println("Test4 <local> <TFS filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
+		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		System.out.println("Test6 <local> <TFS filepath> 		i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
+		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
 	public void ExpectChunkNumberForRead(int i) {
 		System.out.println("expecting "+i+" chunks");
@@ -585,6 +625,7 @@ public class ClientServerNode extends ServerNode {
 	
 	public void test7(String filepath)
 	{
+		System.out.println("Test7 Path: "+filepath);
 		Message m = new Message(msgType.COUNTFILES, filepath);
 		m.sender = serverType.CLIENT;
 		master.DealWithMessage(m);
