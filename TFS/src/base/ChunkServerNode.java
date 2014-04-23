@@ -126,12 +126,12 @@ public class ChunkServerNode extends ServerNode {
 		//		}
 		//		
 		for(TFSFile fileData:file_list){
-			System.out.println(fileData.fileNumber + " finding number " + metadata.filenumber);
+			System.out.println("ChunkServer: Looking at file "+fileData.fileNumber + " looking for file " + metadata.filenumber);
 			if(metadata.filenumber == fileData.fileNumber){
-				System.out.println("Available file byte size: "+(fileData.data.length-fileData.spaceOccupied));
-				System.out.println("Reading from file number "+metadata.filenumber);
-				System.out.println("Reading array size is "+metadata.size +" with byteoffset: "+metadata.byteoffset);
-				System.out.println("File occupied space: "+fileData.spaceOccupied);
+				System.out.println("ChunkServer: Available free byte size: "+(fileData.data.length-fileData.spaceOccupied));
+				System.out.println("ChunkServer: Reading from file number "+metadata.filenumber);
+				System.out.println("ChunkServer: Reading array size is "+metadata.size +" with byteoffset: "+metadata.byteoffset);
+				System.out.println("ChunkServer: File data occupied space: "+fileData.spaceOccupied);
 				
 				
 				byte[] dataINeed = new byte[metadata.size+4];
@@ -263,7 +263,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
-		WriteDataToFile(current, current.data);
+		WriteDataToFile(current, byteArray/*current.data*/);
 		master.DealWithMessage(newMessage);
 	}
 
@@ -637,7 +637,7 @@ public class ChunkServerNode extends ServerNode {
 		//BufferedWriter out = null;
 		OutputStream os = null;
 		try{
-			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
 			os.write(data);
 			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
