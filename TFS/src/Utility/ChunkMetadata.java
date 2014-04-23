@@ -3,6 +3,12 @@ package Utility;
 import java.util.*;
 
 public class ChunkMetadata{
+	/**
+	 * @param fname
+	 * @param chunkindex
+	 * @param versionnumber
+	 * @param refCount
+	 */
 	public ChunkMetadata(String fname, int chunkindex, int versionnumber, int refCount){
 		versionNumber = versionnumber;
 		index = chunkindex;

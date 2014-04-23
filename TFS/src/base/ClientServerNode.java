@@ -24,6 +24,9 @@ public class ClientServerNode extends ServerNode {
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
+	/**
+	 * @throws Exception
+	 */
 	protected void TestInterface() throws Exception {
 		Scanner a = new Scanner(System.in);
 		String input;
@@ -99,6 +102,9 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param message
+	 */
 	public void DealWithMessage(Message message) {
 		if (message.type == msgType.DELETEDIRECTORY) {
 			if (message.success == msgSuccess.REQUESTSUCCESS) {
@@ -143,6 +149,9 @@ public class ClientServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param dataMessage
+	 */
 	public void msgPrintFileData(Message dataMessage) {
 		System.out.println("    Get message to print file data");
 		chunkReadsRecieved++;
@@ -176,11 +185,17 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param m
+	 */
 	public void msgRequestAReadToChunkserver(Message m) {
 
 		chunkServer.DealWithMessage(m);
 	}
 
+	/**
+	 * 
+	 */
 	public void msgEcho() {
 
 		try (Socket echoSocket = new Socket(hostName, portNumber);
@@ -207,6 +222,10 @@ public class ClientServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 * @param nFiles
+	 */
 	public void test2(String filepath, int nFiles) {
 		if (master.NamespaceMap.get(filepath) != null) {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
@@ -228,6 +247,10 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param filepath
+	 * @param nFiles
+	 */
 	public void test2helper(String filepath, int nFiles) {
 
 		String filename = "File";
@@ -252,6 +275,10 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param folderFilepath
+	 * @param fileName
+	 */
 	public void CCreateFile(String folderFilepath, String fileName) {
 		Message message = new Message(msgType.CREATEFILE, folderFilepath, 1);
 		message.fileName = fileName;
@@ -264,10 +291,16 @@ public class ClientServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void test3(String filepath) {
 		CDeleteDirectory(filepath);
 	}
 
+	/**
+	 * @param filepath
+	 */
 	public void CDeleteDirectory(String filepath) {
 		// SENDING FILEPATH TO THE MASTER
 		/*
@@ -310,12 +343,18 @@ public class ClientServerNode extends ServerNode {
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
+	/**
+	 * @param filepath
+	 */
 	public void CCreateDirectory(String filepath) {
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
 		message.sender = serverType.CLIENT;
 		master.DealWithMessage(message);
 	}
 
+	/**
+	 * @param NumFolders
+	 */
 	public void test1(int NumFolders) {
 		int count = 1;
 		CCreateDirectory("1");
@@ -327,6 +366,11 @@ public class ClientServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * @param parentfilepath
+	 * @param folderName
+	 * @param NumMaxFolders
+	 */
 	public void helper(String parentfilepath, int folderName, int NumMaxFolders) {
 		if (folderName <= NumMaxFolders) {
 			String newfilepath = parentfilepath + "\\" + folderName;
@@ -337,6 +381,9 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param fullFilePath
+	 */
 	public void CCreateFile(String fullFilePath) { // including filename
 		Message msg = new Message(fullFilePath, msgType.CREATEFILE);
 		int index = fullFilePath.lastIndexOf('\\');
@@ -349,6 +396,11 @@ public class ClientServerNode extends ServerNode {
 		master.DealWithMessage(msg);
 	}
 	
+	/**
+	 * @param fullFilePath
+	 * @param byteStream
+	 * @return
+	 */
 	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
 		System.out.println("Attempting to retrieve metadata fror: "+fullFilePath);
 		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
@@ -361,6 +413,11 @@ public class ClientServerNode extends ServerNode {
 		//master.DealWithMessage(msg);
 	}
 	
+	/**
+	 * @param cm
+	 * @param fullFilePath
+	 * @param byteStream
+	 */
 	public void CAppendToFile(ChunkMetadata cm, String fullFilePath, byte[] byteStream){
 		
 		//CAppendToFile(fullFilePath, byteStream);//retrieve metadata
@@ -378,11 +435,19 @@ public class ClientServerNode extends ServerNode {
 		chunkServer.DealWithMessage(msg);
 	}
 	
+	/**
+	 * @param hashstring
+	 * @param myServer
+	 */
 	public void AppendToChunkServer(String hashstring, ChunkServerNode myServer){
 		//later on set chunk handle and chunkserver to myServer
 		//CAppendToFile2(filePath, byteFile);
 	}
 	
+	/**
+	 * @param localPath
+	 * @return
+	 */
 	public byte[] convertFileToBytes(String localPath)
 	{
 		FileInputStream fileInputStream = null;
@@ -404,6 +469,10 @@ public class ClientServerNode extends ServerNode {
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
 	// its filepath
+	/**
+	 * @param localPath
+	 * @param filePath
+	 */
 	public void test4(String localPath, String filePath) {
 		/*
 		 * Plan: Send message to server including the filepath to createfile If
@@ -523,6 +592,10 @@ public class ClientServerNode extends ServerNode {
 		// receivedMsg rmsg = (Message)rmsg.readObject();
 	}
 
+	/**
+	 * @param filePath
+	 * @param localPath
+	 */
 	public void test5(String filePath, String localPath) {
 		//Check if inputs are NULL
 		if (filePath == null || localPath == null) {
@@ -564,10 +637,18 @@ public class ClientServerNode extends ServerNode {
 		// }
 	}
 
+	/**
+	 * @param localPath
+	 * @param filePath
+	 */
 	public void test6(String localPath, String filePath){
 		CAppendToTFSFile(localPath, filePath);
 	}
 	
+	/**
+	 * @param localPath
+	 * @param filePath
+	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
 		Message m = new Message(msgType.APPENDTOTFSFILE, filePath);
@@ -576,6 +657,9 @@ public class ClientServerNode extends ServerNode {
 		m.sender = serverType.CLIENT;
 		master.DealWithMessage(m);
 	}
+	/**
+	 * @param message
+	 */
 	public void ReadLocalFile(Message message) {
 		FileInputStream fileInputStream = null;
 		File file = new File(localPathToCreateFile);
@@ -622,6 +706,9 @@ public class ClientServerNode extends ServerNode {
 		chunkCountToExpect = i;
 	}
 	
+	/**
+	 * @param filepath
+	 */
 	public void test7(String filepath)
 	{
 		System.out.println("Test7 Path: "+filepath);
