@@ -55,29 +55,11 @@ public class launch {
 			master.myIP = Config.prop.getProperty("MASTERIP");
 			master.myPortNumber = Config.prop.getProperty("MASTERPORT");
 		}
-		else if (input == 2 ){
-			ClientServerNode client = new ClientServerNode(); 
+		else if (input == 2 || input == 3 || input == 4 || input == 5 ){
 			client.TestInterface();
-			client.myIP = Config.prop.getProperty("IP2");
-			client.myPortNumber = Config.prop.getProperty("PORT2");
-		}
-		else if (input == 3) {
+			String IPkey = Config.prop.getProperty("IP" + input);
+			String portKey = Config.prop.getProperty("PORT" + input + "_CLIENT")
 			ClientServerNode client = new ClientServerNode(); 
-			client.TestInterface();
-			client.myIP = Config.prop.getProperty("IP3");
-			client.myPortNumber = Config.prop.getProperty("PORT3");
-		}
-		else if (input == 4) {
-			ClientServerNode client = new ClientServerNode(); 
-			client.TestInterface();
-			client.myIP = Config.prop.getProperty("IP4");
-			client.myPortNumber = Config.prop.getProperty("PORT4");
-		}
-		else if (input == 5) {
-			ClientServerNode client = new ClientServerNode(); 
-			client.TestInterface();
-			client.myIP = Config.prop.getProperty("IP5");
-			client.myPortNumber = Config.prop.getProperty("PORT5");
 		}
 		else{
 			System.out.println("Invalid Selection");
