@@ -54,6 +54,9 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	// Don't call on this for now; using monolith structure
+	/**
+	 * @throws Exception
+	 */
 	public void WILLBEMAIN() throws Exception {	
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
@@ -344,6 +347,7 @@ public class MasterServerNode extends ServerNode {
 			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -367,6 +371,7 @@ public class MasterServerNode extends ServerNode {
 			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
