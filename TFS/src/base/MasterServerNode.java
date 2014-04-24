@@ -29,6 +29,7 @@ public class MasterServerNode extends ServerNode {
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
+	
 
 	public class ServerData {
 		String IP;
@@ -60,7 +61,6 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket clientSocket = serverSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				//TODO: put messages in queue
 				DealWithMessage(incoming);
