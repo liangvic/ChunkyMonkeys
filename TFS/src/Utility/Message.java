@@ -57,7 +57,7 @@ public class Message implements Serializable{
 	public ChunkMetadata chunkClass;
 	public byte[] fileData;
 	public int countedLogicalFiles;
-	
+	public int replicas;
 	public String senderIP;
 	public String receiverIP;
 }

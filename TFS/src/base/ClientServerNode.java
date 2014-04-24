@@ -84,8 +84,8 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Unit4"):
-					if (tokens.length == 3){
-						test4(tokens[1].toString(), tokens[2].toString());
+					if (tokens.length == 4){
+						unit4(tokens[1].toString(), tokens[2].toString(), Integer.parseInt(tokens[3]));
 					}
 					else{
 						throw new Exception();
@@ -521,7 +521,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param localPath
 	 * @param fullFilePath
 	 */
-	public void CWriteToNewFile(String localPath, String fullFilePath){
+	public void CWriteToNewFile(String localPath, String fullFilePath, int numberOfReplicas){
 		
 		if (fullFilePath == null || localPath == null) {
 			System.out.println("FilePath or localPath are null values, please reenter query");
@@ -538,6 +538,7 @@ public class ClientServerNode extends ServerNode {
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
 		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile);
+		msg.replicas = numberOfReplicas;
 		if (msg.chunkClass == null)
 		{
 			System.out.println("ERROR: " + fullFilePath+ " already exists.");
@@ -580,6 +581,10 @@ public class ClientServerNode extends ServerNode {
 		
 		return byteFile;
 	}
+	
+	public void unit4(String localPath, String filePath, int numberOfReplicas){
+		CWriteToNewFile(localPath, filePath,numberOfReplicas);
+	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
 		// its filepath
@@ -589,7 +594,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void test4(String localPath, String filePath) {
 			
-			CWriteToNewFile(localPath, filePath);
+			CWriteToNewFile(localPath, filePath,0);
 			
 		}
 		//Future test4 reference:
