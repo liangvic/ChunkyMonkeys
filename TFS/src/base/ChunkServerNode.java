@@ -135,7 +135,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void DealWithMessage() {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			Message message = messageList.get(0);
 			if (message.type == msgType.DELETEDIRECTORY) {
 				DeleteChunk(message.chunkClass);
@@ -890,24 +890,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void SendMessageToChunkServer(Message message) {
-		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
-		try(Socket serverSocket =  new Socket(message.senderIP, port);)
-		{
-			message.receiverIP = message.senderIP;
-			message.addressedTo = serverType.CHUNKSERVER;
-			message.sender = serverType.CHUNKSERVER;
-			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
-			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-		finally{
-		}
+		SendMessage(message);
 	}
 	
 
