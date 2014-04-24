@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.WriteAbortedException;
@@ -86,20 +87,35 @@ public class ChunkServerNode extends ServerNode {
 	 * }
 	 */
 	
-	public void WILLBEMAIN() throws Exception {
-		try { 
-			ServerSocket serverSocket = new ServerSocket(myPortNumber);
-			Socket clientSocket = serverSocket.accept();
-			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
-			Message m;
-			while((m = (Message)ois.readObject()) != null) {
-				DealWithMessage(m);
+	/**
+	 * @throws Exception
+	 */
+	public void WILLBEMAIN() throws Exception {	
+		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+
+		{
+			while(true) { 
+				Socket clientSocket = serverSocket.accept();
+				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Message incoming = (Message)in.readObject();
+				//TODO: put messages in queue
+				DealWithMessage(incoming);
+				//outToClient.writeBytes(capitalizedSentence); 
 			}
-		} catch (IOException e) {
+
+			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			//TODO: Deal with Server Pings
+			//TODO: Send updated chunkserver data to re-connected servers
+		}
+		catch (IOException e) {
 			System.out
-					.println("Exception caught when trying to listen on port "
-							+ myPortNumber + " or listening for a connection");
+			.println("Exception caught when trying to listen on port "
+					+ myPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
+		}
+		finally{
+
 		}
 	}
 

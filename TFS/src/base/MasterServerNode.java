@@ -52,6 +52,9 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	// Don't call on this for now; using monolith structure
+	/**
+	 * @throws Exception
+	 */
 	public void WILLBEMAIN() throws Exception {	
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
