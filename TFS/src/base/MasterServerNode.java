@@ -30,7 +30,7 @@ public class MasterServerNode extends ServerNode {
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
-	
+	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 	public class ServerData {
 		String IP;
@@ -71,8 +71,10 @@ public class MasterServerNode extends ServerNode {
 				Socket clientSocket = serverSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
-				//TODO: put messages in queue
-				DealWithMessage(incoming);
+				if(incoming != null) {
+					messageList.add(incoming);
+					DealWithMessage();
+				}
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -94,27 +96,14 @@ public class MasterServerNode extends ServerNode {
 	/**
 	 * @param inputMessage
 	 */
-	public void DealWithMessage(Message inputMessage) {
-		operationID++; //used to differentiate operations
-		System.out.println("inputMessagetype "+ inputMessage.type);
-		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
-			MDeleteDirectory(inputMessage,operationID);
-		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
-			RemoveParentLocks(inputMessage.filePath);
-			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-				// SendSuccessMessageToClient();
-			} else {
-				// SendErrorMessageToClient();
-			}
-		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
-			if (inputMessage.sender == serverType.CLIENT) {
-				try {
-					CreateDirectory(inputMessage,operationID);
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+	public void DealWithMessage() {
+		while(!messageList.isEmpty()) {
+			Message inputMessage = messageList.get(0);
+			operationID++; //used to differentiate operations
+			System.out.println("inputMessagetype "+ inputMessage.type);
+			if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
+				MDeleteDirectory(inputMessage,operationID);
+			} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 				RemoveParentLocks(inputMessage.filePath);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 					// SendSuccessMessageToClient();
@@ -130,74 +119,90 @@ public class MasterServerNode extends ServerNode {
 						e.printStackTrace();
 					}
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+					RemoveParentLocks(inputMessage.filePath);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-						System.out.println("Directory " + " creation successful");
-					} else if (inputMessage.success == msgSuccess.REQUESTERROR) {
-						System.out.println("Directory " + " creation failed");
+						// SendSuccessMessageToClient();
+					} else {
+						// SendErrorMessageToClient();
+					}
+				} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
+					if (inputMessage.sender == serverType.CLIENT) {
+						try {
+							CreateDirectory(inputMessage,operationID);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+						if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
+							System.out.println("Directory " + " creation successful");
+						} else if (inputMessage.success == msgSuccess.REQUESTERROR) {
+							System.out.println("Directory " + " creation failed");
 
+						}
 					}
 				}
-			}
-		} else if (inputMessage.type == msgType.CREATEFILE) {
-			if (inputMessage.sender == serverType.CLIENT)
-				CreateFile(inputMessage, operationID);
-			else if (inputMessage.sender == serverType.CHUNKSERVER) {
-				RemoveParentLocks(inputMessage.filePath);
-				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-					System.out.println("File "
-							+ inputMessage.chunkClass.filename
-							+ " creation successful");
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File "
-							+ inputMessage.chunkClass.filename
-							+ " creation failed");
-			}
-		} else if (inputMessage.type == msgType.READFILE) {
-			if(inputMessage.sender == serverType.CLIENT)
-			{
-				ReadFile(inputMessage, operationID);
-			}
-			else if (inputMessage.sender == serverType.CHUNKSERVER)
-			{
-				RemoveParentLocks(inputMessage.filePath);
-				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
-			}
-		}
-		else if(inputMessage.type == msgType.APPENDTOFILE)
-		{
-			if(inputMessage.sender == serverType.CLIENT)
-				AssignChunkServer(inputMessage);//, operationID);
-			else if (inputMessage.sender == serverType.CHUNKSERVER){
-				RemoveParentLocks(inputMessage.filePath);
-				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+			} else if (inputMessage.type == msgType.CREATEFILE) {
+				if (inputMessage.sender == serverType.CLIENT)
+					CreateFile(inputMessage, operationID);
+				else if (inputMessage.sender == serverType.CHUNKSERVER) {
+					RemoveParentLocks(inputMessage.filePath);
+					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
+						System.out.println("File "
+								+ inputMessage.chunkClass.filename
+								+ " creation successful");
+					else if (inputMessage.success == msgSuccess.REQUESTERROR)
+						System.out.println("File "
+								+ inputMessage.chunkClass.filename
+								+ " creation failed");
 				}
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
-			}
-		}
-		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
-		{
-			if(inputMessage.sender == serverType.CLIENT) {
-				AppendToTFSFile(inputMessage, operationID);
-			}
-			else if(inputMessage.sender == serverType.CHUNKSERVER) {
-				RemoveParentLocks(inputMessage.filePath);
-				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+			} else if (inputMessage.type == msgType.READFILE) {
+				if(inputMessage.sender == serverType.CLIENT)
+				{
+					ReadFile(inputMessage, operationID);
 				}
-			} else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+				else if (inputMessage.sender == serverType.CHUNKSERVER)
+				{
+					RemoveParentLocks(inputMessage.filePath);
+					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+				}
+			}
+			else if(inputMessage.type == msgType.APPENDTOFILE)
 			{
+				if(inputMessage.sender == serverType.CLIENT)
+					AssignChunkServer(inputMessage);//, operationID);
+				else if (inputMessage.sender == serverType.CHUNKSERVER){
+					RemoveParentLocks(inputMessage.filePath);
+					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+						System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+					}
+					else if (inputMessage.success == msgSuccess.REQUESTERROR)
+						System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+				}
+			}
+			else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+			{
+				if(inputMessage.sender == serverType.CLIENT) {
+					AppendToTFSFile(inputMessage, operationID);
+				}
+				else if(inputMessage.sender == serverType.CHUNKSERVER) {
+					RemoveParentLocks(inputMessage.filePath);
+					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+						System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+					}
+				} else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+				{
 
-				FindFile(inputMessage.filePath, operationID);
+					FindFile(inputMessage.filePath, operationID);
+				}
+				else if (inputMessage.sender == serverType.CHUNKSERVER)
+				{
+					RemoveParentLocks(inputMessage.filePath);
+					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
+				}
 			}
-			else if (inputMessage.sender == serverType.CHUNKSERVER)
-			{
-				RemoveParentLocks(inputMessage.filePath);
-				System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
-			}
+			messageList.remove(0);
 		}
-
 	}
 	/**
 	 * 
