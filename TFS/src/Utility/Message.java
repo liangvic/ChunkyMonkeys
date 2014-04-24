@@ -42,7 +42,7 @@ public class Message implements Serializable{
 	public Message() {
 	}
 
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, APPENDTOTFSFILE, COUNTFILES, WRITETONEWFILE};
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, APPENDTOTFSFILE, COUNTFILES, WRITETONEWFILE,EXPECTEDNUMCHUNKREAD};
 	public msgType type;
 	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
 	public msgSuccess success;
@@ -57,7 +57,8 @@ public class Message implements Serializable{
 	public ChunkMetadata chunkClass;
 	public byte[] fileData;
 	public int countedLogicalFiles;
-	public int replicas;
+	public int replicaCount;
 	public String senderIP;
 	public String receiverIP;
+	public int expectNumChunkForRead;
 }

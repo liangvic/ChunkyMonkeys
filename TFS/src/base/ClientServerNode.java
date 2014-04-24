@@ -179,6 +179,8 @@ public class ClientServerNode extends ServerNode {
 			msgPrintFileData(message);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
 			ReadLocalFile(message);
+		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
+			ExpectChunkNumberForRead(message.expectNumChunkForRead);
 		}
 	}
 
@@ -483,7 +485,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param byteStream
 	 * @return
 	 */
-	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
+	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream, int numReplicas){
 		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
 		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
@@ -491,6 +493,7 @@ public class ClientServerNode extends ServerNode {
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
+		msg.replicaCount = numReplicas;
 		return master.AssignChunkServer(msg);
 		//master.DealWithMessage(msg);
 	}
@@ -537,8 +540,8 @@ public class ClientServerNode extends ServerNode {
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
-		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile);
-		msg.replicas = numberOfReplicas;
+		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile, numberOfReplicas);
+		msg.replicaCount = numberOfReplicas;
 		if (msg.chunkClass == null)
 		{
 			System.out.println("ERROR: " + fullFilePath+ " already exists.");
@@ -745,7 +748,7 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		System.out.println("Test6 <local> <TFS filepath> 		i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
 		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
-	public void ExpectChunkNumberForRead(int i) {
+	private void ExpectChunkNumberForRead(int i) {
 		System.out.println("Client: Expecting "+i+" chunks");
 		chunkCountToExpect = i;
 	}

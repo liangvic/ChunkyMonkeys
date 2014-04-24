@@ -497,7 +497,12 @@ public class MasterServerNode extends ServerNode {
 				//				client.DealWithMessage(returnMessage);
 				indexCounter++;
 			}
-			client.ExpectChunkNumberForRead(indexCounter - 1);
+			//Send client the number of chunk number to read
+//			client.ExpectChunkNumberForRead(indexCounter - 1);
+			Message expectMsg = new Message(msgType.EXPECTEDNUMCHUNKREAD);
+			expectMsg.success = msgSuccess.REQUESTSUCCESS;
+			expectMsg.expectNumChunkForRead = indexCounter-1;
+			SendMessageToClient(expectMsg);
 			for(int i=1;i<indexCounter;i++){
 				ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
 				System.out.println("Master: first chunkhash is "+cm.chunkHash);
@@ -535,22 +540,22 @@ public class MasterServerNode extends ServerNode {
 				return null;
 			}
 		}
-		//AssignChunkServer(inputMessage)
-		//System.out.println("burrito: "+inputMessage.fileName);
 		ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
-		//newMetaData.listOfLocations = 0;
 		newMetaData.chunkHash = hashstring;
 		Random rand = new Random();
+		//Assigns a file number from 0 - 4
 		newMetaData.filenumber = rand.nextInt(5);
+		
 		//do a check to see what the offset is
 		int targetFileNumber = newMetaData.filenumber;
 		int largestOffSet = 0;
 
 		for(String key: chunkServerMap.keySet()){
-			if(chunkServerMap.get(key).filenumber == targetFileNumber)
-				if(chunkServerMap.get(key).byteoffset>largestOffSet)
-					largestOffSet = chunkServerMap.get(key).byteoffset;
+			if(chunkServerMap.get(key).filenumber == targetFileNumber)//finds all the chunks of the specific file 
+				if(chunkServerMap.get(key).byteoffset>largestOffSet) //finds the largest offset of the chunk
+					largestOffSet = chunkServerMap.get(key).byteoffset;//checks 
 		}
+		System.out.println("Largest offset is "+largestOffSet);
 		newMetaData.byteoffset = largestOffSet;
 		newMetaData.size = inputMessage.fileData.length;
 
