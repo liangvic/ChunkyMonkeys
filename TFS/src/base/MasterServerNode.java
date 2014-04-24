@@ -13,6 +13,7 @@ import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
 import Utility.SOSMessage;
+import Utility.SOSMessage.msgTypeToMaster;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -24,6 +25,7 @@ public class MasterServerNode extends ServerNode {
 	//public ChunkServerNode chunkServer;
 
 	int operationID = 0;
+	int chunksNeedToBeChecked = 0;
 	// private static ServerSocket welcomeSocket;
 	// chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
@@ -52,11 +54,11 @@ public class MasterServerNode extends ServerNode {
 		myIP = ip;
 		myPortNumber = port;
 		myType = serverType.MASTER;
-		
+
 		LoadChunkServerMap();
 		LoadNamespaceMap();
 		LoadServerData();
-		
+
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -67,6 +69,20 @@ public class MasterServerNode extends ServerNode {
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
 		{
+			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				@Override
+				public void run() {
+					for (Map.Entry<String, ServerData> entry : ServerMap.entrySet())
+					{
+						HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
+								entry.getKey(),serverType.CHUNKSERVER, entry.getValue().serverPort,serverStatus.ALIVE);
+						SendMessage(HBMessage);
+					}
+				}
+			}, 10000, 10000);
+
 			while(true) { 
 				Socket clientSocket = serverSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
@@ -77,7 +93,7 @@ public class MasterServerNode extends ServerNode {
 				}
 			}
 
-			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+
 			//TODO: Deal with Server Pings
 			//TODO: Send updated chunkserver data to re-connected servers
 		}
@@ -101,7 +117,22 @@ public class MasterServerNode extends ServerNode {
 			Message inputMessage = messageList.get(0);
 			operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
-			if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
+			if(inputMessage instanceof HeartBeat)
+			{
+
+			}
+			else if(inputMessage instanceof SOSMessage)
+			{
+				if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.REQUESTINGDATA)
+				{
+					TellOtherChunkServerToSendData((SOSMessage)inputMessage);
+				}
+				else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
+				{
+					//TODO: finished with the sending of data -- release semaphore-kind of thing?
+				}
+			}
+			else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 				MDeleteDirectory(inputMessage,operationID);
 			} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 				RemoveParentLocks(inputMessage.filePath);
@@ -115,7 +146,6 @@ public class MasterServerNode extends ServerNode {
 					try {
 						CreateDirectory(inputMessage,operationID);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
@@ -130,78 +160,93 @@ public class MasterServerNode extends ServerNode {
 						try {
 							CreateDirectory(inputMessage,operationID);
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+						RemoveParentLocks(inputMessage.filePath);
 						if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-							System.out.println("Directory " + " creation successful");
-						} else if (inputMessage.success == msgSuccess.REQUESTERROR) {
-							System.out.println("Directory " + " creation failed");
+							// SendSuccessMessageToClient();
+						} else {
+							// SendErrorMessageToClient();
+						}
+					} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
+						if (inputMessage.sender == serverType.CLIENT) {
+							try {
+								CreateDirectory(inputMessage,operationID);
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						} else if (inputMessage.sender == serverType.CHUNKSERVER) {
+							if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
+								System.out.println("Directory " + " creation successful");
+							} else if (inputMessage.success == msgSuccess.REQUESTERROR) {
+								System.out.println("Directory " + " creation failed");
 
+							}
 						}
 					}
-				}
-			} else if (inputMessage.type == msgType.CREATEFILE) {
-				if (inputMessage.sender == serverType.CLIENT)
-					CreateFile(inputMessage, operationID);
-				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
-					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation successful");
-					else if (inputMessage.success == msgSuccess.REQUESTERROR)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation failed");
-				}
-			} else if (inputMessage.type == msgType.READFILE) {
-				if(inputMessage.sender == serverType.CLIENT)
-				{
-					ReadFile(inputMessage, operationID);
-				}
-				else if (inputMessage.sender == serverType.CHUNKSERVER)
-				{
-					RemoveParentLocks(inputMessage.filePath);
-					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
-				}
-			}
-			else if(inputMessage.type == msgType.APPENDTOFILE)
-			{
-				if(inputMessage.sender == serverType.CLIENT)
-					AssignChunkServer(inputMessage);//, operationID);
-				else if (inputMessage.sender == serverType.CHUNKSERVER){
-					RemoveParentLocks(inputMessage.filePath);
-					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-						System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+				} else if (inputMessage.type == msgType.CREATEFILE) {
+					if (inputMessage.sender == serverType.CLIENT)
+						CreateFile(inputMessage, operationID);
+					else if (inputMessage.sender == serverType.CHUNKSERVER) {
+						RemoveParentLocks(inputMessage.filePath);
+						if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
+							System.out.println("File "
+									+ inputMessage.chunkClass.filename
+									+ " creation successful");
+						else if (inputMessage.success == msgSuccess.REQUESTERROR)
+							System.out.println("File "
+									+ inputMessage.chunkClass.filename
+									+ " creation failed");
 					}
-					else if (inputMessage.success == msgSuccess.REQUESTERROR)
-						System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
-				}
-			}
-			else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
-			{
-				if(inputMessage.sender == serverType.CLIENT) {
-					AppendToTFSFile(inputMessage, operationID);
-				}
-				else if(inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
-					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-						System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+				} else if (inputMessage.type == msgType.READFILE) {
+					if(inputMessage.sender == serverType.CLIENT)
+					{
+						ReadFile(inputMessage, operationID);
 					}
-				} else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+					else if (inputMessage.sender == serverType.CHUNKSERVER)
+					{
+						RemoveParentLocks(inputMessage.filePath);
+						//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+					}
+				}
+				else if(inputMessage.type == msgType.APPENDTOFILE)
 				{
+					if(inputMessage.sender == serverType.CLIENT)
+						AssignChunkServer(inputMessage);//, operationID);
+					else if (inputMessage.sender == serverType.CHUNKSERVER){
+						RemoveParentLocks(inputMessage.filePath);
+						if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+							System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
+						}
+						else if (inputMessage.success == msgSuccess.REQUESTERROR)
+							System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+					}
+				}
+				else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+				{
+					if(inputMessage.sender == serverType.CLIENT) {
+						AppendToTFSFile(inputMessage, operationID);
+					}
+					else if(inputMessage.sender == serverType.CHUNKSERVER) {
+						RemoveParentLocks(inputMessage.filePath);
+						if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+							System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
+						}
+					} else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+					{
 
-					FindFile(inputMessage.filePath, operationID);
+						FindFile(inputMessage.filePath, operationID);
+					}
+					else if (inputMessage.sender == serverType.CHUNKSERVER)
+					{
+						RemoveParentLocks(inputMessage.filePath);
+						System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
+					}
 				}
-				else if (inputMessage.sender == serverType.CHUNKSERVER)
-				{
-					RemoveParentLocks(inputMessage.filePath);
-					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
-				}
+				messageList.remove(0);
 			}
-			messageList.remove(0);
 		}
 	}
 	/**
@@ -339,7 +384,7 @@ public class MasterServerNode extends ServerNode {
 		errorMessage.success = msgSuccess.REQUESTERROR;
 		SendMessageToClient(errorMessage);
 	}
-	
+
 	/** 
 	 * @param chunkServerMessage
 	 */
@@ -347,14 +392,14 @@ public class MasterServerNode extends ServerNode {
 		//MESSAGE MUST HAVE IP and Socket Number
 		SendMessage(message);
 	}
-	
+
 	/** 
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
 		SendMessage(message);
 	}
-	
+
 	/**
 	 * 
 	 * @param msg
@@ -432,13 +477,13 @@ public class MasterServerNode extends ServerNode {
 				while (chunkServerMap.containsKey(chunkServerKey)) {
 					// System.out.println("Going to delete the value");
 					// sending protocol
-			//TODO: send delete message to respective server
-			//		ChunkMetadata metadata = chunkServerMap.get(chunkServerKey);
-			//		String rip = metadata.listOfLocations.
-			//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
-			//		chunkMessage.chunkClass = chunkServerMap
-			//				.get(chunkServerKey);
-					SendMessageToChunkServer(chunkMessage);
+					//TODO: send delete message to respective server
+					//		ChunkMetadata metadata = chunkServerMap.get(chunkServerKey);
+					//		String rip = metadata.listOfLocations.
+					//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
+					//		chunkMessage.chunkClass = chunkServerMap
+					//				.get(chunkServerKey);
+					//AAA		SendMessageToChunkServer(chunkMessage);
 
 					// delete the file from master's chunk server map
 					chunkServerMap.remove(chunkServerKey);
@@ -493,7 +538,7 @@ public class MasterServerNode extends ServerNode {
 				indexCounter++;
 			}
 			//Send client the number of chunk number to read
-//			client.ExpectChunkNumberForRead(indexCounter - 1);
+			//			client.ExpectChunkNumberForRead(indexCounter - 1);
 			Message expectMsg = inputMessage;
 			expectMsg.type = msgType.EXPECTEDNUMCHUNKREAD;
 			expectMsg.success = msgSuccess.REQUESTSUCCESS;
@@ -543,7 +588,7 @@ public class MasterServerNode extends ServerNode {
 		Random rand = new Random();
 		//Assigns a file number from 0 - 4
 		newMetaData.filenumber = rand.nextInt(5);
-		
+
 		//do a check to see what the offset is
 		int targetFileNumber = newMetaData.filenumber;
 		int largestOffSet = 0;
@@ -629,7 +674,7 @@ public class MasterServerNode extends ServerNode {
 					newChunk.filenumber = rand.nextInt(5); //only use one for now
 					newChunk.chunkHash = hashstring;
 					chunkServerMap.put(hashstring, newChunk);
-					
+
 					message.type = msgType.CREATEFILE;
 					message.chunkClass = newChunk;
 					try {
@@ -886,7 +931,6 @@ public class MasterServerNode extends ServerNode {
 				out.close();
 				ofstream.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -923,7 +967,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1013,16 +1056,13 @@ public class MasterServerNode extends ServerNode {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
 				textReader.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1068,16 +1108,13 @@ public class MasterServerNode extends ServerNode {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
 				textReader.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1104,7 +1141,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1131,7 +1167,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1152,30 +1187,30 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
-////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////
+	/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
+	////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////
 	/**
 	 * 
 	 * @param HBMessage
 	 */
 	public void SetChunkServerDead(HeartBeat HBMessage)
 	{
-		//TODO: Is the map key the IP?
 		String IPOfDownChunkServer = HBMessage.receiverIP;
-		
+
 		if(ServerMap.containsKey(IPOfDownChunkServer))
 		{
 			ServerMap.get(IPOfDownChunkServer).status = serverStatus.DEAD;
 		}
 	}
-	
+
 	public void SetChunkServerOutdated(String IPaddress)
 	{
+		chunksNeedToBeChecked = chunkServerMap.size();
 		if(ServerMap.containsKey(IPaddress))
 		{
 			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
 		}
-		
+
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
 		{
 			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
@@ -1184,19 +1219,19 @@ public class MasterServerNode extends ServerNode {
 				{
 					//Send message with the chunkMetaData to the chunkserver
 					//from there, the chunkserver can determine if it has the correct version
-					SOSMessage chunkMessage = new SOSMessage();
-					chunkMessage.type = msgType.CHUNKSERVERBACKONLINE;
+					SOSMessage chunkMessage = new SOSMessage(myIP,myType,myPortNumber,IPaddress,serverType.CHUNKSERVER,location.chunkPort);
 					chunkMessage.chunkClass = cmEntry.getValue();
 					chunkMessage.senderIP = myIP;
 					chunkMessage.receiverIP = IPaddress;
 					chunkMessage.SOSserver = IPaddress;
+					//chunkNeed
 					SendMessageToChunkServer(chunkMessage);
 				}
 			}
 		}
-		
+
 	}
-	
+
 	public void TellOtherChunkServerToSendData(SOSMessage msg)
 	{
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
@@ -1206,12 +1241,13 @@ public class MasterServerNode extends ServerNode {
 				if(location.chunkIP != msg.senderIP)
 				{
 					msg.receiverIP = location.chunkIP;
+					msg.msgToMaster = msgTypeToMaster.DONESENDING;
 					SendMessageToChunkServer(msg);
 				}
 			}
 		}
 	}
-	
+
 	public void SetChunkServerAlive(String IPaddress)
 	{
 		if(ServerMap.containsKey(IPaddress))
