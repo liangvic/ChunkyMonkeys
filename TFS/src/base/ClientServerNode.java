@@ -14,8 +14,8 @@ import Utility.NamespaceNode.nodeType;
 import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
-	public MasterServerNode master;
-	public ChunkServerNode chunkServer;
+	//public MasterServerNode master;
+	//public ChunkServerNode chunkServer;
 
 	int chunkCountToExpect = 99;
 	int chunkReadsRecieved = 0;
@@ -64,7 +64,7 @@ public class ClientServerNode extends ServerNode {
 		String input;
 		do {
 			System.out
-					.print("Please Enter the Test you want to run (Enter X to exit)\n");
+					.print("Please Enter the Test/Unit/Command you want to run (Enter X to exit)\n");
 			System.out.print("Enter parameters separated by a space (Enter C for commands)\n");
 			input = a.nextLine();
 
@@ -477,8 +477,6 @@ public class ClientServerNode extends ServerNode {
 		msg.chunkindex = 1;
 		msg.fileName = fullFilePath.substring(index + 1);
 		msg.filePath = fullFilePath.substring(0, index);
-		msg.addressedTo = serverType.MASTER;
-		msg.sender = serverType.CLIENT;
 		SendMessageToMaster(msg);
 	}
 	

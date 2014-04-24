@@ -10,10 +10,17 @@ import java.io.*;
  */
 public class Message implements Serializable{
 	
-	public Message(msgType msgT){
-		type = msgT;
+	//This IS REQUIRED
+	public Message(String senderip, serverType sendertype, int senderport, 
+			String recieverip, serverType receivertype,int receiverport){
+		addressedTo = receivertype;
+		sender = sendertype;
+		receiverIP = recieverip;
+		senderIP = senderip;
+		recieverPort = receiverport;
+		senderPort = senderport;
 	}
-	//This is for test5
+	/*
 	public Message(String fp, msgType msgT){
 		filePath = fp;
 		type = msgT;
@@ -38,10 +45,7 @@ public class Message implements Serializable{
 	public Message(msgType msgT, byte[] byteData) {
 		type = msgT;
 		fileData = byteData;
-	}
-	public Message() {
-	}
-
+	}*/
 	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, APPENDTOTFSFILE, COUNTFILES, WRITETONEWFILE};
 	public msgType type;
 	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
