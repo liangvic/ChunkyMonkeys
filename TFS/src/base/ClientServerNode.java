@@ -818,47 +818,14 @@ public class ClientServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void SendMessageToChunkServer(Message message) {
-		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
-		try(Socket clientSocket =  new Socket(message.senderIP, port);)
-		{
-			message.receiverIP = message.senderIP;
-			message.addressedTo = serverType.CHUNKSERVER;
-			message.sender = serverType.CLIENT;
-			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
-			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-		finally{
-		}
+		SendMessage(message);
 	}
 	
 	/**
 	 * @param message
 	 */
-	public void SendMessageToMaster(Message message) {
-		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
-		try(Socket clientSocket =  new Socket(message.senderIP, port);)
-		{
-			message.receiverIP = message.senderIP;
-			message.addressedTo = serverType.MASTER;
-			message.sender = serverType.CLIENT;
-			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
-			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-		finally{
-		}
+	public void SendMessageToMaster(Message message) {	
+			SendMessage(message);
+		
 	}
 }
