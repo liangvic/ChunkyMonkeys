@@ -7,6 +7,7 @@ import java.util.*;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
+import Utility.HeartBeat;
 import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
@@ -1135,4 +1136,52 @@ public class MasterServerNode extends ServerNode {
 		System.out.println("ClientPort: " + clientPort + "\t ServerPort: " + serverPort);
 		}
 	}
+/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
+////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////
+	/**
+	 * 
+	 * @param HBMessage
+	 */
+	public void SetChunkServerDead(HeartBeat HBMessage)
+	{
+		//TODO: Is the map key the IP?
+		String IPOfDownChunkServer = HBMessage.receiverIP;
+		
+		if(ServerMap.containsKey(IPOfDownChunkServer))
+		{
+			ServerMap.get(IPOfDownChunkServer).status = serverStatus.DEAD;
+		}
 	}
+	
+	public void SetChunkServerOutdated(String IPaddress)
+	{
+		if(ServerMap.containsKey(IPaddress))
+		{
+			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
+		}
+		
+		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+		{
+			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+			{
+				if(location.chunkIP == IPaddress) //&& cmEntry.getValue().listOfLocations.size() > 1)
+				{
+					//Send message with the chunkMetaData to the chunkserver
+					//from there, the chunkserver can determine if it has the correct version
+					
+				}
+			}
+		}
+		
+	}
+	
+	public void SetChunkServerAlive(String IPaddress)
+	{
+		if(ServerMap.containsKey(IPaddress))
+		{
+			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
+		}
+	}
+	
+
+}

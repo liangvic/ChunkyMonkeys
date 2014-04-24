@@ -745,4 +745,28 @@ public class ChunkServerNode extends ServerNode {
 		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
 		master.DealWithMessage(ping);
 	}
+	
+	public void CheckVersionAfterStarting(ChunkMetadata metadata)
+	{
+		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
+		{
+			if(cmEntry.getValue().chunkHash == metadata.chunkHash) //&& cmEntry.getValue().listOfLocations.size() > 1)
+			{
+				if(cmEntry.getValue().versionNumber < metadata.versionNumber)
+				{
+					for(TFSFile file: file_list)
+					{
+						if(file.fileNumber == metadata.filenumber)
+						{
+							
+						}
+					}
+					
+					chunkMap.remove(cmEntry.getKey());
+					chunkMap.put(metadata.chunkHash, metadata);
+				}
+			}
+		}
+	}
+	
 }
