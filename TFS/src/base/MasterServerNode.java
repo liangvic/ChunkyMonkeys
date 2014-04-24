@@ -187,7 +187,8 @@ public class MasterServerNode extends ServerNode {
 				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
 				}
-			} else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+			} /*
+			else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 			{
 
 				FindFile(inputMessage.filePath, operationID);
@@ -196,7 +197,7 @@ public class MasterServerNode extends ServerNode {
 			{
 				RemoveParentLocks(inputMessage.filePath);
 				System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
-			}
+			}*/
 		}
 
 	}
