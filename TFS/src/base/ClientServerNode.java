@@ -368,7 +368,7 @@ public class ClientServerNode extends ServerNode {
 
 	public void unit1(int NumFolders, int numSubDirectories){
 		List<String> queue = new ArrayList<String>();
-//		CCreateDirectory("1");
+		CCreateDirectory("1");
 		System.out.println("Creating 1");
 		
 		String parentfilepath = "1";
@@ -388,7 +388,7 @@ public class ClientServerNode extends ServerNode {
 			}
 		
 			newfilepath = parentfilepath + "\\" + folderName;
-//			CCreateDirectory("1");
+			CCreateDirectory(newfilepath);
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
