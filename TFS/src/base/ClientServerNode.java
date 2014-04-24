@@ -18,6 +18,7 @@ import base.ServerNode;
 public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
+	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 	public ClientServerNode(String IP, int portNum)
 	{
@@ -38,23 +39,26 @@ public class ClientServerNode extends ServerNode {
 	String localPathToReadFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
-
 	
 	/**
 	 * @throws Exception
 	 */
-	public void WILLBEMAIN() throws Exception {	
-		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+	public void main() throws Exception {	
+		toString();
+		TestInterface();
+		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
 
 		{
 			while(true) { 
-				Socket clientSocket = serverSocket.accept();
-				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Socket otherSocket = mySocket.accept();
+				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
-				//TODO: put messages in queue
-				DealWithMessage(incoming);
-				//outToClient.writeBytes(capitalizedSentence); 
+				if(incoming != null) {
+					messageList.add(incoming);
+					DealWithMessage();
+					//outToClient.writeBytes(capitalizedSentence); 
+				}
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -159,7 +163,7 @@ public class ClientServerNode extends ServerNode {
 				}
 			} catch (Exception e) {
 
-				e.printStackTrace();
+				//e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
 		} while (input != "X" || input != "x");
@@ -169,60 +173,64 @@ public class ClientServerNode extends ServerNode {
 	/**
 	 * @param message
 	 */
-	public void DealWithMessage(Message message) {
-		if (message.type == msgType.DELETEDIRECTORY) {
-			if (message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Deleted directory sucessfully!");
-			} else {
-				System.out.println("Error! Couldn't delete directory...");
+	public void DealWithMessage() {
+		while(!messageList.isEmpty()) {
+			Message message = messageList.get(0);
+			if (message.type == msgType.DELETEDIRECTORY) {
+				if (message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Deleted directory sucessfully!");
+				} else {
+					System.out.println("Error! Couldn't delete directory...");
+				}
 			}
-		}
-		else if (message.type == msgType.CREATEDIRECTORY) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created directory "+message.filePath);
+			else if (message.type == msgType.CREATEDIRECTORY) {
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Successfully created directory "+message.filePath);
+				}
+				else {
+					System.out.println("Failed to create directory "+message.filePath);
+				}
 			}
-			else {
-				System.out.println("Failed to create directory "+message.filePath);
+			else if (message.type == msgType.CREATEFILE) {
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Successfully created file "+message.filePath);
+				}
+				else {
+					System.out.println("Failed to create file "+message.filePath);
+				}
 			}
-		}
-		else if (message.type == msgType.CREATEFILE) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created file "+message.filePath);
-			}
-			else {
-				System.out.println("Failed to create file "+message.filePath);
-			}
-		}
-		else if(message.type == msgType.READFILE)
-		{
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Read succeeded. Found file.");
-				msgRequestAReadToChunkserver(message);
-			}
-			else {
-				System.out.println("Read failed. Could not find file.");
-			}
-			// Supposedly going to cache it. Implementation will be completed
-			// later.lol
-			// uses the location to contact the chunkserver
-			
-		} else if (message.type == msgType.PRINTFILEDATA) {
-			msgPrintFileData(message);
-		} else if (message.type == msgType.APPENDTOTFSFILE) {
-			if(message.sender == serverType.MASTER)
+			else if(message.type == msgType.READFILE)
 			{
-				if(message.success == msgSuccess.REQUESTERROR)
-				{
-					CWriteToNewFile(localPathToReadFile, message.filePath, 3);
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Read succeeded. Found file.");
+					msgRequestAReadToChunkserver(message);
 				}
-				else
-				{
-					AppendToAllReplicas(message);
+				else {
+					System.out.println("Read failed. Could not find file.");
 				}
+				// Supposedly going to cache it. Implementation will be completed
+				// later.lol
+				// uses the location to contact the chunkserver
+
+			} else if (message.type == msgType.PRINTFILEDATA) {
+				msgPrintFileData(message);
+			} else if (message.type == msgType.APPENDTOTFSFILE) {
+				if(message.sender == serverType.MASTER)
+				{
+					if(message.success == msgSuccess.REQUESTERROR)
+					{
+						CWriteToNewFile(localPathToReadFile, message.filePath, 3);
+					}
+					else
+					{
+						AppendToAllReplicas(message);
+					}
+				}
+				//ReadLocalFile(message);
+			}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
+				ExpectChunkNumberForRead(message.expectNumChunkForRead);
 			}
-			//ReadLocalFile(message);
-		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
-			ExpectChunkNumberForRead(message.expectNumChunkForRead);
+			messageList.remove(0);
 		}
 	}
 

@@ -15,6 +15,15 @@ public class ServerNode {
 	static serverType myType;
 	//int targetPortNumber;	
 
+	public String toString(){
+		String type = "";
+		if (myType == serverType.CHUNKSERVER) type = "ChunkServer";
+		if (myType == serverType.MASTER) type = "Master";
+		if (myType == serverType.CLIENT) type = "Client";
+		type = type + ": IP " + myIP + " Port " + myPortNumber;
+		System.out.println(type);
+		return type;
+	}
 	public void SendMessage(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
 
