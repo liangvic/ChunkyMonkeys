@@ -83,6 +83,14 @@ public class ClientServerNode extends ServerNode {
 					else
 						throw new Exception();
 					break;
+				case ("Unit4"):
+					if (tokens.length == 3){
+						test4(tokens[1].toString(), tokens[2].toString());
+					}
+					else{
+						throw new Exception();
+					}
+					break;
 				case ("Test4"):
 					if (tokens.length == 3){
 						test4(tokens[1].toString(), tokens[2].toString());
