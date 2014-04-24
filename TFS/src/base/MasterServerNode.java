@@ -25,6 +25,7 @@ public class MasterServerNode extends ServerNode {
 	//public ChunkServerNode chunkServer;
 
 	int operationID = 0;
+	int chunksNeedToBeChecked = 0;
 	// private static ServerSocket welcomeSocket;
 	// chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
@@ -112,7 +113,11 @@ public class MasterServerNode extends ServerNode {
 	public void DealWithMessage(Message inputMessage) {
 		operationID++; //used to differentiate operations
 		System.out.println("inputMessagetype "+ inputMessage.type);
-		if(inputMessage instanceof SOSMessage)
+		if(inputMessage instanceof HeartBeat)
+		{
+			
+		}
+		else if(inputMessage instanceof SOSMessage)
 		{
 			if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.REQUESTINGDATA)
 			{
@@ -1179,6 +1184,7 @@ public class MasterServerNode extends ServerNode {
 	
 	public void SetChunkServerOutdated(String IPaddress)
 	{
+		chunksNeedToBeChecked = chunkServerMap.size();
 		if(ServerMap.containsKey(IPaddress))
 		{
 			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
@@ -1197,6 +1203,7 @@ public class MasterServerNode extends ServerNode {
 					chunkMessage.senderIP = myIP;
 					chunkMessage.receiverIP = IPaddress;
 					chunkMessage.SOSserver = IPaddress;
+					//chunkNeed
 					SendMessageToChunkServer(chunkMessage);
 				}
 			}
