@@ -755,7 +755,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param msg
 	 */
 	public void CheckVersionAfterStarting(Message msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
-	{
+	{ //TODO: ADD TO SCHEDULER!!!
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
 			if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash && 
