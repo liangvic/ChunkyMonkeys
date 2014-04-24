@@ -24,20 +24,35 @@ public class ClientServerNode extends ServerNode {
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 	
-	public void WILLBEMAIN() throws Exception {
-		try { 
-			ServerSocket serverSocket = new ServerSocket(myPortNumber);
-			Socket clientSocket = serverSocket.accept();
-			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
-			Message m;
-			while((m = (Message)ois.readObject()) != null) {
-				DealWithMessage(m);
+	/**
+	 * @throws Exception
+	 */
+	public void WILLBEMAIN() throws Exception {	
+		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+
+		{
+			while(true) { 
+				Socket clientSocket = serverSocket.accept();
+				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Message incoming = (Message)in.readObject();
+				//TODO: put messages in queue
+				DealWithMessage(incoming);
+				//outToClient.writeBytes(capitalizedSentence); 
 			}
-		} catch (IOException e) {
+
+			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			//TODO: Deal with Server Pings
+			//TODO: Send updated chunkserver data to re-connected servers
+		}
+		catch (IOException e) {
 			System.out
-					.println("Exception caught when trying to listen on port "
-							+ myPortNumber + " or listening for a connection");
+			.println("Exception caught when trying to listen on port "
+					+ myPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
+		}
+		finally{
+
 		}
 	}
 
@@ -224,8 +239,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param m
 	 */
 	public void msgRequestAReadToChunkserver(Message m) {
-
-		chunkServer.DealWithMessage(m);
+		SendMessageToChunkServer(m);
 	}
 
 	/**
@@ -320,7 +334,7 @@ public class ClientServerNode extends ServerNode {
 		message.addressedTo = serverType.MASTER;
 		message.sender = serverType.CLIENT;
 		try {
-			master.DealWithMessage(message);
+			SendMessageToMaster(message);
 		} catch (Exception e) {
 			System.out.println("Unable to send message");
 		}
@@ -359,7 +373,7 @@ public class ClientServerNode extends ServerNode {
 		Message message = new Message(msgType.DELETEDIRECTORY);
 		message.filePath = filepath;
 		message.sender = serverType.CLIENT;
-		master.DealWithMessage(message);
+		SendMessageToMaster(message);
 
 	}
 
@@ -417,7 +431,7 @@ public class ClientServerNode extends ServerNode {
 	public void CCreateDirectory(String filepath) {
 		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
 		message.sender = serverType.CLIENT;
-		master.DealWithMessage(message);
+		SendMessageToMaster(message);
 	}
 
 	/**
@@ -477,7 +491,7 @@ public class ClientServerNode extends ServerNode {
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
-		master.DealWithMessage(msg);
+		SendMessageToMaster(msg);
 	}
 	
 	/**
@@ -515,9 +529,7 @@ public class ClientServerNode extends ServerNode {
 		msg.sender = serverType.CLIENT;
 		msg.chunkClass= cm;
 		
-		
-		
-		chunkServer.DealWithMessage(msg);
+		SendMessageToChunkServer(msg);
 	}
 	
 	/**
@@ -549,7 +561,7 @@ public class ClientServerNode extends ServerNode {
 		else
 		{
 			System.out.println("New chunkmetadata hash "+ msg.chunkClass.chunkHash);		
-			chunkServer.DealWithMessage(msg);
+			SendMessageToChunkServer(msg);
 		}
 	}
 	
@@ -653,7 +665,7 @@ public class ClientServerNode extends ServerNode {
 		localPathToCreateFile = localPath;
 		Message m = new Message(msgType.READFILE, filePath);
 		m.sender = serverType.CLIENT;
-		master.DealWithMessage(m);
+		SendMessageToMaster(m);
 
 		// Step 1 connect to the master
 		// String masterIP = "68.181.174.149";
@@ -702,7 +714,7 @@ public class ClientServerNode extends ServerNode {
 		localPathToCreateFile = localPath;
 		m.fileName = filePath.substring(index + 1);
 		m.sender = serverType.CLIENT;
-		master.DealWithMessage(m);
+		SendMessageToMaster(m);
 	}
 	/**
 	 * @param message
@@ -737,7 +749,7 @@ public class ClientServerNode extends ServerNode {
 		msg.sender = serverType.CLIENT;
 		msg.chunkClass = cm;
 		msg.chunkClass.size = (int) file.length();
-		chunkServer.DealWithMessage(msg);
+		SendMessageToChunkServer(msg);
 	}
 	public void printCommands(){
 		System.out.println("Format closely follows that of in the Assignment Page");
@@ -761,7 +773,54 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test7 Path: "+filepath);
 		Message m = new Message(msgType.COUNTFILES, filepath);
 		m.sender = serverType.CLIENT;
-		master.DealWithMessage(m);
+		SendMessageToMaster(m);
 	}
-
+	
+	/**
+	 * @param message
+	 */
+	public void SendMessageToChunkServer(Message message) {
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CHUNKSERVER;
+			message.sender = serverType.CLIENT;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+	
+	/**
+	 * @param message
+	 */
+	public void SendMessageToMaster(Message message) {
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.MASTER;
+			message.sender = serverType.CLIENT;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
 }

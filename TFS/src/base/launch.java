@@ -17,18 +17,7 @@ import java.util.Timer;
 public class launch {
 
 	public static void main(String args[]) throws Exception {
-		Config.prop.load(new FileInputStream("config/config.properties"));
-		MasterServerNode master = new MasterServerNode();
-		ClientServerNode client = new ClientServerNode();
-		ChunkServerNode chunkServer = new ChunkServerNode();
-		
-		master.client = client;
-		master.chunkServer = chunkServer;
-		client.master = master;
-		client.chunkServer = chunkServer;
-		chunkServer.master = master;
-		chunkServer.client = client;
-		
+
 		/*Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new TimerTask() {
 			  @Override

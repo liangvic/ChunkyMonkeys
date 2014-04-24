@@ -29,6 +29,7 @@ public class MasterServerNode extends ServerNode {
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
+	
 
 	public class ServerData {
 		String IP;
@@ -53,6 +54,9 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	// Don't call on this for now; using monolith structure
+	/**
+	 * @throws Exception
+	 */
 	public void WILLBEMAIN() throws Exception {	
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
@@ -60,7 +64,6 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket clientSocket = serverSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				//TODO: put messages in queue
 				DealWithMessage(incoming);
@@ -131,8 +134,7 @@ public class MasterServerNode extends ServerNode {
 			}
 		} else if (inputMessage.type == msgType.CREATEFILE) {
 			if (inputMessage.sender == serverType.CLIENT)
-				CreateFile(inputMessage.filePath, inputMessage.fileName,
-						inputMessage.chunkindex, operationID);
+				CreateFile(inputMessage, operationID);
 			else if (inputMessage.sender == serverType.CHUNKSERVER) {
 				RemoveParentLocks(inputMessage.filePath);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
@@ -333,12 +335,19 @@ public class MasterServerNode extends ServerNode {
 	 * @param chunkServerMessage
 	 */
 	public void SendMessageToChunkServer(Message message) {
-		//MESSAGE MUST HAVE IP and Socket Number
+		//MESSAGE MUST HAVE IP and Socket Number		
 		int port = ServerMap.get(message.senderIP).serverPort;	
 		try(Socket serverSocket =  new Socket(message.senderIP, port);)
 		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CHUNKSERVER;
+			message.sender = serverType.MASTER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -354,8 +363,15 @@ public class MasterServerNode extends ServerNode {
 		int port = ServerMap.get(message.senderIP).clientPort;	
 		try(Socket clientSocket =  new Socket(message.senderIP, port);)
 		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CLIENT;
+			message.sender = serverType.MASTER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -604,10 +620,13 @@ public class MasterServerNode extends ServerNode {
 	 * @param index
 	 * @param opID
 	 */
-	public void CreateFile(String filepath, String filename, int index, int opID){
-		System.out.println("CREATING FILE");
+	public void CreateFile(Message message, int opID){
+		String filepath = message.filePath;
+		String filename = message.fileName;
+		int index = message.chunkindex;
 		String newfilename = filepath + "\\" + filename;
-		String hashstring = newfilename + index;
+		String hashstring = newfilename + message.chunkindex;
+		System.out.println("CREATING FILE " + newfilename);
 		// if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null
 				|| chunkServerMap.get(hashstring) != null
@@ -628,11 +647,11 @@ public class MasterServerNode extends ServerNode {
 					newChunk.filenumber = rand.nextInt(5); //only use one for now
 					newChunk.chunkHash = hashstring;
 					chunkServerMap.put(hashstring, newChunk);
-
-					Message newMessage = new Message(msgType.CREATEFILE, newChunk);
-					newMessage.chunkClass.filename = newName;
+					
+					message.type = msgType.CREATEFILE;
+					message.chunkClass = newChunk;
 					try {
-						SendMessageToClient(newMessage);
+						SendMessageToClient(message);
 
 					} catch (Exception e) {
 						//TODO: deal with message failure

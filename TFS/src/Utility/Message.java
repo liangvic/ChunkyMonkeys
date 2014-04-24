@@ -51,6 +51,8 @@ public class Message implements Serializable{
 	public serverType sender;
 	public String filePath;
 	public String fileName;
+	public int senderPort;
+	public int recieverPort;
 	int startByte;
 	int byteLength;
 	public int chunkindex;
