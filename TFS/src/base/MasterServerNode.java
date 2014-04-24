@@ -117,7 +117,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param inputMessage
 	 */
 	public void DealWithMessage() {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			Message inputMessage = messageList.get(0);
 			operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
