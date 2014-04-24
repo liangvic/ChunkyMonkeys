@@ -316,7 +316,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public void WriteToNewFile(ChunkMetadata metadata, byte[] byteArray) {
 
-		TFSFile current = new TFSFile(0);
+		TFSFile current = new TFSFile(metadata.filenumber);
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
 			if(tf.fileNumber == metadata.filenumber)

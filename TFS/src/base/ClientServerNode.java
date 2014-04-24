@@ -14,8 +14,8 @@ import Utility.NamespaceNode.nodeType;
 import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
-	public MasterServerNode master;
-	public ChunkServerNode chunkServer;
+//	public MasterServerNode master;
+//	public ChunkServerNode chunkServer;
 
 	int chunkCountToExpect = 99;
 	int chunkReadsRecieved = 0;
@@ -196,6 +196,8 @@ public class ClientServerNode extends ServerNode {
 			ReadLocalFile(message);
 		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
 			ExpectChunkNumberForRead(message.expectNumChunkForRead);
+		} else if (message.type == msgType.WRITETONEWFILE) {
+			CWriteToNewFile2(message);
 		}
 	}
 
@@ -494,23 +496,7 @@ public class ClientServerNode extends ServerNode {
 		SendMessageToMaster(msg);
 	}
 	
-	/**
-	 * @param fullFilePath
-	 * @param byteStream
-	 * @return
-	 */
-	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream, int numReplicas){
-		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
-		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
-		int index = fullFilePath.lastIndexOf('\\');
-		msg.fileName = fullFilePath.substring(index+1);
-		msg.filePath = fullFilePath.substring(0, index);
-		msg.addressedTo = serverType.MASTER;
-		msg.sender = serverType.CLIENT;
-		msg.replicaCount = numReplicas;
-		return master.AssignChunkServer(msg);
-		//master.DealWithMessage(msg);
-	}
+	
 	
 	/**
 	 * @param cm
@@ -533,6 +519,24 @@ public class ClientServerNode extends ServerNode {
 	}
 	
 	/**
+	 * @param fullFilePath
+	 * @param byteStream
+	 * @return
+	 */
+//	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream, int numReplicas){
+//		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
+//		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
+//		int index = fullFilePath.lastIndexOf('\\');
+//		msg.fileName = fullFilePath.substring(index+1);
+//		msg.filePath = fullFilePath.substring(0, index);
+//		msg.addressedTo = serverType.MASTER;
+//		msg.sender = serverType.CLIENT;
+//		msg.replicaCount = numReplicas;
+//		return master.AssignChunkServer(msg);
+//		//master.DealWithMessage(msg);
+//	}
+	
+	/**
 	 * @param localPath
 	 * @param fullFilePath
 	 */
@@ -550,17 +554,23 @@ public class ClientServerNode extends ServerNode {
 		int index = fullFilePath.lastIndexOf('\\');
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
-		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
-		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile, numberOfReplicas);
 		msg.replicaCount = numberOfReplicas;
+		//Going to ask the master to populate the chunk metadata
+		SendMessageToMaster(msg);
+		
+	}
+	
+	public void CWriteToNewFile2(Message msg){
 		if (msg.chunkClass == null)
 		{
-			System.out.println("ERROR: " + fullFilePath+ " already exists.");
+			System.out.println("ERROR: " + msg.filePath+ " already exists.");
 		}
 		else
 		{
-			System.out.println("New chunkmetadata hash "+ msg.chunkClass.chunkHash);		
+			System.out.println("New chunkmetadata hash "+ msg.chunkClass.chunkHash);
+			msg.addressedTo = serverType.CHUNKSERVER;
 			SendMessageToChunkServer(msg);
 		}
 	}
