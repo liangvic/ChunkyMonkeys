@@ -61,6 +61,8 @@ public class ChunkServerNode extends ServerNode {
 		myIP = IP;
 		myPortNumber = port;
 		myType = serverType.CHUNKSERVER;
+		masterIP = Config.prop.getProperty("MASTERIP");
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
 		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
@@ -68,6 +70,9 @@ public class ChunkServerNode extends ServerNode {
 		LoadServerNodeMap();
 		LoadFileData();
 	}
+	
+	String masterIP = null;
+	int masterPort = 0;
 
 	// hash to data
 
@@ -233,7 +238,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("toobad");
 			e.printStackTrace();
 		}
-		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
@@ -309,7 +314,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(metadata.chunkHash, metadata);
 
-		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 
 		//appending on
@@ -357,7 +362,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 
-		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.chunkClass = message.chunkClass;
 		m.success = msgSuccess.REQUESTSUCCESS;
 
@@ -392,7 +397,7 @@ public class ChunkServerNode extends ServerNode {
 				}
 				chunkToDelete = entry.getKey();
 
-				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToMaster(successMessageToMaster);
 
@@ -439,7 +444,7 @@ public class ChunkServerNode extends ServerNode {
 							numCounted++;
 						}
 
-						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
@@ -489,7 +494,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 
-			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
 			
 			m.success = msgSuccess.REQUESTSUCCESS;
 			m.chunkClass = metadata;
@@ -765,7 +770,7 @@ public class ChunkServerNode extends ServerNode {
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
 	public void PingMaster (){
-		HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")), serverStatus.ALIVE);
+		HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
