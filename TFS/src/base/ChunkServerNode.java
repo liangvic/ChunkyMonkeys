@@ -26,7 +26,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import base.MasterServerNode.ServerData;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
@@ -107,6 +110,16 @@ public class ChunkServerNode extends ServerNode {
 		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
 
 		{
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				@Override
+				public void run() {
+						HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
+								masterIP,serverType.MASTER, masterPort,serverStatus.ALIVE);
+						SendMessage(HBMessage);
+				}
+			}, 10000, 10000);
+			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
 				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
@@ -138,7 +151,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void DealWithMessage() {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			Message message = messageList.get(0);
 
 			if(message instanceof HeartBeat)
@@ -925,24 +938,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void SendMessageToChunkServer(Message message) {
-		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
-		try(Socket serverSocket =  new Socket(message.senderIP, port);)
-		{
-			message.receiverIP = message.senderIP;
-			message.addressedTo = serverType.CHUNKSERVER;
-			message.sender = serverType.CHUNKSERVER;
-			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
-			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-		finally{
-		}
+		SendMessage(message);
 	}
 
 

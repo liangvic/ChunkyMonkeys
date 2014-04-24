@@ -174,7 +174,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void DealWithMessage() {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			Message message = messageList.get(0);
 			if (message.type == msgType.DELETEDIRECTORY) {
 				if (message.success == msgSuccess.REQUESTSUCCESS) {

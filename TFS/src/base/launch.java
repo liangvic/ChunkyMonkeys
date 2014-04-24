@@ -39,9 +39,11 @@ public class launch {
 		int input = a.nextInt();
 		
 		if (input == 1){
+			Config.prop.load(new FileInputStream("config/config.properties"));
 			String myIP = Config.prop.getProperty("MASTERIP");
 			int myPortNumber = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
 			MasterServerNode master = new MasterServerNode(myIP, myPortNumber); 
+			master.main();
 		}
 		else if (input == 2){
 			System.out.println(" Enter config number (2-5)");

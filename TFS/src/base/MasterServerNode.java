@@ -65,7 +65,8 @@ public class MasterServerNode extends ServerNode {
 	/**
 	 * @throws Exception
 	 */
-	public void WILLBEMAIN() throws Exception {	
+	public void main() throws Exception {	
+		toString();
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
 		{
@@ -76,9 +77,11 @@ public class MasterServerNode extends ServerNode {
 				public void run() {
 					for (Map.Entry<String, ServerData> entry : ServerMap.entrySet())
 					{
-						HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
-								entry.getKey(),serverType.CHUNKSERVER, entry.getValue().serverPort,serverStatus.ALIVE);
-						SendMessage(HBMessage);
+						ServerData temp = entry.getValue();
+						temp.TTL+=1;
+						if (temp.TTL >= 10 && temp.status == serverStatus.ALIVE)
+							temp.status = serverStatus.DEAD;
+						
 					}
 				}
 			}, 10000, 10000);
@@ -88,8 +91,9 @@ public class MasterServerNode extends ServerNode {
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
+					System.out.println("Message from IP: " + incoming.senderIP + " recieved.");
 					messageList.add(incoming);
-					DealWithMessage();
+					//DealWithMessage();
 				}
 			}
 
@@ -113,7 +117,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param inputMessage
 	 */
 	public void DealWithMessage() {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			Message inputMessage = messageList.get(0);
 			operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
@@ -626,7 +630,7 @@ public class MasterServerNode extends ServerNode {
 		WritePersistentChunkServerMap(hashstring,
 				chunkServerMap.get(hashstring));
 
-		Message metadataMsg = new Message(msgType.WRITETONEWFILE, newMetaData);
+		Message metadataMsg = inputMessage;//new Message(msgType.WRITETONEWFILE, newMetaData);
 		SendMessageToClient(metadataMsg);
 		return newMetaData;
 		//client.AppendToChunkServer(hashstring, myServer);
