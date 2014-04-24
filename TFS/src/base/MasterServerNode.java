@@ -48,10 +48,15 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public MasterServerNode() {
+	public MasterServerNode(String ip, int port) {
+		myIP = ip;
+		myPortNumber = port;
+		myType = serverType.MASTER;
+		
 		LoadChunkServerMap();
 		LoadNamespaceMap();
 		LoadServerData();
+		
 	}
 
 	// Don't call on this for now; using monolith structure
@@ -104,7 +109,7 @@ public class MasterServerNode extends ServerNode {
 		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
 			if (inputMessage.sender == serverType.CLIENT) {
 				try {
-					CreateDirectory(inputMessage.filePath,operationID);
+					CreateDirectory(inputMessage,operationID);
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -119,7 +124,7 @@ public class MasterServerNode extends ServerNode {
 			} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
 				if (inputMessage.sender == serverType.CLIENT) {
 					try {
-						CreateDirectory(inputMessage.filePath,operationID);
+						CreateDirectory(inputMessage,operationID);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -249,7 +254,6 @@ public class MasterServerNode extends ServerNode {
 					if(parentPath == filePath)
 					{
 						RemoveParentLocks(filePath);
-						SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 						return false;
 					}
 					//if not the final node, allow it to pass
@@ -258,7 +262,6 @@ public class MasterServerNode extends ServerNode {
 						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
 				{
 					RemoveParentLocks(parentPath);
-					SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
 					return false;
 				}
 				parentPath = parentPath + "\\" + tokens[i]; 
@@ -344,26 +347,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
-		int port = ServerMap.get(message.senderIP).clientPort;	
-		try(Socket clientSocket =  new Socket(message.senderIP, port);)
-		{
-			if (message.sender != serverType.MASTER){
-			message.receiverIP = message.senderIP;
-			message.addressedTo = serverType.CLIENT;
-			message.sender = serverType.MASTER;
-			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
-			}
-			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
-		}
-		catch (IOException e){
-			e.printStackTrace();
-		}
-		finally{
-		}
+		SendMessage(message);
 	}
 	
 	/**
@@ -443,8 +427,13 @@ public class MasterServerNode extends ServerNode {
 				while (chunkServerMap.containsKey(chunkServerKey)) {
 					// System.out.println("Going to delete the value");
 					// sending protocol
-					msg.chunkClass = chunkServerMap.get(chunkServerKey);
-					SendMessageToChunkServer(msg);
+			//TODO: send delete message to respective server
+			//		ChunkMetadata metadata = chunkServerMap.get(chunkServerKey);
+			//		String rip = metadata.listOfLocations.
+			//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
+			//		chunkMessage.chunkClass = chunkServerMap
+			//				.get(chunkServerKey);
+					SendMessageToChunkServer(chunkMessage);
 
 					// delete the file from master's chunk server map
 					chunkServerMap.remove(chunkServerKey);
@@ -484,7 +473,7 @@ public class MasterServerNode extends ServerNode {
 			System.out.println("Master: trying to read "+inputMessage.filePath + indexCounter);
 			if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
 				System.out.println("Master: doesnt exist");
-				SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
+				SendErrorMessageToClient(inputMessage);
 				return;
 			}
 
@@ -500,14 +489,17 @@ public class MasterServerNode extends ServerNode {
 			}
 			//Send client the number of chunk number to read
 //			client.ExpectChunkNumberForRead(indexCounter - 1);
-			Message expectMsg = new Message(msgType.EXPECTEDNUMCHUNKREAD);
+			Message expectMsg = inputMessage;
+			expectMsg.type = msgType.EXPECTEDNUMCHUNKREAD;
 			expectMsg.success = msgSuccess.REQUESTSUCCESS;
 			expectMsg.expectNumChunkForRead = indexCounter-1;
 			SendMessageToClient(expectMsg);
 			for(int i=1;i<indexCounter;i++){
 				ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
 				System.out.println("Master: first chunkhash is "+cm.chunkHash);
-				Message returnMessage = new Message(msgType.READFILE, cm);
+				Message returnMessage = inputMessage;
+				returnMessage.type = msgType.READFILE;
+				returnMessage.chunkClass = cm;
 				returnMessage.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToClient(returnMessage);
 			}
@@ -516,7 +508,7 @@ public class MasterServerNode extends ServerNode {
 		}
 		else
 		{
-			SendErrorMessageToClient(new Message(msgType.READFILE, inputMessage.filePath));
+			SendErrorMessageToClient(inputMessage);
 		}
 	}
 
@@ -616,7 +608,7 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.get(filepath) == null
 				|| chunkServerMap.get(hashstring) != null
 				|| NamespaceMap.get(filepath).type == nodeType.FILE) {
-			SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
+			SendErrorMessageToClient(message);
 		} else {
 			if(AddExclusiveParentLocks(filepath, opID))
 			{
@@ -648,12 +640,12 @@ public class MasterServerNode extends ServerNode {
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
 				WritePersistentChunkServerMap(hashstring,
 						chunkServerMap.get(hashstring));
-				SendSuccessMessageToClient(new Message(msgType.CREATEFILE, filename));
+				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created file " + newName);
 
 			} else {
 
-				SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
+				SendErrorMessageToClient(message);
 				/*
 				 * ServerSocket serverSocket; try { serverSocket = new
 				 * ServerSocket(myPortNumber); Socket clientSocket =
@@ -681,7 +673,8 @@ public class MasterServerNode extends ServerNode {
 	 * @param filepath
 	 * @param opID
 	 */
-	public void CreateDirectory(String filepath, int opID) {
+	public void CreateDirectory(Message message, int opID) {
+		String filepath = message.filePath;
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			if(AddExclusiveParentLocks(filepath, opID))
 			{
@@ -695,7 +688,7 @@ public class MasterServerNode extends ServerNode {
 				}
 				if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
 					// parent directory does not exist
-					SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
+					SendErrorMessageToClient(message);
 					return;
 				} else if (NamespaceMap.containsKey(parent)) {
 					NamespaceMap.get(parent).children.add(filepath);
@@ -703,8 +696,7 @@ public class MasterServerNode extends ServerNode {
 
 				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
 				NamespaceMap.put(filepath, newNode);
-				SendSuccessMessageToClient(new Message(msgType.CREATEDIRECTORY,
-						filepath));
+				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created directory " + filepath);
 
 				WritePersistentNamespaceMap(filepath, newNode);
@@ -712,12 +704,12 @@ public class MasterServerNode extends ServerNode {
 			}
 			else
 			{
-				SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
+				SendErrorMessageToClient(message);
 			}
 
 		} else // directory already exists
 		{
-			SendErrorMessageToClient(new Message(msgType.CREATEDIRECTORY, filepath));
+			SendErrorMessageToClient(message);
 		}
 	}
 
@@ -732,18 +724,18 @@ public class MasterServerNode extends ServerNode {
 		{
 			ChunkMetadata chunkData = GetTFSFile(message.filePath);
 			if(chunkData != null) {
-				Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
-				Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
-				SendMessageToChunkServer(m1);
-				SendMessageToClient(m2);
+				message.chunkClass = chunkData;
+				//TODO: FIX THIS
+				SendMessageToChunkServer(message);
+				SendMessageToClient(message);
 			}
 			else {
-				SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
+				SendErrorMessageToClient(message);
 			}
 		}
 		else
 		{
-			SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
+			SendErrorMessageToClient(message);
 		}
 	}
 
@@ -819,9 +811,6 @@ public class MasterServerNode extends ServerNode {
 
 				while(chunkServerMap.containsKey(chunkServerMapKey)){
 					logicalFilesCount++;
-					chunkDataFinding = chunkServerMap.get(chunkServerMapKey);
-					Message newMessage = new Message(msgType.COUNTFILES, chunkDataFinding);
-					newMessage.chunkClass.filename = filepath;
 					//					try {
 					//						chunkServer.DealWithMessage(newMessage);
 					//
