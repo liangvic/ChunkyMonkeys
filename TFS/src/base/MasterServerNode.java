@@ -13,6 +13,7 @@ import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
 import Utility.SOSMessage;
+import Utility.SOSMessage.msgTypeToMaster;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -67,6 +68,20 @@ public class MasterServerNode extends ServerNode {
 		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
 		{
+			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				  @Override
+				  public void run() {
+					  for (Map.Entry<String, ServerData> entry : ServerMap.entrySet())
+					  {
+						  HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
+									entry.getKey(),serverType.CHUNKSERVER, entry.getValue().serverPort,serverStatus.ALIVE);
+						  SendMessage(HBMessage);
+					  }
+				  }
+				}, 10000, 10000);
+			
 			while(true) { 
 				Socket clientSocket = serverSocket.accept();
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
@@ -75,7 +90,7 @@ public class MasterServerNode extends ServerNode {
 				DealWithMessage(incoming);
 			}
 
-			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			
 			//TODO: Deal with Server Pings
 			//TODO: Send updated chunkserver data to re-connected servers
 		}
@@ -97,7 +112,18 @@ public class MasterServerNode extends ServerNode {
 	public void DealWithMessage(Message inputMessage) {
 		operationID++; //used to differentiate operations
 		System.out.println("inputMessagetype "+ inputMessage.type);
-		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
+		if(inputMessage instanceof SOSMessage)
+		{
+			if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.REQUESTINGDATA)
+			{
+				TellOtherChunkServerToSendData((SOSMessage)inputMessage);
+			}
+			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
+			{
+				//TODO: finished with the sending of data -- release semaphore-kind of thing?
+			}
+		}
+		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 			MDeleteDirectory(inputMessage,operationID);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 			RemoveParentLocks(inputMessage.filePath);
@@ -111,7 +137,6 @@ public class MasterServerNode extends ServerNode {
 				try {
 					CreateDirectory(inputMessage,operationID);
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else if (inputMessage.sender == serverType.CHUNKSERVER) {
@@ -126,7 +151,6 @@ public class MasterServerNode extends ServerNode {
 					try {
 						CreateDirectory(inputMessage,operationID);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
@@ -881,7 +905,6 @@ public class MasterServerNode extends ServerNode {
 				out.close();
 				ofstream.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -918,7 +941,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1008,16 +1030,13 @@ public class MasterServerNode extends ServerNode {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
 				textReader.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1063,16 +1082,13 @@ public class MasterServerNode extends ServerNode {
 			}
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			try {
 				textReader.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1099,7 +1115,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1126,7 +1141,6 @@ public class MasterServerNode extends ServerNode {
 			try {
 				out.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1155,7 +1169,6 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void SetChunkServerDead(HeartBeat HBMessage)
 	{
-		//TODO: Is the map key the IP?
 		String IPOfDownChunkServer = HBMessage.receiverIP;
 		
 		if(ServerMap.containsKey(IPOfDownChunkServer))
@@ -1200,6 +1213,7 @@ public class MasterServerNode extends ServerNode {
 				if(location.chunkIP != msg.senderIP)
 				{
 					msg.receiverIP = location.chunkIP;
+					msg.msgToMaster = msgTypeToMaster.DONESENDING;
 					SendMessageToChunkServer(msg);
 				}
 			}

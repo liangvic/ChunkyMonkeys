@@ -37,6 +37,8 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.SOSMessage;
+import Utility.SOSMessage.msgTypeToMaster;
+import Utility.SOSMessage.msgTypeToServer;
 
 public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -133,9 +135,24 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void DealWithMessage(Message message) {
-		if(message instanceof SOSMessage)
+		if(message instanceof HeartBeat)
 		{
-			CheckVersionAfterStarting((SOSMessage)message);
+			PingMaster((HeartBeat)message);
+		}
+		else if(message instanceof SOSMessage)
+		{
+			if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
+			{
+				CheckVersionAfterStarting((SOSMessage)message);
+			}
+			else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
+			{
+				SendingDataToUpdateChunkServer((SOSMessage)message);
+			}
+			else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
+			{
+				ReplacingData((SOSMessage)message);
+			}
 		}
 		else if (message.type == msgType.DELETEDIRECTORY) {
 			DeleteChunk(message.chunkClass);
@@ -773,8 +790,8 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
-	public void PingMaster (){
-		HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+	public void PingMaster (HeartBeat ping){
+		//HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
@@ -795,6 +812,7 @@ public class ChunkServerNode extends ServerNode {
 					cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
 			{
 				//TODO: Message to Master to get new data
+				msg.msgToServer = msgTypeToServer.TO_OTHERSERVER;
 				SendMessageToMaster(msg);
 				return;
 			}
@@ -813,6 +831,7 @@ public class ChunkServerNode extends ServerNode {
 					msg.fileData[i] = file.data[msg.chunkClass.byteoffset + i];
 				}
 				msg.receiverIP = msg.SOSserver;
+				msg.msgToServer = msgTypeToServer.RECEIVINGDATA;
 				SendMessageToChunkServer(msg);
 			}
 		}
