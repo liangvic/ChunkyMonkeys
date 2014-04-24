@@ -17,15 +17,6 @@ import base.ServerNode;
 public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
-
-	public ClientServerNode(String IP, int portNum)
-	{
-		myIP = IP;
-		myPortNumber = portNum;
-		myType = serverType.CLIENT;
-		masterIP = Config.prop.getProperty("MASTERIP");
-		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
-	}
 	
 	String masterIP = null;
 	int masterPort = 0;
@@ -36,19 +27,28 @@ public class ClientServerNode extends ServerNode {
 	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
-
+	public ClientServerNode(String IP, int portNum)
+	{
+		myIP = IP;
+		myPortNumber = portNum;
+		myType = serverType.CLIENT;
+		masterIP = Config.prop.getProperty("MASTERIP");
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
+	}
 	
 	/**
 	 * @throws Exception
 	 */
-	public void WILLBEMAIN() throws Exception {	
-		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+	public void main() throws Exception {	
+		toString();
+		TestInterface();
+		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
 
 		{
 			while(true) { 
-				Socket clientSocket = serverSocket.accept();
-				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Socket otherSocket = mySocket.accept();
+				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				//TODO: put messages in queue
 				DealWithMessage(incoming);
@@ -157,7 +157,7 @@ public class ClientServerNode extends ServerNode {
 				}
 			} catch (Exception e) {
 
-				e.printStackTrace();
+				//e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
 		} while (input != "X" || input != "x");

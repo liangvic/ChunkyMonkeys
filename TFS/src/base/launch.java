@@ -32,29 +32,38 @@ public class launch {
 				  }
 			  }
 			}, 10000, 10000);*/
+				
 		
-		client.TestInterface();
-		
-		/* System.out.println("1: Launch Master Server\n2: Launch Client Server\n");
+		System.out.println("1: Launch Master Server\n2: Launch Client\n3: Launch Chunk Server\n");
 		Scanner a = new Scanner(System.in);
 		int input = a.nextInt();
 		
 		if (input == 1){
 			String myIP = Config.prop.getProperty("MASTERIP");
-			int myPortNumber = Config.prop.getProperty("MASTERPORT");
+			int myPortNumber = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
 			MasterServerNode master = new MasterServerNode(myIP, myPortNumber); 
 		}
-		else if (input == 2 || input == 3 || input == 4 || input == 5 ){
-			client.TestInterface();
-			String IPkey = Config.prop.getProperty("IP" + input);
-			String portKeyClient = Config.prop.getProperty("PORT" + input + "_CLIENT");
-			String portKeyServer = Config.prop.getProperty("PORT" + input + "_SERVER")
-			ClientServerNode client = new ClientServerNode(IPkey, portKeyClient); 
-			ChunkServerNode chunkServer = new ChunkServerNode(IPkey, portKeyServer);
+		else if (input == 2){
+			System.out.println(" Enter config number (2-5)");
+			input = a.nextInt();
+			Config.prop.load(new FileInputStream("config/config.properties"));
+			String IPkey = Config.prop.getProperty("IP" + Integer.toString(input));
+			String portKeyClient = Config.prop.getProperty("PORT" + Integer.toString(input) + "_CLIENT");
+			ClientServerNode client = new ClientServerNode(IPkey, Integer.parseInt(portKeyClient)); 
+			client.main();
+		}
+		else if (input == 3){
+			System.out.println(" Enter config number (2-5)");
+			input = a.nextInt();
+			Config.prop.load(new FileInputStream("config/config.properties"));
+			String IPkey = Config.prop.getProperty("IP" + Integer.toString(input));
+			String portKeyServer = Config.prop.getProperty("PORT" + Integer.toString(input) + "_SERVER");
+			ChunkServerNode chunkServer = new ChunkServerNode(IPkey, Integer.parseInt(portKeyServer));
+			chunkServer.main();
 		}
 		else{
 			System.out.println("Invalid Selection");
-		}*/
+		}
 	}
 
 }

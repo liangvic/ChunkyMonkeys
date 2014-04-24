@@ -100,14 +100,15 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * @throws Exception
 	 */
-	public void WILLBEMAIN() throws Exception {	
-		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+	public void main() throws Exception {	
+		toString();
+		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
 
 		{
 			while(true) { 
-				Socket clientSocket = serverSocket.accept();
-				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Socket otherSocket = mySocket.accept();
+				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				//TODO: put messages in queue
 				DealWithMessage(incoming);

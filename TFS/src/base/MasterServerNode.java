@@ -433,7 +433,7 @@ public class MasterServerNode extends ServerNode {
 			//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
 			//		chunkMessage.chunkClass = chunkServerMap
 			//				.get(chunkServerKey);
-					SendMessageToChunkServer(chunkMessage);
+			//AAA		SendMessageToChunkServer(chunkMessage);
 
 					// delete the file from master's chunk server map
 					chunkServerMap.remove(chunkServerKey);
