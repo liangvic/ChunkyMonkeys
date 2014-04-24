@@ -28,6 +28,7 @@ import java.util.Map;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
+import Utility.Config;
 import Utility.HeartBeat;
 import Utility.HeartBeat.serverStatus;
 import Utility.Message;
@@ -158,7 +159,7 @@ public class ChunkServerNode extends ServerNode {
 				System.out.println("chunkClass is null");
 			}
 			else
-				WriteToNewFile(message.chunkClass, message.fileData);
+				WriteToNewFile(message);
 		}
 	}
 
@@ -231,7 +232,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("toobad");
 			e.printStackTrace();
 		}
-		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, message.senderIP, message.sender, message.senderPort);
+		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
 		m.success = msgSuccess.REQUESTSUCCESS;
 		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
@@ -307,65 +308,62 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(metadata.chunkHash, metadata);
 
-		Message newMessage = new Message(msgType.APPENDTOFILE, metadata);
-		newMessage.success = msgSuccess.REQUESTSUCCESS;
-		newMessage.addressedTo = serverType.MASTER;
-		newMessage.sender = serverType.CHUNKSERVER;
+		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+		m.success = msgSuccess.REQUESTSUCCESS;
 
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		WriteDataToFile(current, byteArray/*current.data*/);
-		SendMessageToMaster(newMessage);
+		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 	}
 
-	public void WriteToNewFile(ChunkMetadata metadata, byte[] byteArray) {
+	public void WriteToNewFile(Message message) {
 
 		TFSFile current = new TFSFile(0);
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
-			if(tf.fileNumber == metadata.filenumber)
+			if(tf.fileNumber == message.chunkClass.filenumber)
 				current = tf;
 		}
 		System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
 		System.out.println("File #: "+current.fileNumber);
-		System.out.println("Metadata correct file #: "+metadata.filenumber);
-		ByteBuffer.allocate(4).putInt(metadata.size).array();
-		byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		System.out.println("Metadata correct file #: "+message.chunkClass.filenumber);
+		ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
+		byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
 		for(int i=0;i<4;i++){
 			current.data[current.spaceOccupied] = fourBytesBefore[i];
 			current.spaceOccupied++;
 		}
 		System.out.println("occupied length: "+current.spaceOccupied);
-		System.out.println("add length: "+byteArray.length);
+		System.out.println("add length: "+message.fileData.length);
 
-		metadata.byteoffset = current.spaceOccupied;
-		metadata.size = byteArray.length;
+		message.chunkClass.byteoffset = current.spaceOccupied;
+		message.chunkClass.size = message.fileData.length;
 
 
-		for(int i=0;i<byteArray.length;i++){
-			current.data[current.spaceOccupied] = byteArray[i];
+		for(int i=0;i<message.fileData.length;i++){
+			current.data[current.spaceOccupied] = message.fileData[i];
 			current.spaceOccupied++;
 		}
 
-		byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(metadata.size).array();
+		byte[] fourBytesAfter = ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
 		for(int i=0;i<4;i++){
 			current.data[current.spaceOccupied] = fourBytesAfter[i];
 			current.spaceOccupied++;
 		}
 
 
-		chunkMap.put(metadata.chunkHash, metadata);
+		chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 
-		Message newMessage = new Message(msgType.WRITETONEWFILE, metadata);
-		newMessage.success = msgSuccess.REQUESTSUCCESS;
-		newMessage.addressedTo = serverType.MASTER;
-		newMessage.sender = serverType.CHUNKSERVER;
+		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+		m.chunkClass = message.chunkClass;
+		m.success = msgSuccess.REQUESTSUCCESS;
 
 		//appending on
-		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
+		WritePersistentServerNodeMap(message.chunkClass.chunkHash,message.chunkClass);
 		WriteDataToFile(current, current.data);
-		SendMessageToMaster(newMessage);
+		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 	}
 
@@ -393,7 +391,7 @@ public class ChunkServerNode extends ServerNode {
 				}
 				chunkToDelete = entry.getKey();
 
-				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
+				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
 				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToMaster(successMessageToMaster);
 
@@ -440,7 +438,7 @@ public class ChunkServerNode extends ServerNode {
 							numCounted++;
 						}
 
-						Message successMessageToMaster = new Message(msgType.COUNTFILES);
+						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
@@ -490,15 +488,15 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 
-			Message newMessage = new Message(msgType.APPENDTOTFSFILE, metadata);
-			newMessage.success = msgSuccess.REQUESTSUCCESS;
-			newMessage.addressedTo = serverType.MASTER;
-			newMessage.sender = serverType.CHUNKSERVER;
+			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")));
+			
+			m.success = msgSuccess.REQUESTSUCCESS;
+			m.chunkClass = metadata;
 
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 			WriteDataToFile(current, byteArray);
-			SendMessageToMaster(newMessage);
+			SendMessageToMaster(m);
 			//master.DealWithMessage(newMessage);
 		}
 		catch(Exception e) {
@@ -766,7 +764,7 @@ public class ChunkServerNode extends ServerNode {
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
 	public void PingMaster (){
-		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
+		HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, Config.prop.getProperty("MASTERIP"), serverType.MASTER, Integer.parseInt(Config.prop.getProperty("MASTERPORT")), serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
