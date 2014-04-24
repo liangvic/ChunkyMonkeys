@@ -38,6 +38,8 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.SOSMessage;
+import Utility.SOSMessage.msgTypeToMaster;
+import Utility.SOSMessage.msgTypeToServer;
 
 public class ChunkServerNode extends ServerNode {
 	//public ClientServerNode client;
@@ -70,7 +72,7 @@ public class ChunkServerNode extends ServerNode {
 		LoadServerNodeMap();
 		LoadFileData();
 	}
-	
+
 	String masterIP = null;
 	int masterPort = 0;
 
@@ -96,7 +98,7 @@ public class ChunkServerNode extends ServerNode {
 	 *  //TODO:Timer that send out pings at regular intervals
 	 * }
 	 */
-	
+
 	/**
 	 * @throws Exception
 	 */
@@ -138,9 +140,30 @@ public class ChunkServerNode extends ServerNode {
 	public void DealWithMessage() {
 		while(!messageList.isEmpty()) {
 			Message message = messageList.get(0);
-			if (message.type == msgType.DELETEDIRECTORY) {
+
+			if(message instanceof HeartBeat)
+			{
+				PingMaster((HeartBeat)message);
+			}
+			else if(message instanceof SOSMessage)
+			{
+				if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
+				{
+					CheckVersionAfterStarting((SOSMessage)message);
+				}
+				else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
+				{
+					SendingDataToUpdateChunkServer((SOSMessage)message);
+				}
+				else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
+				{
+					ReplacingData((SOSMessage)message);
+				}
+			}
+			else if (message.type == msgType.DELETEDIRECTORY) {
 				DeleteChunk(message.chunkClass);
 			}
+
 			else if (message.type == msgType.CREATEFILE) {
 				AddNewBlankChunk(message);
 			} else if (message.type == msgType.READFILE) {
@@ -149,29 +172,38 @@ public class ChunkServerNode extends ServerNode {
 				if (message.chunkClass == null) {
 					System.out.println("chunkClass is null");
 				}
-				else
-					AppendToFile(message.chunkClass, message.fileData);
-			} else if (message.type == msgType.APPENDTOTFSFILE) {
-				if(message.sender == serverType.MASTER) {
-					System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-					chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+				else if (message.type == msgType.CREATEFILE) {
+					AddNewBlankChunk(message);
+				} else if (message.type == msgType.READFILE) {
+					ReadChunks(message);
+				} else if (message.type == msgType.APPENDTOFILE) {
+					if (message.chunkClass == null) {
+						System.out.println("chunkClass is null");
+					}
+					else
+						AppendToFile(message.chunkClass, message.fileData);
+				} else if (message.type == msgType.APPENDTOTFSFILE) {
+					if(message.sender == serverType.MASTER) {
+						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
+						chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+					}
+					else if (message.sender == serverType.CLIENT) {
+						System.out.println("Calling AppendToTSFFile Method");
+						AppendToTFSFile(message);
+					}
+				} else if (message.type == msgType.COUNTFILES) {
+					CountNumInFile(message.chunkClass);
 				}
-				else if (message.sender == serverType.CLIENT) {
-					System.out.println("Calling AppendToTSFFile Method");
-					AppendToTFSFile(message);
+				else if (message.type == msgType.WRITETONEWFILE)
+				{
+					if (message.chunkClass == null) {
+						System.out.println("chunkClass is null");
+					}
+					else
+						WriteToNewFile(message);
 				}
-			} else if (message.type == msgType.COUNTFILES) {
-				CountNumInFile(message.chunkClass);
+				messageList.remove(0);
 			}
-			else if (message.type == msgType.WRITETONEWFILE)
-			{
-				if (message.chunkClass == null) {
-					System.out.println("chunkClass is null");
-				}
-				else
-					WriteToNewFile(message);
-			}
-			messageList.remove(0);
 		}
 	}
 
@@ -501,7 +533,7 @@ public class ChunkServerNode extends ServerNode {
 			chunkMap.put(metadata.chunkHash, metadata);
 
 			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
-			
+
 			m.success = msgSuccess.REQUESTSUCCESS;
 			m.chunkClass = metadata;
 
@@ -775,34 +807,35 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
-	public void PingMaster (){
-		HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+	public void PingMaster (HeartBeat ping){
+		//HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
-////////PROCEDURE FOR BRINGING A CHUNKSERVER BACK UP ////////////////////////////////////
+	////////PROCEDURE FOR BRINGING A CHUNKSERVER BACK UP ////////////////////////////////////
 	//Master sends information to check version numbrer
 	//This chunkserver sends message to another chunkserver to send data if out of date
 	//Other chunkserver sends data over to this chunkserver.
-	
+
 	/**
 	 * 
 	 * @param msg
 	 */
 	public void CheckVersionAfterStarting(SOSMessage msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
-	{ //TODO: ADD TO SCHEDULER!!!
+	{ 
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
 			if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash && 
 					cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
 			{
 				//TODO: Message to Master to get new data
+				msg.msgToServer = msgTypeToServer.TO_OTHERSERVER;
 				SendMessageToMaster(msg);
 				return;
 			}
 		}
 	}
-	
+
 	public void SendingDataToUpdateChunkServer(SOSMessage msg)
 	{
 		for(TFSFile file: file_list)
@@ -815,11 +848,12 @@ public class ChunkServerNode extends ServerNode {
 					msg.fileData[i] = file.data[msg.chunkClass.byteoffset + i];
 				}
 				msg.receiverIP = msg.SOSserver;
+				msg.msgToServer = msgTypeToServer.RECEIVINGDATA;
 				SendMessageToChunkServer(msg);
 			}
 		}
 	}
-	
+
 	public void ReplacingData(SOSMessage msg) //MESSAGE THAT COMES FROM CHUNKSERVER TO GIVE DATA
 	{
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
@@ -830,7 +864,7 @@ public class ChunkServerNode extends ServerNode {
 				//removing from the chunkmap and adding in the correct information
 				chunkMap.remove(cmEntry.getKey());
 				chunkMap.put(msg.chunkClass.chunkHash, msg.chunkClass);
-				
+
 				for(TFSFile file: file_list)
 				{
 					if(file.fileNumber == msg.chunkClass.filenumber)
@@ -910,7 +944,7 @@ public class ChunkServerNode extends ServerNode {
 		finally{
 		}
 	}
-	
+
 
 	/**
 	 * @param message
@@ -925,5 +959,5 @@ public class ChunkServerNode extends ServerNode {
 	public void SendMessageToMaster(Message message) {
 		SendMessage(message);
 	}
-	
+
 }
