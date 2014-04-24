@@ -12,6 +12,7 @@ import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
+import Utility.SOSMessage;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -92,7 +93,7 @@ public class MasterServerNode extends ServerNode {
 		operationID++; //used to differentiate operations
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
-			MDeleteDirectory(inputMessage.filePath,operationID);
+			MDeleteDirectory(inputMessage,operationID);
 		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
 			RemoveParentLocks(inputMessage.filePath);
 			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
@@ -367,10 +368,11 @@ public class MasterServerNode extends ServerNode {
 	
 	/**
 	 * 
-	 * @param filePath
+	 * @param msg
 	 * @param opID
 	 */
-	public void MDeleteDirectory(String filePath, int opID) {
+	public void MDeleteDirectory(Message msg, int opID) {
+		String filePath = msg.filePath;
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
@@ -380,7 +382,7 @@ public class MasterServerNode extends ServerNode {
 				if (NamespaceMap.get(filePath).children.size() > 0) {
 					// recursively going through the tree and deleting all
 					// files/directories below
-					deleteAllChildNodes(filePath);
+					deleteAllChildNodes(filePath, msg);
 				}
 
 				String[] tokens = filePath.split(File.pathSeparator);
@@ -417,11 +419,11 @@ public class MasterServerNode extends ServerNode {
 				{
 					WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
 				}
-				SendSuccessMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				SendSuccessMessageToClient(msg);
 			}
 			else
 			{
-				SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, filePath));
+				SendErrorMessageToClient(msg);
 				return;
 			}
 		}
@@ -430,7 +432,7 @@ public class MasterServerNode extends ServerNode {
 	/**
 	 * @param startingNodeFilePath
 	 */
-	public void deleteAllChildNodes(String startingNodeFilePath) {
+	public void deleteAllChildNodes(String startingNodeFilePath, Message msg) {
 		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
 			// initially start at chunk index 1
 			int chunkIndex = 1;
@@ -441,10 +443,8 @@ public class MasterServerNode extends ServerNode {
 				while (chunkServerMap.containsKey(chunkServerKey)) {
 					// System.out.println("Going to delete the value");
 					// sending protocol
-					Message clientMessage = new Message(msgType.DELETEDIRECTORY);
-					clientMessage.chunkClass = chunkServerMap
-							.get(chunkServerKey);
-					SendMessageToChunkServer(clientMessage);
+					msg.chunkClass = chunkServerMap.get(chunkServerKey);
+					SendMessageToChunkServer(msg);
 
 					// delete the file from master's chunk server map
 					chunkServerMap.remove(chunkServerKey);
@@ -463,7 +463,7 @@ public class MasterServerNode extends ServerNode {
 			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children
 					.size(); i++) {
 				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children
-						.get(i));
+						.get(i),msg);
 			}
 			NamespaceMap.get(startingNodeFilePath).children.clear();
 			NamespaceMap.remove(startingNodeFilePath);
@@ -1190,11 +1190,32 @@ public class MasterServerNode extends ServerNode {
 				{
 					//Send message with the chunkMetaData to the chunkserver
 					//from there, the chunkserver can determine if it has the correct version
-					
+					SOSMessage chunkMessage = new SOSMessage();
+					chunkMessage.type = msgType.CHUNKSERVERBACKONLINE;
+					chunkMessage.chunkClass = cmEntry.getValue();
+					chunkMessage.senderIP = myIP;
+					chunkMessage.receiverIP = IPaddress;
+					chunkMessage.SOSserver = IPaddress;
+					SendMessageToChunkServer(chunkMessage);
 				}
 			}
 		}
 		
+	}
+	
+	public void TellOtherChunkServerToSendData(SOSMessage msg)
+	{
+		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+		{
+			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+			{
+				if(location.chunkIP != msg.senderIP)
+				{
+					msg.receiverIP = location.chunkIP;
+					SendMessageToChunkServer(msg);
+				}
+			}
+		}
 	}
 	
 	public void SetChunkServerAlive(String IPaddress)

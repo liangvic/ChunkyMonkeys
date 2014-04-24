@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 
 import Utility.ChunkMetadata;
+import Utility.Config;
 import Utility.Message;
 import Utility.Message.serverType;
 import Utility.Message.msgSuccess;
@@ -17,12 +18,25 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 
+	public ClientServerNode(String IP, int portNum)
+	{
+		myIP = IP;
+		myPortNumber = portNum;
+		myType = serverType.CLIENT;
+		masterIP = Config.prop.getProperty("MASTERIP");
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
+	}
+	
+	String masterIP = null;
+	int masterPort = 0;
+	
 	int chunkCountToExpect = 99;
 	int chunkReadsRecieved = 0;
 	List<Byte> readFileData = new ArrayList<Byte>();
 	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
+
 	
 	/**
 	 * @throws Exception
@@ -276,14 +290,15 @@ public class ClientServerNode extends ServerNode {
 	 * @param nFiles
 	 */
 	public void test2(String filepath, int nFiles) {
-		if (master.NamespaceMap.get(filepath) != null) {
+		//TODO: FIX THE COMMENT BELOW
+		/*if (master.NamespaceMap.get(filepath) != null) {
 			if (master.NamespaceMap.get(filepath).children.size() > 0) {
 				List<String> childs = master.NamespaceMap.get(filepath).children;
 				for (int a = 0; a < childs.size(); a++) {
 					test2helper(childs.get(a), nFiles);
 				}
 			}
-		}
+		}*/
 
 		for (int i = 1; i <= nFiles; i++) {
 			try {
@@ -303,7 +318,8 @@ public class ClientServerNode extends ServerNode {
 	public void test2helper(String filepath, int nFiles) {
 
 		String filename = "File";
-		if (master.NamespaceMap.get(filepath) != null) {
+		//TODO: FIX THIS COMMENT BELOW
+		/*if (master.NamespaceMap.get(filepath) != null) {
 			if (master.NamespaceMap.get(filepath).type != nodeType.FILE) {
 				if (master.NamespaceMap.get(filepath).children.size() > 0) {
 					List<String> childs = master.NamespaceMap.get(filepath).children;
@@ -320,7 +336,7 @@ public class ClientServerNode extends ServerNode {
 					System.out.println("Unable to create files");
 				}
 			}
-		}
+		}*/
 
 	}
 
@@ -329,7 +345,10 @@ public class ClientServerNode extends ServerNode {
 	 * @param fileName
 	 */
 	public void CCreateFile(String folderFilepath, String fileName) {
-		Message message = new Message(msgType.CREATEFILE, folderFilepath, 1);
+		Message message = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
+		message.type = msgType.CREATEFILE;
+		message.filePath = folderFilepath;
+		message.chunkindex = 1;
 		message.fileName = fileName;
 		message.addressedTo = serverType.MASTER;
 		message.sender = serverType.CLIENT;
@@ -370,7 +389,8 @@ public class ClientServerNode extends ServerNode {
 		 * Auto-generated catch block e.printStackTrace(); } catch (IOException
 		 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
 		 */
-		Message message = new Message(msgType.DELETEDIRECTORY);
+		Message message = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
+		message.type = msgType.DELETEDIRECTORY;
 		message.filePath = filepath;
 		message.sender = serverType.CLIENT;
 		SendMessageToMaster(message);
@@ -429,7 +449,9 @@ public class ClientServerNode extends ServerNode {
 	 * @param filepath
 	 */
 	public void CCreateDirectory(String filepath) {
-		Message message = new Message(msgType.CREATEDIRECTORY, filepath);
+		Message message = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
+		message.type = msgType.CREATEDIRECTORY;
+		message.filePath = filepath;
 		message.sender = serverType.CLIENT;
 		SendMessageToMaster(message);
 	}
@@ -483,10 +505,11 @@ public class ClientServerNode extends ServerNode {
 	 * @param fullFilePath
 	 */
 	public void CCreateFile(String fullFilePath) { // including filename
-		Message msg = new Message(fullFilePath, msgType.CREATEFILE);
+		Message msg = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
 		int index = fullFilePath.lastIndexOf('\\');
 
 		msg.chunkindex = 1;
+		msg.type = msgType.CREATEFILE;
 		msg.fileName = fullFilePath.substring(index + 1);
 		msg.filePath = fullFilePath.substring(0, index);
 		SendMessageToMaster(msg);
@@ -499,15 +522,20 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream, int numReplicas){
 		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
-		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
+		Message msg = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
 		int index = fullFilePath.lastIndexOf('\\');
+		msg.type = msgType.WRITETONEWFILE;
+		msg.fileData = byteStream;
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
 		msg.replicaCount = numReplicas;
-		return master.AssignChunkServer(msg);
-		//master.DealWithMessage(msg);
+		
+		//TODO: FIX THE TWO LINES DIRECTLY BELOW. NOT THE ONE AFTER IT
+		return null;
+		//return master.AssignChunkServer(msg);
+		/////master.DealWithMessage(msg);
 	}
 	
 	/**
@@ -519,15 +547,17 @@ public class ClientServerNode extends ServerNode {
 		
 		//CAppendToFile(fullFilePath, byteStream);//retrieve metadata
 		
-		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		/*Message msg = new Message(msgType.APPENDTOFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
+		msg.type = msgType.APPENDTOFILE;
+		msg.fileData = byteStream;
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
 		msg.chunkClass= cm;
 		
-		SendMessageToChunkServer(msg);
+		SendMessageToChunkServer(msg);*/
 	}
 	
 	/**
@@ -543,9 +573,11 @@ public class ClientServerNode extends ServerNode {
 		
 		byte[] byteFile = convertFileToBytes(localPath);
 		
-		Message msg = new Message(msgType.WRITETONEWFILE, byteFile);
-
+		//Message msg = new Message(msgType.WRITETONEWFILE, byteFile);
+		Message msg = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
 		int index = fullFilePath.lastIndexOf('\\');
+		msg.type = msgType.WRITETONEWFILE;
+		msg.fileData = byteFile;
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.CHUNKSERVER;
@@ -661,7 +693,9 @@ public class ClientServerNode extends ServerNode {
 		}
 		
 		localPathToCreateFile = localPath;
-		Message m = new Message(msgType.READFILE, filePath);
+		Message m = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
+		m.type = msgType.READFILE;
+		m.filePath = filePath;
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 
@@ -708,8 +742,10 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
-		Message m = new Message(msgType.APPENDTOTFSFILE, filePath);
+		Message m = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
 		localPathToCreateFile = localPath;
+		m.type = msgType.APPENDTOTFSFILE;
+		m.filePath = filePath;
 		m.fileName = filePath.substring(index + 1);
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
@@ -742,12 +778,14 @@ public class ClientServerNode extends ServerNode {
 		/*cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
 		//now chunkServer will be set
 		System.out.println("metadata hash "+cm.chunkHash);*/
-		Message msg = new Message(msgType.APPENDTOTFSFILE, byteFile);
-		msg.addressedTo = serverType.CHUNKSERVER;
-		msg.sender = serverType.CLIENT;
-		msg.chunkClass = cm;
-		msg.chunkClass.size = (int) file.length();
-		SendMessageToChunkServer(msg);
+		//Message msg = new Message(msgType.APPENDTOTFSFILE, byteFile);
+		message.type = msgType.APPENDTOTFSFILE;
+		message.fileData = byteFile;
+		message.addressedTo = serverType.CHUNKSERVER;
+		message.sender = serverType.CLIENT;
+		message.chunkClass = cm;
+		message.chunkClass.size = (int) file.length();
+		SendMessageToChunkServer(message);
 	}
 	public void printCommands(){
 		System.out.println("Format closely follows that of in the Assignment Page");
@@ -769,7 +807,9 @@ public class ClientServerNode extends ServerNode {
 	public void test7(String filepath)
 	{
 		System.out.println("Test7 Path: "+filepath);
-		Message m = new Message(msgType.COUNTFILES, filepath);
+		Message m = new Message(myIP,myType,myPortNumber,masterIP,serverType.MASTER,masterPort);
+		m.type = msgType.COUNTFILES;
+		m.filePath = filepath;
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}

@@ -36,6 +36,7 @@ import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
+import Utility.SOSMessage;
 
 public class ChunkServerNode extends ServerNode {
 	public ClientServerNode client;
@@ -777,21 +778,38 @@ public class ChunkServerNode extends ServerNode {
 	 * 
 	 * @param msg
 	 */
-	public void CheckVersionAfterStarting(Message msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
-	{
+	public void CheckVersionAfterStarting(SOSMessage msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
+	{ //TODO: ADD TO SCHEDULER!!!
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
 			if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash && 
 					cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
 			{
 				//TODO: Message to Master to get new data
-				
+				SendMessageToMaster(msg);
 				return;
 			}
 		}
 	}
 	
-	public void ReplacingData(Message msg) //MESSAGE THAT COMES FROM CHUNKSERVER TO GIVE DATA
+	public void SendingDataToUpdateChunkServer(SOSMessage msg)
+	{
+		for(TFSFile file: file_list)
+		{
+			if(file.fileNumber == msg.chunkClass.filenumber)
+			{
+				//TODO: fix later with change in byteoffset variable
+				for(int i=0; i<msg.chunkClass.size; i++)
+				{
+					msg.fileData[i] = file.data[msg.chunkClass.byteoffset + i];
+				}
+				msg.receiverIP = msg.SOSserver;
+				SendMessageToChunkServer(msg);
+			}
+		}
+	}
+	
+	public void ReplacingData(SOSMessage msg) //MESSAGE THAT COMES FROM CHUNKSERVER TO GIVE DATA
 	{
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
@@ -851,6 +869,7 @@ public class ChunkServerNode extends ServerNode {
 
 					}
 				}
+				SendMessageToMaster(msg);
 				return;
 			}
 		}
