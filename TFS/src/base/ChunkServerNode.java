@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.WriteAbortedException;
@@ -85,21 +86,36 @@ public class ChunkServerNode extends ServerNode {
 	 *  //TODO:Timer that send out pings at regular intervals
 	 * }
 	 */
+	
+	/**
+	 * @throws Exception
+	 */
+	public void WILLBEMAIN() throws Exception {	
+		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
 
-	public void WILLBEMAIN() throws Exception {
-		try { 
-			ServerSocket serverSocket = new ServerSocket(myPortNumber);
-			Socket clientSocket = serverSocket.accept();
-			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
-			Message m;
-			while((m = (Message)ois.readObject()) != null) {
-				DealWithMessage(m);
+		{
+			while(true) { 
+				Socket clientSocket = serverSocket.accept();
+				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+				Message incoming = (Message)in.readObject();
+				//TODO: put messages in queue
+				DealWithMessage(incoming);
+				//outToClient.writeBytes(capitalizedSentence); 
 			}
-		} catch (IOException e) {
+
+			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
+			//TODO: Deal with Server Pings
+			//TODO: Send updated chunkserver data to re-connected servers
+		}
+		catch (IOException e) {
 			System.out
 			.println("Exception caught when trying to listen on port "
 					+ myPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
+		}
+		finally{
+
 		}
 	}
 
@@ -172,10 +188,8 @@ public class ChunkServerNode extends ServerNode {
 					dataINeed[i] = fileData.data[offSetIndex];
 					offSetIndex++;
 				}
-
-
-
-				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
+				Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
+				SendMessageToClient(message);
 
 				break;
 			}
@@ -214,7 +228,8 @@ public class ChunkServerNode extends ServerNode {
 		}
 		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 
 
 	}
@@ -295,7 +310,8 @@ public class ChunkServerNode extends ServerNode {
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		WriteDataToFile(current, byteArray/*current.data*/);
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 	}
 
 	public void WriteToNewFile(ChunkMetadata metadata, byte[] byteArray) {
@@ -344,7 +360,8 @@ public class ChunkServerNode extends ServerNode {
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		WriteDataToFile(current, current.data);
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 	}
 
 	/**
@@ -373,7 +390,7 @@ public class ChunkServerNode extends ServerNode {
 
 				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
 				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-				master.DealWithMessage(successMessageToMaster);
+				SendMessageToMaster(successMessageToMaster);
 
 				break;
 			}
@@ -422,7 +439,8 @@ public class ChunkServerNode extends ServerNode {
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
-						master.DealWithMessage(successMessageToMaster);
+						SendMessageToMaster(successMessageToMaster);
+						//master.DealWithMessage(successMessageToMaster);
 						break;
 					}
 				}
@@ -475,7 +493,8 @@ public class ChunkServerNode extends ServerNode {
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 			WriteDataToFile(current, byteArray);
-			master.DealWithMessage(newMessage);
+			SendMessageToMaster(newMessage);
+			//master.DealWithMessage(newMessage);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -743,7 +762,8 @@ public class ChunkServerNode extends ServerNode {
 	 */
 	public void PingMaster (){
 		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
-		master.DealWithMessage(ping);
+		SendMessageToMaster(ping);
+		//master.DealWithMessage(ping);
 	}
 ////////PROCEDURE FOR BRINGING A CHUNKSERVER BACK UP ////////////////////////////////////
 	//Master sends information to check version numbrer
@@ -832,6 +852,79 @@ public class ChunkServerNode extends ServerNode {
 			}
 		}
 
+	}
+
+	/**
+	 * @param message
+	 */
+	public void SendMessageToChunkServer(Message message) {
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
+		try(Socket serverSocket =  new Socket(message.senderIP, port);)
+		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CHUNKSERVER;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
+			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+	
+
+	/**
+	 * @param message
+	 */
+	public void SendMessageToClient(Message message) {
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CLIENT;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+
+	/**
+	 * @param message
+	 */
+	public void SendMessageToMaster(Message message) {
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.MASTER;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
 	}
 	
 }
