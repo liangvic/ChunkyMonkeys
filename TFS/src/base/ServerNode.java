@@ -36,6 +36,7 @@ public class ServerNode {
 			out.close();
 		}
 		catch (IOException e){
+			System.err.println("Unable to send Message from " + myIP + " to " + message.senderIP);
 			e.printStackTrace();
 		}
 
