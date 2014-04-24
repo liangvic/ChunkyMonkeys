@@ -26,7 +26,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import base.MasterServerNode.ServerData;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
@@ -107,6 +110,16 @@ public class ChunkServerNode extends ServerNode {
 		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
 
 		{
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				@Override
+				public void run() {
+						HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
+								masterIP,serverType.MASTER, masterPort,serverStatus.ALIVE);
+						SendMessage(HBMessage);
+				}
+			}, 10000, 10000);
+			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
 				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
