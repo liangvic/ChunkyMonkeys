@@ -23,6 +23,23 @@ public class ClientServerNode extends ServerNode {
 	String localPathToCreateFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
+	
+	public void WILLBEMAIN() throws Exception {
+		try { 
+			ServerSocket serverSocket = new ServerSocket(myPortNumber);
+			Socket clientSocket = serverSocket.accept();
+			ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+			Message m;
+			while((m = (Message)ois.readObject()) != null) {
+				DealWithMessage(m);
+			}
+		} catch (IOException e) {
+			System.out
+					.println("Exception caught when trying to listen on port "
+							+ myPortNumber + " or listening for a connection");
+			System.out.println(e.getMessage());
+		}
+	}
 
 	/**
 	 * @throws Exception
@@ -40,6 +57,12 @@ public class ClientServerNode extends ServerNode {
 			String[] tokens = input.split(delim);
 			try {
 				switch (tokens[0]) {
+				case ("Unit1"):
+					if (tokens.length == 3)
+						unit1(Integer.parseInt(tokens[1]),Integer.parseInt(tokens[2]));
+					else
+						throw new Exception();
+					break;
 				case ("Test1"):
 					if (tokens.length == 2)
 						test1(Integer.parseInt(tokens[1]));
@@ -343,6 +366,39 @@ public class ClientServerNode extends ServerNode {
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
+	public void unit1(int NumFolders, int numSubDirectories){
+		List<String> queue = new ArrayList<String>();
+		CCreateDirectory("1");
+		System.out.println("Creating 1");
+		
+		String parentfilepath = "1";
+		int folderName = 2;
+		String newfilepath = parentfilepath + "\\" + folderName;
+		int subDirectoryCounter = 0;
+		while(folderName<=NumFolders){
+			subDirectoryCounter++;
+			if(subDirectoryCounter>numSubDirectories){
+				subDirectoryCounter=1;
+//				parentfilepath = newfilepath;
+				parentfilepath = queue.get(0);
+				for(int i=1;i<queue.size();i++){
+					queue.set(i-1,  queue.get(i));
+				}
+				queue.remove(queue.size()-1);
+			}
+		
+			newfilepath = parentfilepath + "\\" + folderName;
+			CCreateDirectory(newfilepath);
+			System.out.println("Creating "+newfilepath);
+			queue.add(newfilepath);
+			folderName++;
+			
+			
+		}
+		
+	}
+	
+	
 	/**
 	 * @param filepath
 	 */
@@ -380,6 +436,22 @@ public class ClientServerNode extends ServerNode {
 		}
 
 	}
+	
+	public void unit1helper(String parentfilepath, int folderName, int NumMaxFolders, int NumSubdirectories){
+		if(folderName<=NumMaxFolders){
+			for(int i=1;i<=NumSubdirectories;i++){
+				String newfilepath = parentfilepath + "\\" + folderName+1;
+				CCreateDirectory(newfilepath);
+			}
+		}
+		
+		if (folderName <= NumMaxFolders) {
+			String newfilepath = parentfilepath + "\\" + folderName;
+			CCreateDirectory(newfilepath);
+			helper(newfilepath, folderName * 2, NumMaxFolders);
+			helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
+		}
+	}
 
 	/**
 	 * @param fullFilePath
@@ -402,8 +474,8 @@ public class ClientServerNode extends ServerNode {
 	 * @return
 	 */
 	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
-		System.out.println("Attempting to retrieve metadata fror: "+fullFilePath);
-		Message msg = new Message(msgType.APPENDTOFILE, byteStream);
+		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
+		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
 		msg.fileName = fullFilePath.substring(index+1);
 		msg.filePath = fullFilePath.substring(0, index);
@@ -433,6 +505,38 @@ public class ClientServerNode extends ServerNode {
 		
 		
 		chunkServer.DealWithMessage(msg);
+	}
+	
+	/**
+	 * @param localPath
+	 * @param fullFilePath
+	 */
+	public void CWriteToNewFile(String localPath, String fullFilePath){
+		
+		if (fullFilePath == null || localPath == null) {
+			System.out.println("FilePath or localPath are null values, please reenter query");
+			return;
+		}
+		
+		byte[] byteFile = convertFileToBytes(localPath);
+		
+		Message msg = new Message(msgType.WRITETONEWFILE, byteFile);
+
+		int index = fullFilePath.lastIndexOf('\\');
+		msg.fileName = fullFilePath.substring(index+1);
+		msg.filePath = fullFilePath.substring(0, index);
+		msg.addressedTo = serverType.CHUNKSERVER;
+		msg.sender = serverType.CLIENT;
+		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile);
+		if (msg.chunkClass == null)
+		{
+			System.out.println("ERROR: " + fullFilePath+ " already exists.");
+		}
+		else
+		{
+			System.out.println("New chunkmetadata hash "+ msg.chunkClass.chunkHash);		
+			chunkServer.DealWithMessage(msg);
+		}
 	}
 	
 	/**
@@ -468,129 +572,54 @@ public class ClientServerNode extends ServerNode {
 	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
-	// its filepath
-	/**
-	 * @param localPath
-	 * @param filePath
-	 */
-	public void test4(String localPath, String filePath) {
-		/*
-		 * Plan: Send message to server including the filepath to createfile If
-		 * no error returned, read the content of the local file and send to TFS
-		 * Write to the created file If file >64MB (size of a chunk), write to
-		 * several chunks
+		// its filepath
+		/**
+		 * @param localPath
+		 * @param filePath
 		 */
-
-
-//		CCreateFile(filePath); // empty file created
-
-		/*
-		FileInputStream fileInputStream = null;
-		File localFile = new File(localPath);
-		
-		byte[] byteFile = new byte[(int) localFile.length()];
-
-		// convert file into array of bytes
-		try {
-			fileInputStream = new FileInputStream(localFile);
-			fileInputStream.read(byteFile);
-			fileInputStream.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-		
-		byte[] byteFile = convertFileToBytes(localPath);
-		
-//		String decodedString = "string";
-//		try {
-//			decodedString = new String(byteFile, "UTF-8");
-//		} catch (UnsupportedEncodingException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
-		ChunkMetadata cm = RetrieveMetadata(filePath, byteFile); //sends message to master to append to specified file
-		//now chunkServer will be set
-		System.out.println("New chunkmetadata hash "+cm.chunkHash);		
-		CAppendToFile(cm, filePath, byteFile); //now sends to chunkServer
-		
-		/*
-		//now to cut it up into 64MB chunks
-		if (byteFile.length >67108864){ //67108864 bytes = 64MB
-			int numChunks = ((byteFile.length - 1)/67108864) + 1;
-			int currentIndex = 0;
-			byte[][] Chunks = new byte[numChunks][]; //creates a list of byte arrays
-			while(currentIndex <= numChunks-1){
-				Chunks[currentIndex] = Arrays.copyOf(byteFile, 67108864);
-				//INCOMPLETE! NEED TO SEPARATE TO DIFFERENT CHUNKS
-			}	
+		public void test4(String localPath, String filePath) {
+			
+			CWriteToNewFile(localPath, filePath);
+			
 		}
-		*/
+		//Future test4 reference:
+			/*
+			//separate into 64MB chunks
+			if (byteFile.length >67108864){ //67108864 bytes = 64MB
+				int numChunks = ((byteFile.length - 1)/67108864) + 1;
+				int currentIndex = 0;
+				byte[][] Chunks = new byte[numChunks][]; //creates a list of byte arrays
+				while(currentIndex <= numChunks-1){
+					Chunks[currentIndex] = Arrays.copyOf(byteFile, 67108864);
+					//Still incomplete
+				}	
+			}
+			String masterIP = "68.181.174.149";
+			int masterPort = 8111;
+			try {
+				Socket masterSocket = new Socket(masterIP, masterPort);
+				PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
+						true);
+				// BufferedReader in = new BufferedReader(new
+				// InputStreamReader(echoSocket.getInputStream()));
+				BufferedReader stdIn = new BufferedReader(new InputStreamReader(
+						System.in));
+			} catch (UnknownHostException e) {
+				System.err.println("Don't know about host " + masterIP);
+				System.exit(1);
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.err.println("Couldn't get I/O for the connection to "
+						+ masterIP);
+				System.exit(1);
+			}
 
-		
-		
-		
-		
-//		String masterIP = "68.181.174.149";
-//		int masterPort = 8111;
-//
-//		try {
-//			Socket masterSocket = new Socket(masterIP, masterPort);
-//			PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
-//					true);
-			// BufferedReader in = new BufferedReader(new
-			// InputStreamReader(echoSocket.getInputStream()));
-//			BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-//					System.in));
-//
-//		} catch (UnknownHostException e) {
-//			System.err.println("Don't know about host " + masterIP);
-//			System.exit(1);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//			System.err.println("Couldn't get I/O for the connection to "
-//					+ masterIP);
-//			System.exit(1);
-//		}
-
-		/*
-		 * //now to cut it up into 64MB chunks if (byteFile.length >67108864){
-		 * //67108864 bytes = 64MB int numChunks = ((byteFile.length -
-		 * 1)/67108864) + 1; int currentIndex = 0; byte[][] Chunks = new
-		 * byte[numChunks][]; //creates a list of byte arrays while(currentIndex
-		 * <= numChunks-1){ Chunks[currentIndex] = Arrays.copyOf(byteFile,
-		 * 67108864); //INCOMPLETE! NEED TO SEPARATE TO DIFFERENT CHUNKS } }
-		 */
-
-		// String masterIP = "68.181.174.149";
-		// int masterPort = 8111;
-		//
-		// try {
-		// Socket masterSocket = new Socket(masterIP, masterPort);
-		// PrintWriter out = new PrintWriter(masterSocket.getOutputStream(),
-		// true);
-		// BufferedReader in = new BufferedReader(new
-		// InputStreamReader(echoSocket.getInputStream()));
-		// BufferedReader stdIn = new BufferedReader(new InputStreamReader(
-		// System.in));
-		//
-		// } catch (UnknownHostException e) {
-		// System.err.println("Don't know about host " + masterIP);
-		// System.exit(1);
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// System.err.println("Couldn't get I/O for the connection to "
-		// + masterIP);
-		// System.exit(1);
-		// }
-		// Step 2: Receive Message to be Written
-		// if it exists, return error. else read content and store in TFS file
-		// Pseudocode referring to
-		// coderanch.com/t/205325/sockets/java/send-java-Object-socket
-		// InputStream is = clientSocket.getInputStream();
-		// ObjectInputStream ois = new ObjectInputStream(is);
-		// receivedMsg rmsg = (Message)rmsg.readObject();
-	}
+			 Step 2: Receive Message to be Written
+			 if it exists, return error. else read content and store in TFS file
+			 Pseudocode referring to
+			 coderanch.com/t/205325/sockets/java/send-java-Object-socket
+			 */
+		//end of future test4 reference
 
 	/**
 	 * @param filePath
