@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,8 @@ import Utility.Message.serverType;
 import Utility.SOSMessage;
 
 public class ChunkServerNode extends ServerNode {
-	public ClientServerNode client;
-	public MasterServerNode master;
+	//public ClientServerNode client;
+	//public MasterServerNode master;
 
 	public class TFSFile {
 		int fileNumber = 1;
@@ -54,8 +55,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	List<TFSFile> file_list = new ArrayList<TFSFile>();
-
-
+	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 	public ChunkServerNode(String IP, int port) {
 		myIP = IP;
@@ -109,9 +109,11 @@ public class ChunkServerNode extends ServerNode {
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
-				//TODO: put messages in queue
-				DealWithMessage(incoming);
-				//outToClient.writeBytes(capitalizedSentence); 
+				if(incoming != null) {
+					messageList.add(incoming);
+					DealWithMessage();
+					//outToClient.writeBytes(capitalizedSentence); 
+				}
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -132,40 +134,43 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * @param message
 	 */
-	public void DealWithMessage(Message message) {
-		if (message.type == msgType.DELETEDIRECTORY) {
-			DeleteChunk(message.chunkClass);
-		}
-
-		else if (message.type == msgType.CREATEFILE) {
-			AddNewBlankChunk(message);
-		} else if (message.type == msgType.READFILE) {
-			ReadChunks(message);
-		} else if (message.type == msgType.APPENDTOFILE) {
-			if (message.chunkClass == null) {
-				System.out.println("chunkClass is null");
+	public void DealWithMessage() {
+		while(!messageList.isEmpty()) {
+			Message message = messageList.get(0);
+			if (message.type == msgType.DELETEDIRECTORY) {
+				DeleteChunk(message.chunkClass);
 			}
-			else
-				AppendToFile(message.chunkClass, message.fileData);
-		} else if (message.type == msgType.APPENDTOTFSFILE) {
-			if(message.sender == serverType.MASTER) {
-				System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-				chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+			else if (message.type == msgType.CREATEFILE) {
+				AddNewBlankChunk(message);
+			} else if (message.type == msgType.READFILE) {
+				ReadChunks(message);
+			} else if (message.type == msgType.APPENDTOFILE) {
+				if (message.chunkClass == null) {
+					System.out.println("chunkClass is null");
+				}
+				else
+					AppendToFile(message.chunkClass, message.fileData);
+			} else if (message.type == msgType.APPENDTOTFSFILE) {
+				if(message.sender == serverType.MASTER) {
+					System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
+					chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+				}
+				else if (message.sender == serverType.CLIENT) {
+					System.out.println("Calling AppendToTSFFile Method");
+					AppendToTFSFile(message);
+				}
+			} else if (message.type == msgType.COUNTFILES) {
+				CountNumInFile(message.chunkClass);
 			}
-			else if (message.sender == serverType.CLIENT) {
-				System.out.println("Calling AppendToTSFFile Method");
-				AppendToTFSFile(message);
+			else if (message.type == msgType.WRITETONEWFILE)
+			{
+				if (message.chunkClass == null) {
+					System.out.println("chunkClass is null");
+				}
+				else
+					WriteToNewFile(message);
 			}
-		} else if (message.type == msgType.COUNTFILES) {
-			CountNumInFile(message.chunkClass);
-		}
-		else if (message.type == msgType.WRITETONEWFILE)
-		{
-			if (message.chunkClass == null) {
-				System.out.println("chunkClass is null");
-			}
-			else
-				WriteToNewFile(message);
+			messageList.remove(0);
 		}
 	}
 

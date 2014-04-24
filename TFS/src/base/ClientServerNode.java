@@ -17,6 +17,7 @@ import base.ServerNode;
 public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
+	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 	public ClientServerNode(String IP, int portNum)
 	{
@@ -50,9 +51,11 @@ public class ClientServerNode extends ServerNode {
 				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 				ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
-				//TODO: put messages in queue
-				DealWithMessage(incoming);
-				//outToClient.writeBytes(capitalizedSentence); 
+				if(incoming != null) {
+					messageList.add(incoming);
+					DealWithMessage();
+					//outToClient.writeBytes(capitalizedSentence); 
+				}
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -167,49 +170,53 @@ public class ClientServerNode extends ServerNode {
 	/**
 	 * @param message
 	 */
-	public void DealWithMessage(Message message) {
-		if (message.type == msgType.DELETEDIRECTORY) {
-			if (message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Deleted directory sucessfully!");
-			} else {
-				System.out.println("Error! Couldn't delete directory...");
+	public void DealWithMessage() {
+		while(!messageList.isEmpty()) {
+			Message message = messageList.get(0);
+			if (message.type == msgType.DELETEDIRECTORY) {
+				if (message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Deleted directory sucessfully!");
+				} else {
+					System.out.println("Error! Couldn't delete directory...");
+				}
 			}
-		}
-		else if (message.type == msgType.CREATEDIRECTORY) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created directory "+message.filePath);
+			else if (message.type == msgType.CREATEDIRECTORY) {
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Successfully created directory "+message.filePath);
+				}
+				else {
+					System.out.println("Failed to create directory "+message.filePath);
+				}
 			}
-			else {
-				System.out.println("Failed to create directory "+message.filePath);
+			else if (message.type == msgType.CREATEFILE) {
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Successfully created file "+message.filePath);
+				}
+				else {
+					System.out.println("Failed to create file "+message.filePath);
+				}
 			}
-		}
-		else if (message.type == msgType.CREATEFILE) {
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Successfully created file "+message.filePath);
+			else if(message.type == msgType.READFILE)
+			{
+				if(message.success == msgSuccess.REQUESTSUCCESS) {
+					System.out.println("Read succeeded. Found file.");
+					msgRequestAReadToChunkserver(message);
+				}
+				else {
+					System.out.println("Read failed. Could not find file.");
+				}
+				// Supposedly going to cache it. Implementation will be completed
+				// later.lol
+				// uses the location to contact the chunkserver
+
+			} else if (message.type == msgType.PRINTFILEDATA) {
+				msgPrintFileData(message);
+			} else if (message.type == msgType.APPENDTOTFSFILE) {
+				ReadLocalFile(message);
+			}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
+				ExpectChunkNumberForRead(message.expectNumChunkForRead);
 			}
-			else {
-				System.out.println("Failed to create file "+message.filePath);
-			}
-		}
-		else if(message.type == msgType.READFILE)
-		{
-			if(message.success == msgSuccess.REQUESTSUCCESS) {
-				System.out.println("Read succeeded. Found file.");
-				msgRequestAReadToChunkserver(message);
-			}
-			else {
-				System.out.println("Read failed. Could not find file.");
-			}
-			// Supposedly going to cache it. Implementation will be completed
-			// later.lol
-			// uses the location to contact the chunkserver
-			
-		} else if (message.type == msgType.PRINTFILEDATA) {
-			msgPrintFileData(message);
-		} else if (message.type == msgType.APPENDTOTFSFILE) {
-			ReadLocalFile(message);
-		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
-			ExpectChunkNumberForRead(message.expectNumChunkForRead);
+			messageList.remove(0);
 		}
 	}
 
