@@ -55,7 +55,10 @@ public class ChunkServerNode extends ServerNode {
 
 
 
-	public ChunkServerNode() {
+	public ChunkServerNode(String IP, int port) {
+		myIP = IP;
+		myPortNumber = port;
+		myType = serverType.CHUNKSERVER;
 		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
@@ -128,9 +131,9 @@ public class ChunkServerNode extends ServerNode {
 		}
 
 		else if (message.type == msgType.CREATEFILE) {
-			AddNewBlankChunk(message.chunkClass);
+			AddNewBlankChunk(message);
 		} else if (message.type == msgType.READFILE) {
-			ReadChunks(message.chunkClass);
+			ReadChunks(message);
 		} else if (message.type == msgType.APPENDTOFILE) {
 			if (message.chunkClass == null) {
 				System.out.println("chunkClass is null");
@@ -162,7 +165,7 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * @param metadata
 	 */
-	public void ReadChunks(ChunkMetadata metadata){
+	public void ReadChunks(Message message){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
 		//		for(ChunkLocation messageLocation: metadata.listOfLocations){
 		//			for(File fileData: file_list){
@@ -173,23 +176,25 @@ public class ChunkServerNode extends ServerNode {
 		//		}
 		//		
 		for(TFSFile fileData:file_list){
-			System.out.println("ChunkServer: Looking at file "+fileData.fileNumber + " looking for file " + metadata.filenumber);
-			if(metadata.filenumber == fileData.fileNumber){
+			System.out.println("ChunkServer: Looking at file "+fileData.fileNumber + " looking for file " + message.chunkClass.filenumber);
+			if(message.chunkClass.filenumber == fileData.fileNumber){
 				System.out.println("ChunkServer: Available free byte size: "+(fileData.data.length-fileData.spaceOccupied));
-				System.out.println("ChunkServer: Reading from file number "+metadata.filenumber);
-				System.out.println("ChunkServer: Reading array size is "+metadata.size +" with byteoffset: "+metadata.byteoffset);
+				System.out.println("ChunkServer: Reading from file number "+message.chunkClass.filenumber);
+				System.out.println("ChunkServer: Reading array size is "+message.chunkClass.size +" with byteoffset: "+message.chunkClass.byteoffset);
 				System.out.println("ChunkServer: File data occupied space: "+fileData.spaceOccupied);
 
 
-				byte[] dataINeed = new byte[metadata.size+4];
+				byte[] dataINeed = new byte[message.chunkClass.size+4];
 				// check byte offset
-				int offSetIndex = metadata.byteoffset;
-				for (int i = 0; i < metadata.size; i++) {
+				int offSetIndex = message.chunkClass.byteoffset;
+				for (int i = 0; i < message.chunkClass.size; i++) {
 					dataINeed[i] = fileData.data[offSetIndex];
 					offSetIndex++;
 				}
-				Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
-				SendMessageToClient(message);
+				Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myPortNumber, message.senderIP, serverType.CLIENT, message.senderPort);
+				//Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
+				m.fileData = dataINeed;
+				SendMessageToClient(m);
 
 				break;
 			}
@@ -203,14 +208,14 @@ public class ChunkServerNode extends ServerNode {
 	/**
 	 * @param metadata
 	 */
-	public void AddNewBlankChunk(ChunkMetadata metadata) {
+	public void AddNewBlankChunk(Message message) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
 		try{
-			chunkMap.put(metadata.chunkHash, metadata);
+			chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 			TFSFile current = file_list.get(1);
-			metadata.byteoffset = current.spaceOccupied;
+			message.chunkClass.byteoffset = current.spaceOccupied;
 
-			metadata.size = 4;
+			message.chunkClass.size = 4;
 
 			String s = "popo";
 			byte buf[] = s.getBytes();	
@@ -218,7 +223,7 @@ public class ChunkServerNode extends ServerNode {
 				file_list.get(1).data[current.spaceOccupied+ i] = buf[i-1];
 			current.spaceOccupied += s.length();
 
-			WritePersistentServerNodeMap(metadata.chunkHash, metadata);
+			WritePersistentServerNodeMap(message.chunkClass.chunkHash, message.chunkClass);
 
 			//WritePersistentServerFileData();
 		}
@@ -226,9 +231,9 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("toobad");
 			e.printStackTrace();
 		}
-		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
-		newMessage.success = msgSuccess.REQUESTSUCCESS;
-		SendMessageToMaster(newMessage);
+		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, message.senderIP, message.sender, message.senderPort);
+		m.success = msgSuccess.REQUESTSUCCESS;
+		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 
 

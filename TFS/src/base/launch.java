@@ -40,17 +40,17 @@ public class launch {
 		int input = a.nextInt();
 		
 		if (input == 1){
-			MasterServerNode master = new MasterServerNode(); 
-			master.myIP = Config.prop.getProperty("MASTERIP");
-			master.myPortNumber = Config.prop.getProperty("MASTERPORT");
+			String myIP = Config.prop.getProperty("MASTERIP");
+			int myPortNumber = Config.prop.getProperty("MASTERPORT");
+			MasterServerNode master = new MasterServerNode(myIP, myPortNumber); 
 		}
 		else if (input == 2 || input == 3 || input == 4 || input == 5 ){
 			client.TestInterface();
 			String IPkey = Config.prop.getProperty("IP" + input);
 			String portKeyClient = Config.prop.getProperty("PORT" + input + "_CLIENT");
 			String portKeyServer = Config.prop.getProperty("PORT" + input + "_SERVER")
-			ClientServerNode client = new ClientServerNode(); 
-			ChunkServerNode chunkServer = new ChunkServerNode();
+			ClientServerNode client = new ClientServerNode(IPkey, portKeyClient); 
+			ChunkServerNode chunkServer = new ChunkServerNode(IPkey, portKeyServer);
 		}
 		else{
 			System.out.println("Invalid Selection");
