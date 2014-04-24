@@ -12,6 +12,7 @@ import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
 import Utility.NamespaceNode.nodeType;
+import Utility.SOSMessage;
 import Utility.TFSLogger;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -1199,14 +1200,32 @@ public class MasterServerNode extends ServerNode {
 				{
 					//Send message with the chunkMetaData to the chunkserver
 					//from there, the chunkserver can determine if it has the correct version
-					Message chunkMessage = new Message();
+					SOSMessage chunkMessage = new SOSMessage();
 					chunkMessage.type = msgType.CHUNKSERVERBACKONLINE;
 					chunkMessage.chunkClass = cmEntry.getValue();
+					chunkMessage.senderIP = myIP;
+					chunkMessage.receiverIP = IPaddress;
+					chunkMessage.SOSserver = IPaddress;
 					SendMessageToChunkServer(chunkMessage);
 				}
 			}
 		}
 		
+	}
+	
+	public void TellOtherChunkServerToSendData(SOSMessage msg)
+	{
+		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+		{
+			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+			{
+				if(location.chunkIP != msg.senderIP)
+				{
+					msg.receiverIP = location.chunkIP;
+					SendMessageToChunkServer(msg);
+				}
+			}
+		}
 	}
 	
 	public void SetChunkServerAlive(String IPaddress)
