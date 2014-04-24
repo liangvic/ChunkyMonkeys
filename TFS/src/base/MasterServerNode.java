@@ -1190,8 +1190,7 @@ public class MasterServerNode extends ServerNode {
 				{
 					//Send message with the chunkMetaData to the chunkserver
 					//from there, the chunkserver can determine if it has the correct version
-					SOSMessage chunkMessage = new SOSMessage();
-					chunkMessage.type = msgType.CHUNKSERVERBACKONLINE;
+					SOSMessage chunkMessage = new SOSMessage(myIP,myType,myPortNumber,IPaddress,serverType.CHUNKSERVER,location.chunkPort);
 					chunkMessage.chunkClass = cmEntry.getValue();
 					chunkMessage.senderIP = myIP;
 					chunkMessage.receiverIP = IPaddress;

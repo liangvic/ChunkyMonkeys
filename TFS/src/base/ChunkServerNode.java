@@ -128,7 +128,11 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void DealWithMessage(Message message) {
-		if (message.type == msgType.DELETEDIRECTORY) {
+		if(message instanceof SOSMessage)
+		{
+			CheckVersionAfterStarting((SOSMessage)message);
+		}
+		else if (message.type == msgType.DELETEDIRECTORY) {
 			DeleteChunk(message.chunkClass);
 		}
 
@@ -779,7 +783,7 @@ public class ChunkServerNode extends ServerNode {
 	 * @param msg
 	 */
 	public void CheckVersionAfterStarting(SOSMessage msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
-	{ //TODO: ADD TO SCHEDULER!!!
+	{ 
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
 			if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash && 
