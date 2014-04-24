@@ -746,24 +746,51 @@ public class ChunkServerNode extends ServerNode {
 		master.DealWithMessage(ping);
 	}
 	
-	public void CheckVersionAfterStarting(ChunkMetadata metadata)
+	public void CheckVersionAfterStarting(Message msg)
 	{
+		//TODO: NEED TO FIX!
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
 		{
-			if(cmEntry.getValue().chunkHash == metadata.chunkHash) //&& cmEntry.getValue().listOfLocations.size() > 1)
+			if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash) //&& cmEntry.getValue().listOfLocations.size() > 1)
 			{
-				if(cmEntry.getValue().versionNumber < metadata.versionNumber)
+				if(cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
 				{
 					for(TFSFile file: file_list)
 					{
-						if(file.fileNumber == metadata.filenumber)
+						if(file.fileNumber == msg.chunkClass.filenumber)
 						{
+							for(int i=0;i<msg.chunkClass.size;i++)
+							{
+								file.data[msg.chunkClass.byteoffset+i] = msg.fileData[i];
+							}
+							
+							OutputStream os = null;
+							try{
+								os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
+								os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
+								//os.write(data);
+								os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
+							}
+							catch (IOException e)
+							{
+								System.err.println("Error: " + e.getMessage());
+							}
+							finally
+							{
+								try {
+									os.close();
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
 							
 						}
 					}
 					
 					chunkMap.remove(cmEntry.getKey());
-					chunkMap.put(metadata.chunkHash, metadata);
+					chunkMap.put(msg.chunkClass.chunkHash, msg.chunkClass);
+					return;
 				}
 			}
 		}
