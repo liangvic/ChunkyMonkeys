@@ -20,6 +20,17 @@ public class Message implements Serializable{
 		recieverPort = receiverport;
 		senderPort = senderport;
 	}
+	
+	public Message(msgType msgtype, String senderip, serverType sendertype, int senderport, 
+		String recieverip, serverType receivertype,int receiverport){
+		type = msgtype;
+		addressedTo = receivertype;
+		sender = sendertype;
+		receiverIP = recieverip;
+		senderIP = senderip;
+		recieverPort = receiverport;
+		senderPort = senderport;
+	}
 	/*
 	public Message(String fp, msgType msgT){
 		filePath = fp;
