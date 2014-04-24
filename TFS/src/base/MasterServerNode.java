@@ -7,6 +7,7 @@ import java.util.*;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
+import Utility.HeartBeat;
 import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.NamespaceNode.lockType;
@@ -18,8 +19,8 @@ import Utility.Message.serverType;
 import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode {
-	public ClientServerNode client;
-	public ChunkServerNode chunkServer;
+	//public ClientServerNode client;
+	//public ChunkServerNode chunkServer;
 
 	int operationID = 0;
 	// private static ServerSocket welcomeSocket;
@@ -63,7 +64,6 @@ public class MasterServerNode extends ServerNode {
 				Message incoming = (Message)in.readObject();
 				//TODO: put messages in queue
 				DealWithMessage(incoming);
-				//outToClient.writeBytes(capitalizedSentence); 
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -318,7 +318,7 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void SendSuccessMessageToClient(Message successMessage) {
 		successMessage.success = msgSuccess.REQUESTSUCCESS;
-		client.DealWithMessage(successMessage);
+		SendMessageToClient(successMessage);
 	}
 
 	/** 
@@ -326,9 +326,44 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void SendErrorMessageToClient(Message errorMessage) {
 		errorMessage.success = msgSuccess.REQUESTERROR;
-		client.DealWithMessage(errorMessage);
+		SendMessageToClient(errorMessage);
 	}
-
+	
+	/** 
+	 * @param chunkServerMessage
+	 */
+	public void SendMessageToChunkServer(Message message) {
+		//MESSAGE MUST HAVE IP and Socket Number
+		int port = ServerMap.get(message.senderIP).serverPort;	
+		try(Socket serverSocket =  new Socket(message.senderIP, port);)
+		{
+			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
+			out.writeObject(message);
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+	
+	/** 
+	 * @param clientServerMessage
+	 */
+	public void SendMessageToClient(Message message) {
+		int port = ServerMap.get(message.senderIP).clientPort;	
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+	
 	/**
 	 * 
 	 * @param filePath
@@ -408,7 +443,7 @@ public class MasterServerNode extends ServerNode {
 					Message clientMessage = new Message(msgType.DELETEDIRECTORY);
 					clientMessage.chunkClass = chunkServerMap
 							.get(chunkServerKey);
-					chunkServer.DealWithMessage(clientMessage);
+					SendMessageToChunkServer(clientMessage);
 
 					// delete the file from master's chunk server map
 					chunkServerMap.remove(chunkServerKey);
@@ -468,7 +503,7 @@ public class MasterServerNode extends ServerNode {
 				System.out.println("Master: first chunkhash is "+cm.chunkHash);
 				Message returnMessage = new Message(msgType.READFILE, cm);
 				returnMessage.success = msgSuccess.REQUESTSUCCESS;
-				client.DealWithMessage(returnMessage);
+				SendMessageToClient(returnMessage);
 			}
 
 
@@ -543,7 +578,7 @@ public class MasterServerNode extends ServerNode {
 				chunkServerMap.get(hashstring));
 
 		Message metadataMsg = new Message(msgType.WRITETONEWFILE, newMetaData);
-		client.DealWithMessage(metadataMsg);
+		SendMessageToClient(metadataMsg);
 		return newMetaData;
 		//client.AppendToChunkServer(hashstring, myServer);
 		//client.AppendToChunkServer(newMetaData, chunkServer);
@@ -592,10 +627,12 @@ public class MasterServerNode extends ServerNode {
 					Message newMessage = new Message(msgType.CREATEFILE, newChunk);
 					newMessage.chunkClass.filename = newName;
 					try {
-						chunkServer.DealWithMessage(newMessage);
+						SendMessageToClient(newMessage);
 
 					} catch (Exception e) {
-						SendErrorMessageToClient(new Message(msgType.CREATEFILE, filename));
+						//TODO: deal with message failure
+						//newMessage.success = msgSuccess.REQUESTERROR;
+						//SendMessageToClient(new Message(msgType.CREATEFILE, filename));
 					}
 				}
 
@@ -688,8 +725,8 @@ public class MasterServerNode extends ServerNode {
 			if(chunkData != null) {
 				Message m1 = new Message(msgType.APPENDTOTFSFILE, chunkData);
 				Message m2 = new Message(msgType.APPENDTOTFSFILE, chunkData);
-				chunkServer.DealWithMessage(m1);
-				client.DealWithMessage(m2);
+				SendMessageToChunkServer(m1);
+				SendMessageToClient(m2);
 			}
 			else {
 				SendErrorMessageToClient(new Message(msgType.CREATEFILE, message.filePath));
@@ -1109,6 +1146,53 @@ public class MasterServerNode extends ServerNode {
 			System.out.println("Server at IP " + IP + " added to network");
 			System.out.println("ClientPort: " + clientPort + "\t ServerPort: "
 					+ serverPort);
+		}
+	}
+
+/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
+////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////
+	/**
+	 * 
+	 * @param HBMessage
+	 */
+	public void SetChunkServerDead(HeartBeat HBMessage)
+	{
+		//TODO: Is the map key the IP?
+		String IPOfDownChunkServer = HBMessage.receiverIP;
+		
+		if(ServerMap.containsKey(IPOfDownChunkServer))
+		{
+			ServerMap.get(IPOfDownChunkServer).status = serverStatus.DEAD;
+		}
+	}
+	
+	public void SetChunkServerOutdated(String IPaddress)
+	{
+		if(ServerMap.containsKey(IPaddress))
+		{
+			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
+		}
+		
+		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+		{
+			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+			{
+				if(location.chunkIP == IPaddress) //&& cmEntry.getValue().listOfLocations.size() > 1)
+				{
+					//Send message with the chunkMetaData to the chunkserver
+					//from there, the chunkserver can determine if it has the correct version
+					
+				}
+			}
+		}
+		
+	}
+	
+	public void SetChunkServerAlive(String IPaddress)
+	{
+		if(ServerMap.containsKey(IPaddress))
+		{
+			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
 }
