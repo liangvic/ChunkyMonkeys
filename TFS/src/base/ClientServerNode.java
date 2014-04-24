@@ -85,16 +85,26 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test2"):
+				case ("Unit2"):
 					if (tokens.length == 3) {
 						test2(tokens[1], Integer.parseInt(tokens[2]));
 					} else
 						throw new Exception();
 					break;
 				case ("Test3"):
+				case ("Unit3"):
 					if (tokens.length == 2)
 						test3(tokens[1]);
 					else
 						throw new Exception();
+					break;
+				case ("Unit4"):
+					if (tokens.length == 4){
+						unit4(tokens[1].toString(), tokens[2].toString(), Integer.parseInt(tokens[3]));
+					}
+					else{
+						throw new Exception();
+					}
 					break;
 				case ("Test4"):
 					if (tokens.length == 3){
@@ -184,6 +194,8 @@ public class ClientServerNode extends ServerNode {
 			msgPrintFileData(message);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
 			ReadLocalFile(message);
+		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
+			ExpectChunkNumberForRead(message.expectNumChunkForRead);
 		}
 	}
 
@@ -382,7 +394,7 @@ public class ClientServerNode extends ServerNode {
 
 	public void unit1(int NumFolders, int numSubDirectories){
 		List<String> queue = new ArrayList<String>();
-		CCreateDirectory("1");
+//		CCreateDirectory("1");
 		System.out.println("Creating 1");
 		
 		String parentfilepath = "1";
@@ -402,7 +414,7 @@ public class ClientServerNode extends ServerNode {
 			}
 		
 			newfilepath = parentfilepath + "\\" + folderName;
-			CCreateDirectory(newfilepath);
+//			CCreateDirectory("1");
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
@@ -485,7 +497,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param byteStream
 	 * @return
 	 */
-	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream){
+	public ChunkMetadata RetrieveMetadata(String fullFilePath, byte[] byteStream, int numReplicas){
 		System.out.println("Attempting to retrieve metadata for: "+fullFilePath);		
 		Message msg = new Message(msgType.WRITETONEWFILE, byteStream);
 		int index = fullFilePath.lastIndexOf('\\');
@@ -493,6 +505,7 @@ public class ClientServerNode extends ServerNode {
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.MASTER;
 		msg.sender = serverType.CLIENT;
+		msg.replicaCount = numReplicas;
 		return master.AssignChunkServer(msg);
 		//master.DealWithMessage(msg);
 	}
@@ -521,7 +534,7 @@ public class ClientServerNode extends ServerNode {
 	 * @param localPath
 	 * @param fullFilePath
 	 */
-	public void CWriteToNewFile(String localPath, String fullFilePath){
+	public void CWriteToNewFile(String localPath, String fullFilePath, int numberOfReplicas){
 		
 		if (fullFilePath == null || localPath == null) {
 			System.out.println("FilePath or localPath are null values, please reenter query");
@@ -537,7 +550,8 @@ public class ClientServerNode extends ServerNode {
 		msg.filePath = fullFilePath.substring(0, index);
 		msg.addressedTo = serverType.CHUNKSERVER;
 		msg.sender = serverType.CLIENT;
-		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile);
+		msg.chunkClass = RetrieveMetadata(fullFilePath, byteFile, numberOfReplicas);
+		msg.replicaCount = numberOfReplicas;
 		if (msg.chunkClass == null)
 		{
 			System.out.println("ERROR: " + fullFilePath+ " already exists.");
@@ -580,6 +594,10 @@ public class ClientServerNode extends ServerNode {
 		
 		return byteFile;
 	}
+	
+	public void unit4(String localPath, String filePath, int numberOfReplicas){
+		CWriteToNewFile(localPath, filePath,numberOfReplicas);
+	}
 
 	// Test 4 stores a file on the local machine in a target TFS specified by
 		// its filepath
@@ -589,7 +607,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void test4(String localPath, String filePath) {
 			
-			CWriteToNewFile(localPath, filePath);
+			CWriteToNewFile(localPath, filePath,0);
 			
 		}
 		//Future test4 reference:
@@ -740,7 +758,7 @@ public class ClientServerNode extends ServerNode {
 		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		System.out.println("Test6 <local> <TFS filepath> 		i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
 		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
-	public void ExpectChunkNumberForRead(int i) {
+	private void ExpectChunkNumberForRead(int i) {
 		System.out.println("Client: Expecting "+i+" chunks");
 		chunkCountToExpect = i;
 	}

@@ -45,8 +45,8 @@ public class Message implements Serializable{
 	public Message(msgType msgT, byte[] byteData) {
 		type = msgT;
 		fileData = byteData;
-	}*/
-	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, APPENDTOTFSFILE, COUNTFILES, WRITETONEWFILE};
+	}*/ 
+	public static enum msgType {CREATEDIRECTORY,DELETEDIRECTORY, CREATEFILE,READFILE,PRINTFILEDATA,UNKNOWNFILE, APPENDTOFILE, APPENDTOTFSFILE, COUNTFILES, WRITETONEWFILE,EXPECTEDNUMCHUNKREAD};
 	public msgType type;
 	public static enum msgSuccess {REQUESTSUCCESS, REQUESTERROR};
 	public msgSuccess success;
@@ -63,7 +63,8 @@ public class Message implements Serializable{
 	public ChunkMetadata chunkClass;
 	public byte[] fileData;
 	public int countedLogicalFiles;
-	
+	public int replicaCount;
 	public String senderIP;
 	public String receiverIP;
+	public int expectNumChunkForRead;
 }
