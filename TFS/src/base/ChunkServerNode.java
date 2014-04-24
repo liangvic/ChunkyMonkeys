@@ -190,8 +190,9 @@ public class ChunkServerNode extends ServerNode {
 				}
 				
 				
-				
-				client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
+				Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
+				SendMessageToClient(message);
+				//client.DealWithMessage(new Message(msgType.PRINTFILEDATA ,dataINeed));
 
 				break;
 			}
@@ -230,7 +231,8 @@ public class ChunkServerNode extends ServerNode {
 		}
 		Message newMessage = new Message(msgType.CREATEDIRECTORY, metadata);
 		newMessage.success = msgSuccess.REQUESTSUCCESS;
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 
 		
 	}
@@ -311,7 +313,8 @@ public class ChunkServerNode extends ServerNode {
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		WriteDataToFile(current, byteArray/*current.data*/);
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 	}
 
 	public void WriteToNewFile(ChunkMetadata metadata, byte[] byteArray) {
@@ -360,7 +363,8 @@ public class ChunkServerNode extends ServerNode {
 		//appending on
 		WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 		WriteDataToFile(current, current.data);
-		master.DealWithMessage(newMessage);
+		SendMessageToMaster(newMessage);
+		//master.DealWithMessage(newMessage);
 	}
 	
 	/**
@@ -389,7 +393,8 @@ public class ChunkServerNode extends ServerNode {
     			
     			Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY);
         		successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-        		master.DealWithMessage(successMessageToMaster);
+        		SendMessageToMaster(successMessageToMaster);
+        		//master.DealWithMessage(successMessageToMaster);
         		
         		break;
     		}
@@ -438,7 +443,8 @@ public class ChunkServerNode extends ServerNode {
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
-						master.DealWithMessage(successMessageToMaster);
+						SendMessageToMaster(successMessageToMaster);
+						//master.DealWithMessage(successMessageToMaster);
 						break;
 					}
 				}
@@ -491,7 +497,8 @@ public class ChunkServerNode extends ServerNode {
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 			WriteDataToFile(current, byteArray);
-			master.DealWithMessage(newMessage);
+			SendMessageToMaster(newMessage);
+			//master.DealWithMessage(newMessage);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -759,7 +766,8 @@ public class ChunkServerNode extends ServerNode {
 	 */
 	public void PingMaster (){
 		HeartBeat ping = new HeartBeat(myIP, serverType.CHUNKSERVER, serverStatus.ALIVE);
-		master.DealWithMessage(ping);
+		SendMessageToMaster(ping);
+		//master.DealWithMessage(ping);
 	}
 	
 	public void CheckVersionAfterStarting(Message msg)
@@ -809,6 +817,60 @@ public class ChunkServerNode extends ServerNode {
 					return;
 				}
 			}
+		}
+	}
+	
+	/** 
+	 * @param chunkServerMessage
+	 */
+	public void SendMessageToChunkServer(Message message) {
+		int port = ServerMap.get(message.senderIP).serverPort;	
+		try(Socket serverSocket =  new Socket(message.senderIP, port);)
+		{
+			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+	
+	/** 
+	 * @param clientServerMessage
+	 */
+	public void SendMessageToClient(Message message) {
+		int port = ServerMap.get(message.senderIP).clientPort;	
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
+		}
+	}
+
+	/**
+	 * @param message
+	 */
+	public void SendMessageToMaster(Message message) {
+		int port = ServerMap.get(message.senderIP).clientPort;	
+		try(Socket clientSocket =  new Socket(message.senderIP, port);)
+		{
+			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+			out.writeObject(message);
+			out.close();
+		}
+		catch (IOException e){
+			e.printStackTrace();
+		}
+		finally{
 		}
 	}
 	

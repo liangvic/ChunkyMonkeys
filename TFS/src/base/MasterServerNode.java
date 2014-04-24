@@ -342,6 +342,7 @@ public class MasterServerNode extends ServerNode {
 		{
 			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -359,6 +360,7 @@ public class MasterServerNode extends ServerNode {
 		{
 			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 			out.writeObject(message);
+			out.close();
 		}
 		catch (IOException e){
 			e.printStackTrace();
