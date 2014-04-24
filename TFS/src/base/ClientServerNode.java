@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
 import Utility.Message;
@@ -34,6 +35,7 @@ public class ClientServerNode extends ServerNode {
 	int chunkReadsRecieved = 0;
 	List<Byte> readFileData = new ArrayList<Byte>();
 	String localPathToCreateFile;
+	String localPathToReadFile;
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -207,7 +209,18 @@ public class ClientServerNode extends ServerNode {
 		} else if (message.type == msgType.PRINTFILEDATA) {
 			msgPrintFileData(message);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
-			ReadLocalFile(message);
+			if(message.sender == serverType.MASTER)
+			{
+				if(message.success == msgSuccess.REQUESTERROR)
+				{
+					CWriteToNewFile(localPathToReadFile, message.filePath, 3);
+				}
+				else
+				{
+					AppendToAllReplicas(message);
+				}
+			}
+			//ReadLocalFile(message);
 		}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
 			ExpectChunkNumberForRead(message.expectNumChunkForRead);
 		}
@@ -639,6 +652,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void test4(String localPath, String filePath) {
 			
+			localPathToReadFile = localPath;
 			CWriteToNewFile(localPath, filePath,0);
 			
 		}
@@ -737,6 +751,7 @@ public class ClientServerNode extends ServerNode {
 	}
 	
 	/**
+	 * Retrieves chunkClass from Master, which contains chunk locations of all replicas
 	 * @param localPath
 	 * @param filePath
 	 */
@@ -750,6 +765,23 @@ public class ClientServerNode extends ServerNode {
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}
+	
+	/**
+	 * Runs through all chunk locations with replica present and asks them to append data
+	 * @param message
+	 */
+	public void AppendToAllReplicas(Message message)
+	{
+		for (ChunkLocation loc : message.chunkClass.listOfLocations)
+		{
+			Message m = new Message(myIP, myType, myPortNumber, loc.chunkIP, serverType.CHUNKSERVER, loc.chunkPort);
+			m.type = msgType.APPENDTOTFSFILE;
+			m.filePath = message.filePath;
+			m.fileName = message.fileName;
+			ReadLocalFile(m); //this should send to individual chunkserver
+		}
+	}
+	
 	/**
 	 * @param message
 	 */

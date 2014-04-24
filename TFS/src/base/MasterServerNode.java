@@ -179,6 +179,7 @@ public class MasterServerNode extends ServerNode {
 		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
+				//should retrieve ip and port for chunkserver who has the filepath here
 				AppendToTFSFile(inputMessage, operationID);
 			}
 			else if(inputMessage.sender == serverType.CHUNKSERVER) {
@@ -726,8 +727,8 @@ public class MasterServerNode extends ServerNode {
 			if(chunkData != null) {
 				message.chunkClass = chunkData;
 				//TODO: FIX THIS
-				SendMessageToChunkServer(message);
-				SendMessageToClient(message);
+				//SendMessageToChunkServer(message);
+				SendMessageToClient(message); //sends chunkClass with list of chunk locations to client
 			}
 			else {
 				SendErrorMessageToClient(message);
