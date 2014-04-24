@@ -70,12 +70,14 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 					break;
 				case ("Test2"):
+				case ("Unit2"):
 					if (tokens.length == 3) {
 						test2(tokens[1], Integer.parseInt(tokens[2]));
 					} else
 						throw new Exception();
 					break;
 				case ("Test3"):
+				case ("Unit3"):
 					if (tokens.length == 2)
 						test3(tokens[1]);
 					else
