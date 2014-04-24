@@ -819,14 +819,20 @@ public class ChunkServerNode extends ServerNode {
 			}
 		}
 	}
-	
-	/** 
-	 * @param chunkServerMessage
+
+	/**
+	 * @param message
 	 */
 	public void SendMessageToChunkServer(Message message) {
-		int port = ServerMap.get(message.senderIP).serverPort;	
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
 		try(Socket serverSocket =  new Socket(message.senderIP, port);)
 		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CHUNKSERVER;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
 			out.writeObject(message);
 			out.close();
@@ -838,13 +844,20 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 	
-	/** 
-	 * @param clientServerMessage
+
+	/**
+	 * @param message
 	 */
 	public void SendMessageToClient(Message message) {
-		int port = ServerMap.get(message.senderIP).clientPort;	
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
 		try(Socket clientSocket =  new Socket(message.senderIP, port);)
 		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.CLIENT;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 			out.writeObject(message);
 			out.close();
@@ -860,9 +873,15 @@ public class ChunkServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void SendMessageToMaster(Message message) {
-		int port = ServerMap.get(message.senderIP).clientPort;	
+		int port = message.senderPort;	// assuming that master has given this chunk server the proper port 
 		try(Socket clientSocket =  new Socket(message.senderIP, port);)
 		{
+			message.receiverIP = message.senderIP;
+			message.addressedTo = serverType.MASTER;
+			message.sender = serverType.CHUNKSERVER;
+			message.senderIP = myIP;
+			message.recieverPort = message.senderPort;
+			message.senderPort = myPortNumber;
 			ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
 			out.writeObject(message);
 			out.close();
