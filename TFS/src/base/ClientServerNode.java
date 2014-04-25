@@ -21,7 +21,7 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
-	Semaphore action = new Semaphore(1, true);
+	//Semaphore action = new Semaphore(1, true);
 
 	public ClientServerNode(String ip, int inPort, int outPort)
 	{
@@ -415,9 +415,9 @@ public class ClientServerNode extends ServerNode {
 			
 			if (NumFolders > 1) {
 				try{
-					action.acquire();
+					//action.acquire();
 					wait(5000);
-					action.release();
+					//action.release();
 				}
 				catch(InterruptedException e){
 					e.printStackTrace();
@@ -426,9 +426,9 @@ public class ClientServerNode extends ServerNode {
 			}
 			if (NumFolders > 2) {
 				try{
-					action.acquire();
+				//	action.acquire();
 					wait(5000);
-					action.release();
+					//action.release();
 				}
 				catch(InterruptedException e){
 					e.printStackTrace();
@@ -447,9 +447,9 @@ public class ClientServerNode extends ServerNode {
 				String newfilepath = parentfilepath + "\\" + folderName;
 				CCreateDirectory(newfilepath);
 				try{
-					action.acquire();
+					//action.acquire();
 					wait(5000);
-					action.release();
+					//action.release();
 				}
 				catch(InterruptedException e){
 					e.printStackTrace();
