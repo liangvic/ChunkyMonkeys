@@ -1,8 +1,13 @@
 package Utility;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class ChunkMetadata{
+public class ChunkMetadata implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	/**
 	 * @param fname
 	 * @param chunkindex
