@@ -22,6 +22,7 @@ public class ClientServerNode extends ServerNode {
 	//public ChunkServerNode chunkServer;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	//Semaphore action = new Semaphore(1, true);
+	Timer timer = new Timer();
 
 	public ClientServerNode(String ip, int inPort, int outPort)
 	{
@@ -320,25 +321,6 @@ public class ClientServerNode extends ServerNode {
 		 * @param filepath
 		 */
 		public void CDeleteDirectory(String filepath) {
-			// SENDING FILEPATH TO THE MASTER
-			/*
-			 * Properties prop = new Properties(); try { prop.load(new
-			 * FileInputStream("config/config.properties")); } catch
-			 * (FileNotFoundException e) { // TODO Auto-generated catch block
-			 * e.printStackTrace(); } catch (IOException e) { // TODO Auto-generated
-			 * catch block e.printStackTrace(); }
-			 * System.out.println(prop.getProperty("IP1"));
-			 * 
-			 * try { Socket masterSocket = new Socket(prop.getProperty("IP1"),
-			 * Integer.parseInt(prop.getProperty("PORT1"))); ObjectOutputStream out
-			 * = new ObjectOutputStream(masterSocket.getOutputStream()); Message
-			 * message = new Message(msgType.DELETEDIRECTORY);
-			 * out.writeObject(message); out.close(); masterSocket.close(); } catch
-			 * (NumberFormatException e) { // TODO Auto-generated catch block
-			 * e.printStackTrace(); } catch (UnknownHostException e) { // TODO
-			 * Auto-generated catch block e.printStackTrace(); } catch (IOException
-			 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
-			 */
 			Message message = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 			message.type = msgType.DELETEDIRECTORY;
 			message.filePath = filepath;
@@ -385,7 +367,6 @@ public class ClientServerNode extends ServerNode {
 
 				newfilepath = parentfilepath + "\\" + folderName;
 				final String finalFilePath = newfilepath;
-				Timer timer = new Timer();
 				timer.schedule(new TimerTask() {
 					@Override
 					public void run() {
@@ -419,7 +400,6 @@ public class ClientServerNode extends ServerNode {
 		 * @param NumFolders
 		 */
 		public void test1(final int NumFolders) {
-			Timer timer = new Timer();
 			final int count = 1;
 			CCreateDirectory("1");
 			
@@ -450,7 +430,6 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void helper(String parentfilepath, final int folderName, final int NumMaxFolders) {
 			if (folderName <= NumMaxFolders) {
-				Timer timer = new Timer();
 				final String newfilepath = parentfilepath + "\\" + folderName;
 				CCreateDirectory(newfilepath);
 				timer.schedule(new TimerTask() {
