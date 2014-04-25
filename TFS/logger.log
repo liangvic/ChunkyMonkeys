@@ -26,3 +26,11 @@ Apr 25, 2014 3:49:00 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1
 Apr 25, 2014 3:49:01 PM Utility.TFSLogger LogMsg
 FINE: Created directory 1\4
+Apr 25, 2014 3:57:25 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 25, 2014 3:57:26 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 25, 2014 3:58:15 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\File3
+Apr 25, 2014 3:58:15 PM Utility.TFSLogger LogMsg
+FINE: Created file 1\File1

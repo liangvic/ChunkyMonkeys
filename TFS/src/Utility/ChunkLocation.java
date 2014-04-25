@@ -4,7 +4,7 @@ package Utility;
  * 
  *
  */
-public class ChunkLocation {
+public class ChunkLocation{
 	public String chunkIP;
 	public int chunkPort;
 	public int byteOffset;
