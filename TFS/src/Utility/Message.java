@@ -10,6 +10,10 @@ import java.io.*;
  */
 public class Message implements Serializable{
 		
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//This IS REQUIRED
 	public Message(String senderip, serverType sendertype, int senderport, 
 			String recieverip, serverType receivertype,int receiverport){
@@ -79,5 +83,5 @@ public class Message implements Serializable{
 	public String senderIP;
 	public String receiverIP;
 	public int expectNumChunkForRead;
-	
+	public int opID;
 }

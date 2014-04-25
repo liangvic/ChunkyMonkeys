@@ -12,9 +12,9 @@ public class ServerNode {
 
 	protected 
 	String myIP;
-	static int myInputPortNumber; 
+	int myInputPortNumber; 
 	static int myOutputPortNumber;
-	static serverType myType;
+	serverType myType;
 	//int targetPortNumber;	
 
 	public ServerNode(String ip, int inPort, int outPort){
@@ -43,13 +43,33 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
+		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
-				out.close();			
+
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
+			e.printStackTrace();
+		}
+
+	}
+	public void SendMessage(Message smessage, Socket socket) {
+		//MESSAGE MUST HAVE IP and Socket Number
+
+		//if created new message, don't flip addressing data
+		System.out.println("Sending message to " + socket.getInetAddress() + " port " + socket.getLocalPort() + " " + socket.getPort());
+		
+		try
+		{
+			Message message = new Message(myIP,myType,myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());			
+			out.writeObject(message);
+			out.flush();
+			//out.close();			
+		}
+		catch (IOException e){
+			System.err.println("Unable to send Message from " + myIP + " to " + smessage.senderIP);
 			e.printStackTrace();
 		}
 

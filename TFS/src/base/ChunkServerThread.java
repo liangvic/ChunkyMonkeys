@@ -13,13 +13,13 @@ public class ChunkServerThread extends ServerThread {
 	ChunkServerNode server;
 
 	public ChunkServerThread(ChunkServerNode sn, Socket s) {
-		super(s);
+		super(sn,s);
 		server = sn;
 	}
 	
-	public void DealWithMessage() {
-		if(!messageList.isEmpty()) {
-			Message message = messageList.get(0);
+	public void DealWithMessage(Message message) {
+		//if(!messageList.isEmpty()) {
+		//	Message message = messageList.get(0);
 
 			if(message instanceof HeartBeat)
 			{
@@ -79,5 +79,5 @@ public class ChunkServerThread extends ServerThread {
 				messageList.remove(0);
 			}
 		}
-	}
+	//}
 }

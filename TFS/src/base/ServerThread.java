@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 import Utility.Message;
+import Utility.Message.msgType;
+import Utility.Message.serverType;
 
 public abstract class ServerThread extends Thread {
 	ServerNode server;
@@ -18,6 +20,7 @@ public abstract class ServerThread extends Thread {
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
 		socket = s; 
+		System.out.println("socket port:"+s.getPort());
 	}
 	
 	public void run() {
@@ -43,23 +46,6 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
-	public void DealWithMessage(Message message) {
-	}
-	public void SendMessage(Message message) {
-		//MESSAGE MUST HAVE IP and Socket Number
+	public abstract void DealWithMessage(Message message);
 
-		//if created new message, don't flip addressing data
-
-		try{
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-			out.writeObject(message);
-			out.flush();
-			//out.close();			
-		}
-		catch (IOException e){
-			System.err.println("Unable to send Message from " + server.myIP + " to " + message.receiverIP);
-			e.printStackTrace();
-		}
-
-	}
 }

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import Utility.Message;
 import Utility.NamespaceNode;
 import Utility.SOSMessage;
 import Utility.TFSLogger;
+import Utility.lockInfo;
 import Utility.HeartBeat.serverStatus;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
@@ -55,7 +57,6 @@ public class MasterServerThread extends ServerThread {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-		if(!messageList.isEmpty()) {
 			server.operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
 			if(inputMessage instanceof HeartBeat)
@@ -76,7 +77,7 @@ public class MasterServerThread extends ServerThread {
 			else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 				MDeleteDirectory(inputMessage, server.operationID);
 			} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
-				RemoveParentLocks(inputMessage.filePath);
+				RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 					// SendSuccessMessageToClient();
 				} else {
@@ -90,7 +91,7 @@ public class MasterServerThread extends ServerThread {
 						e.printStackTrace();
 					}
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 						// SendSuccessMessageToClient();
 					} else {
@@ -102,7 +103,7 @@ public class MasterServerThread extends ServerThread {
 				if (inputMessage.sender == serverType.CLIENT)
 					CreateFile(inputMessage, server.operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
 						System.out.println("File "
 								+ inputMessage.chunkClass.filename
@@ -119,7 +120,7 @@ public class MasterServerThread extends ServerThread {
 				}
 				else if (inputMessage.sender == serverType.CHUNKSERVER)
 				{
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
 				}
 			}
@@ -128,7 +129,7 @@ public class MasterServerThread extends ServerThread {
 				if (inputMessage.sender == serverType.CLIENT)
 					CreateFile(inputMessage, server.operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
 						System.out.println("File "
 								+ inputMessage.chunkClass.filename
@@ -145,7 +146,7 @@ public class MasterServerThread extends ServerThread {
 				}
 				else if (inputMessage.sender == serverType.CHUNKSERVER)
 				{
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
 				}
 			}
@@ -154,7 +155,7 @@ public class MasterServerThread extends ServerThread {
 				if(inputMessage.sender == serverType.CLIENT)
 					AssignChunkServer(inputMessage, server.operationID);//, operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER){
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 						System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
 					}
@@ -169,7 +170,7 @@ public class MasterServerThread extends ServerThread {
 					AppendToTFSFile(inputMessage, server.operationID);
 				}
 				else if(inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath);
+					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 						System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
 					}
@@ -190,8 +191,6 @@ public class MasterServerThread extends ServerThread {
 					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 				}*/
 			
-			messageList.remove(inputMessage);
-		}
 	}
 	
 
@@ -199,21 +198,20 @@ public class MasterServerThread extends ServerThread {
 	 * 
 	 * @param opID
 	 */
-	public void RemoveParentLocks(String filePath)
+	public void RemoveParentLocks(String filePath, int opID)
 	{
-		int opID = 0;
-		if(NamespaceMap.containsKey(filePath))
-		{
-			opID = NamespaceMap.get(filePath).lockData.operationID;
-		}
-
 		for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
 		{
 			//if this operation previously made the lock
-			if(entry.getValue().lockData.operationID == opID)
+			for(lockInfo lock: entry.getValue().lockList)
 			{
-				entry.getValue().lockData.lockStatus = lockType.NONE;
+				if(lock.operationID == opID)
+				{
+					//lock.lockStatus = lockType.NONE;
+					entry.getValue().lockList.remove(lock);
+				}
 			}
+			
 		}
 		
 	}
@@ -239,35 +237,45 @@ public class MasterServerThread extends ServerThread {
 		{
 			if(NamespaceMap.containsKey(filePath))
 			{
-				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+				for(lockInfo nsNode: NamespaceMap.get(parentPath).lockList)
 				{
-					if(parentPath != filePath)
+					if(nsNode.operationID == opID)
 					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
-					}
-					else
-					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
+						if(nsNode.lockStatus == lockType.NONE)
+						{
+							if(parentPath != filePath)
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.I_EXCLUSIVE,opID));
+								//nsNode.lockStatus = lockType.I_EXCLUSIVE;
+								//nsNode.operationID = opID;
+							}
+							else
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.EXCLUSIVE,opID));
+								//NamespaceMap.get(parentPath).lockList.remove(opID);
+								//NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
+								//NamespaceMap.get(parentPath).lockData.operationID = opID;
+							}
+						}
+						else if(nsNode.lockStatus == lockType.I_EXCLUSIVE ||
+								nsNode.lockStatus == lockType.I_SHARED)
+						{
+							if(parentPath == filePath)
+							{
+								RemoveParentLocks(filePath, opID);
+								return false;
+							}
+							//if not the final node, allow it to pass
+						}
+						else if(nsNode.lockStatus == lockType.SHARED ||
+								nsNode.lockStatus == lockType.EXCLUSIVE)
+						{
+							RemoveParentLocks(parentPath, opID);
+							return false;
+						}
 					}
 				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
-				{
-					if(parentPath == filePath)
-					{
-						RemoveParentLocks(filePath);
-						return false;
-					}
-					//if not the final node, allow it to pass
-				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
-				{
-					RemoveParentLocks(parentPath);
-					return false;
-				}
+				
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
@@ -283,7 +291,7 @@ public class MasterServerThread extends ServerThread {
 	 */
 
 	public boolean AddSharedParentLocks(String filePath, int opID)
-	{		
+	{
 		try{
 		lockChange.acquire();
 		}
@@ -298,34 +306,39 @@ public class MasterServerThread extends ServerThread {
 		{
 			if(NamespaceMap.containsKey(filePath))
 			{
-				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+				for(lockInfo nsNode: NamespaceMap.get(parentPath).lockList)
 				{
-					if(parentPath != filePath)
+					if(nsNode.operationID == opID)
 					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_SHARED;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
-					}
-					else
-					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.SHARED;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
+						if(nsNode.lockStatus == lockType.NONE)
+						{
+							if(parentPath != filePath)
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.I_SHARED,opID));
+							}
+							else
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.SHARED,opID));
+							}
+						}
+						else if(nsNode.lockStatus == lockType.I_EXCLUSIVE ||
+								nsNode.lockStatus == lockType.I_SHARED)
+						{
+							if(parentPath == filePath)
+							{
+								RemoveParentLocks(filePath,opID);
+								return false;
+							}
+							//if not the final node, allow it to pass
+						}
+						else if(nsNode.lockStatus == lockType.EXCLUSIVE)
+						{
+							RemoveParentLocks(parentPath,opID);
+							return false;
+						}
 					}
 				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
-				{
-					if(parentPath == filePath)
-					{
-						RemoveParentLocks(filePath);
-						return false;
-					}
-					//if not the final node, allow it to pass
-				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
-				{
-					RemoveParentLocks(parentPath);
-					return false;
-				}
+				
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
@@ -354,14 +367,14 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void SendMessageToChunkServer(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
-		SendMessage(message);
+		server.SendMessage(message);
 	}
 
 	/** 
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
-		SendMessage(message);
+		server.SendMessage(message);
 	}
 
 	/**
@@ -943,9 +956,7 @@ public class MasterServerThread extends ServerThread {
 			}
 		}
 	}
-
 	/**
-	 * @param key
 	 * @param chunkmd
 	 */
 	public void WritePersistentChunkServerMap(String key, ChunkMetadata chunkmd) {
@@ -953,8 +964,9 @@ public class MasterServerThread extends ServerThread {
 
 		// STRUCTURE///
 		// KEY VERSION# SIZEOF_LOCATIONLIST
-		// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
-		// CHUNKLOCATIONN_PORT
+		// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT 
+		// CHUNKLOCATION1_BYTEOFFSET CHUNKLOCATION1_FILENUMBER
+		//... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
 		// CHUNKHASH
 		// REFERENCECOUNT
 		// FILENAME
@@ -977,7 +989,9 @@ public class MasterServerThread extends ServerThread {
 					+ chunkmd.listOfLocations.size() + "\t");
 			for (int i = 0; i < chunkmd.listOfLocations.size(); i++) {
 				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t"
-						+ chunkmd.listOfLocations.get(i).chunkPort + "\t");
+						+ chunkmd.listOfLocations.get(i).chunkPort + "\t"
+						+ chunkmd.listOfLocations.get(i).byteOffset + "\t"
+						+ chunkmd.listOfLocations.get(i).fileNumber + "\t");
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
@@ -995,14 +1009,16 @@ public class MasterServerThread extends ServerThread {
 			}
 		}
 	}
-
+	
 	/**
 	 * @param key
 	 * @param nsNode
 	 */
 	public void WritePersistentNamespaceMap(String key, NamespaceNode nsNode) {
 		// STRUCTURE///
-		// KEY TYPE CHILD CHILD CHILD ...//
+		// KEY TYPE CHILDLIST_SIZE CHILD CHILD CHILD 
+		// LOCKLIST_SIZE LOCKSTATUS1 LOCKOPID1 ...
+		// LOCKSTATUSN LOCKOPIDN 
 		BufferedWriter out = null;
 		try {
 			File file = new File("dataStorage/MData_NamespaceMap.txt");
@@ -1015,8 +1031,18 @@ public class MasterServerThread extends ServerThread {
 			// System.out.println("Writing out to file");
 			out.write(key + "\t" + nsNode.type.toString() + "\t");
 			if (nsNode.children.size() > 0) {
+				out.write(nsNode.children.size() + "\t");
 				for (int i = 0; i < nsNode.children.size(); i++) {
 					out.write(nsNode.children.get(i) + "\t");
+				}
+			}
+			if (nsNode.lockList.size() > 0)
+			{
+				out.write(nsNode.lockList.size() + "\t");
+				for (int i = 0; i < nsNode.lockList.size(); i++)
+				{
+					out.write(nsNode.lockList.get(i).lockStatus + "\t"
+							+ nsNode.lockList.get(i).operationID + "\t");
 				}
 			}
 
@@ -1075,5 +1101,6 @@ public class MasterServerThread extends ServerThread {
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
+
 }
 
