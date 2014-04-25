@@ -94,7 +94,10 @@ public class MasterServerNode extends ServerNode {
 				if(incoming != null) {
 					System.out.println("Message from IP: " + incoming.senderIP + " recieved.");
 					messageList.add(incoming);
-					//DealWithMessage();
+					DealWithMessage();
+					ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+					out.writeObject(incoming);
+					out.close();
 				}
 			}
 

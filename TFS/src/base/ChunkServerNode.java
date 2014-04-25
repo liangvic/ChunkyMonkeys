@@ -67,7 +67,7 @@ public class ChunkServerNode extends ServerNode {
 		
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
-		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
 		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
