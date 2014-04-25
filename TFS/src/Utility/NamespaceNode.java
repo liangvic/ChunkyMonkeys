@@ -3,6 +3,8 @@ package Utility;
 import java.util.ArrayList;
 import java.util.List;
 
+import Utility.NamespaceNode.lockType;
+
 /**
  * 
  *
@@ -16,11 +18,7 @@ public class NamespaceNode {
 	}
 	//file access permissions?
 	public static enum lockType { NONE, SHARED, I_SHARED, EXCLUSIVE, I_EXCLUSIVE }
-	public lockInfo lockData;
+	//public lockInfo lockData;
+	public List<lockInfo> lockList = new ArrayList<lockInfo>();
 	
-	public class lockInfo 
-	{
-		public lockType lockStatus = lockType.NONE;
-		public int operationID = 0;
-	}
 }

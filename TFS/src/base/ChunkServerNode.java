@@ -497,8 +497,9 @@ public class ChunkServerNode extends ServerNode {
 			while ((textLine = textReader.readLine()) != null) {
 				// STRUCTURE///
 				// KEY VERSION# SIZEOF_LOCATIONLIST
-				// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
-				// CHUNKLOCATIONN_PORT
+				// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT 
+				// CHUNKLOCATION1_BYTEOFFSET CHUNKLOCATION1_FILENUMBER
+				//... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
 				// CHUNKHASH
 				// REFERENCECOUNT
 				// FILENAME
@@ -519,9 +520,10 @@ public class ChunkServerNode extends ServerNode {
 				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = Integer.parseInt(data[2]);
 				int newIndexCounter = 3 + (locationSize / 2);
-				for (int i = 3; i < newIndexCounter; i = i + 2) {
+				for (int i = 3; i < newIndexCounter; i = i + 4) {
 					locations.add(new ChunkLocation(data[i], Integer
-							.parseInt(data[i + 1])));
+							.parseInt(data[i + 1]),Integer.parseInt(data[i+2]),
+							Integer.parseInt(data[i+3])));
 				}
 
 				// hash
@@ -656,7 +658,10 @@ public class ChunkServerNode extends ServerNode {
 						+ chunkmd.listOfLocations.size() + "\t");
 				for (int i = 0; i < chunkmd.listOfLocations.size(); i++) {
 					out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t"
-							+ chunkmd.listOfLocations.get(i).chunkPort + "\t");
+							+ chunkmd.listOfLocations.get(i).chunkPort + "\t"
+							+ chunkmd.listOfLocations.get(i).byteOffset + "\t"
+							+ chunkmd.listOfLocations.get(i).fileNumber + "\t");
+				
 				}
 				out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 						+ chunkmd.filename + "\t");
