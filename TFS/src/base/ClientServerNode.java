@@ -28,7 +28,7 @@ public class ClientServerNode extends ServerNode {
 		
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
-		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
 	}
 
 	String masterIP = null;
