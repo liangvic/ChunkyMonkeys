@@ -43,7 +43,7 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
+		try(Socket outSocket =  new Socket("68.181.174.114", 6060);){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
 				//out.close();			
@@ -60,10 +60,10 @@ public class ServerNode {
 		//if created new message, don't flip addressing data
 		System.out.println("Sending message to " + socket.getInetAddress() + " port " + socket.getLocalPort() + " " + socket.getPort());
 		
-		try(Socket outSocket = new Socket(socket.getInetAddress(),6060);)
+		try
 		{
 			Message message = new Message(myIP,myType,myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);
-			ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());			
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());			
 			out.writeObject(message);
 			out.flush();
 			//out.close();			
