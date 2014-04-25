@@ -52,9 +52,8 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public MasterServerNode(String ip, int port) {
-		myIP = ip;
-		myPortNumber = port;
+	public MasterServerNode(String ip, int inPort, int outPort) {
+		super(ip, inPort, outPort);
 		myType = serverType.MASTER;
 
 		LoadChunkServerMap();
@@ -69,7 +68,7 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void main() throws Exception {	
 		toString();
-		try (ServerSocket serverSocket = new ServerSocket(myPortNumber);)
+		try (ServerSocket serverSocket = new ServerSocket(myInputPortNumber);)
 
 		{
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -89,14 +88,16 @@ public class MasterServerNode extends ServerNode {
 			}, 10000, 10000);
 
 			while(true) { 
-				Socket clientSocket = serverSocket.accept();
-				ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+				Socket otherSocket = serverSocket.accept();
+				ServerThread st = new MasterServerThread(this, otherSocket);
+				st.start();
+				/*ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
 					System.out.println("Message from IP: " + incoming.senderIP + " recieved.");
 					messageList.add(incoming);
-					//DealWithMessage();
-				}
+					DealWithMessage();
+				}*/
 			}
 
 
@@ -106,7 +107,7 @@ public class MasterServerNode extends ServerNode {
 		catch (IOException e) {
 			System.out
 			.println("Exception caught when trying to listen on port "
-					+ myPortNumber + " or listening for a connection");
+					+ myInputPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		finally{
@@ -114,7 +115,6 @@ public class MasterServerNode extends ServerNode {
 		}
 
 	}
-
 	/**
 	 * @param inputMessage
 	 */
@@ -1232,9 +1232,9 @@ public class MasterServerNode extends ServerNode {
 		for (int i = 2; i <= 5; i++) {
 			String IP = Config.prop.getProperty("IP" + i);
 			int clientPort = Integer.parseInt(Config.prop.getProperty("PORT"
-					+ i + "_CLIENT"));
+					+ i + "_CLIENT_INPORT"));
 			int serverPort = Integer.parseInt(Config.prop.getProperty("PORT"
-					+ i + "_SERVER"));
+					+ i + "_SERVER_INPORT"));
 			ServerData temp = new ServerData(IP, clientPort, serverPort);
 			ServerMap.put(IP, temp);
 			System.out.println("Server at IP " + IP + " added to network");
@@ -1276,7 +1276,7 @@ public class MasterServerNode extends ServerNode {
 					//Send message with the chunkMetaData to the chunkserver
 					//from there, the chunkserver can determine if it has the correct version
 
-					SOSMessage chunkMessage = new SOSMessage(myIP,myType,myPortNumber,IPaddress,serverType.CHUNKSERVER,location.chunkPort);
+					SOSMessage chunkMessage = new SOSMessage(myIP,myType,myInputPortNumber,IPaddress,serverType.CHUNKSERVER,location.chunkPort);
 					chunkMessage.chunkClass = cmEntry.getValue();
 					chunkMessage.senderIP = myIP;
 					chunkMessage.receiverIP = IPaddress;
