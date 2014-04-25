@@ -88,13 +88,6 @@ public class MasterServerNode extends ServerNode {
 				Socket otherSocket = serverSocket.accept();
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
-				/*ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				Message incoming = (Message)in.readObject();
-				if(incoming != null) {
-					System.out.println("Message from IP: " + incoming.senderIP + " recieved.");
-					messageList.add(incoming);
-					DealWithMessage();
-				}*/
 			}
 
 
@@ -381,6 +374,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param opID
 	 */
 	public void ReadFile(Message inputMessage, int opID) {
+		lockChange.tryAcquire();
 		if(AddSharedParentLocks(inputMessage.filePath, opID))
 		{
 			//Implement Later
