@@ -23,9 +23,9 @@ public class ClientServerNode extends ServerNode {
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	//Semaphore action = new Semaphore(1, true);
 
-	public ClientServerNode(String ip, int inPort, int outPort)
+	public ClientServerNode(String ip, int inPort)
 	{
-		super(ip, inPort, outPort);
+		super(ip, inPort);
 		
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");

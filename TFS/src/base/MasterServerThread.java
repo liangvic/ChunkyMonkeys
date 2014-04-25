@@ -93,9 +93,9 @@ public class MasterServerThread extends ServerThread {
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
 					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-						// SendSuccessMessageToClient();
+						 SendSuccessMessageToClient(inputMessage);
 					} else {
-						// SendErrorMessageToClient();
+						 SendErrorMessageToClient(inputMessage);
 					}
 				} 
 			}
@@ -772,7 +772,7 @@ public class MasterServerThread extends ServerThread {
 				tfsLogger.LogMsg("Created directory " + filepath);
 
 				WritePersistentNamespaceMap(filepath, newNode);
-				System.out.println("output " + opID);
+				System.out.print("\t OPID " + opID + " Finished");
 			}
 			else
 			{

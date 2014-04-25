@@ -69,8 +69,8 @@ public class ChunkServerNode extends ServerNode {
 	Semaphore chunkMapSemaphore = new Semaphore(1,true);
 	Semaphore appendToFileSemaphore = new Semaphore(1,true);
 	
-	public ChunkServerNode(String ip, int inPort, int outPort) {
-		super(ip, inPort, outPort);
+	public ChunkServerNode(String ip, int inPort) {
+		super(ip, inPort);
 		
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");

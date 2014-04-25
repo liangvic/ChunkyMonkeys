@@ -13,21 +13,19 @@ public class ServerNode {
 	protected 
 	String myIP;
 	int myInputPortNumber; 
-	static int myOutputPortNumber;
 	serverType myType;
 	//int targetPortNumber;	
 
-	public ServerNode(String ip, int inPort, int outPort){
+	public ServerNode(String ip, int inPort){
 		myIP = ip;
 		myInputPortNumber = inPort;
-		myOutputPortNumber = outPort;
 	}
 	public String toString(){
 		String type = "";
 		if (myType == serverType.CHUNKSERVER) type = "ChunkServer";
 		if (myType == serverType.MASTER) type = "Master";
 		if (myType == serverType.CLIENT) type = "Client";
-		type = type + ": IP " + myIP + " inputPort: " + myInputPortNumber + " outputPort: " + myOutputPortNumber;
+		type = type + ": IP " + myIP + " inputPort: " + myInputPortNumber;
 		System.out.println(type);
 		return type;
 	}

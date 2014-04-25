@@ -33,10 +33,10 @@ public abstract class ServerThread extends Thread {
 				DealWithMessage(incoming);
 			}
 			
-			long time = System.currentTimeMillis();
+			//long time = System.currentTimeMillis();
             //in.close();
             //out.close();
-            System.out.println("Request processed: " + time);
+           // System.out.println("Request processed: " + time);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
