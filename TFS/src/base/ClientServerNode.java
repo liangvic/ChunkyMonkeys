@@ -149,6 +149,7 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 				break;
 				case ("Test7"):
+				case("Unit7"):
 					if (tokens.length == 2)
 						test7(tokens[1].toString());
 					else
