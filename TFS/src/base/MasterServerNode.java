@@ -364,7 +364,7 @@ public class MasterServerNode extends ServerNode {
 			ServerData temp = new ServerData(IP, clientPort, serverPort);
 			ServerMap.put(IP, temp);
 			System.out.print("Server at IP " + IP + " added to network:");
-			System.out.println("\t ClientPort: " + clientPort + "\t ServerPort: "
+			System.out.println("ClientPort: " + clientPort + "\t ServerPort: "
 					+ serverPort);
 		}
 	}

@@ -57,129 +57,116 @@ public class MasterServerThread extends ServerThread {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-			server.operationID++; //used to differentiate operations
-			System.out.println("inputMessagetype "+ inputMessage.type);
-			if(inputMessage instanceof HeartBeat)
-			{
+		server.operationID++; //used to differentiate operations
+		System.out.println("inputMessagetype "+ inputMessage.type);
+		if(inputMessage instanceof HeartBeat)
+		{
 
-			}
-			else if(inputMessage instanceof SOSMessage)
+		}
+		else if(inputMessage instanceof SOSMessage)
+		{
+			if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.REQUESTINGDATA)
 			{
-				if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.REQUESTINGDATA)
-				{
-					TellOtherChunkServerToSendData((SOSMessage)inputMessage);
-				}
-				else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
-				{
-					//TODO: finished with the sending of data -- release semaphore-kind of thing?
-				}
+				TellOtherChunkServerToSendData((SOSMessage)inputMessage);
 			}
-			else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
-				MDeleteDirectory(inputMessage, server.operationID);
-			} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
+			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
+			{
+				//TODO: finished with the sending of data -- release semaphore-kind of thing?
+			}
+		}
+		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
+			MDeleteDirectory(inputMessage, server.operationID);
+		} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
+			RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
+			if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
+				// SendSuccessMessageToClient();
+			} else {
+				// SendErrorMessageToClient();
+			}
+
+		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
+			if (inputMessage.sender == serverType.CLIENT) {
+				try {
+					CreateDirectory(inputMessage, server.operationID);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else if (inputMessage.sender == serverType.CHUNKSERVER) {
 				RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-					// SendSuccessMessageToClient();
+					SendSuccessMessageToClient(inputMessage);
 				} else {
-					// SendErrorMessageToClient();
+					SendErrorMessageToClient(inputMessage);
 				}
-			} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
-				if (inputMessage.sender == serverType.CLIENT) {
-					try {
-						CreateDirectory(inputMessage, server.operationID);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
-					if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-						 SendSuccessMessageToClient(inputMessage);
-					} else {
-						 SendErrorMessageToClient(inputMessage);
-					}
-				} 
-			}
-			else if (inputMessage.type == msgType.CREATEFILE) {
-				if (inputMessage.sender == serverType.CLIENT)
-					CreateFile(inputMessage, server.operationID);
-				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
-					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation successful");
-					else if (inputMessage.success == msgSuccess.REQUESTERROR)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation failed");
-				}
-			} else if (inputMessage.type == msgType.READFILE) {
-				if(inputMessage.sender == serverType.CLIENT)
-				{
-					ReadFile(inputMessage, server.operationID);
-				}
-				else if (inputMessage.sender == serverType.CHUNKSERVER)
-				{
-					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
-				}
-			}
 
-			else if (inputMessage.type == msgType.CREATEFILE) {
-				if (inputMessage.sender == serverType.CLIENT)
-					CreateFile(inputMessage, server.operationID);
-				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
-					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation successful");
-					else if (inputMessage.success == msgSuccess.REQUESTERROR)
-						System.out.println("File "
-								+ inputMessage.chunkClass.filename
-								+ " creation failed");
+			}
+		} else if (inputMessage.type == msgType.READFILE) {
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				ReadFile(inputMessage, server.operationID);
+			}
+			else if (inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
+				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+			}
+		}
+
+		else if (inputMessage.type == msgType.CREATEFILE) {
+			if (inputMessage.sender == serverType.CLIENT)
+				CreateFile(inputMessage, server.operationID);
+			else if (inputMessage.sender == serverType.CHUNKSERVER) {
+				RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
+				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
+					System.out.println("File "
+							+ inputMessage.chunkClass.filename
+							+ " creation successful");
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File "
+							+ inputMessage.chunkClass.filename
+							+ " creation failed");
+			}
+		} else if (inputMessage.type == msgType.READFILE) {
+			if(inputMessage.sender == serverType.CLIENT)
+			{
+				ReadFile(inputMessage, server.operationID);
+			}
+			else if (inputMessage.sender == serverType.CHUNKSERVER)
+			{
+				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
+				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+			}
+		}
+		else if(inputMessage.type == msgType.APPENDTOFILE)
+		{
+			if(inputMessage.sender == serverType.CLIENT)
+				AssignChunkServer(inputMessage, server.operationID);//, operationID);
+			else if (inputMessage.sender == serverType.CHUNKSERVER){
+				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
 				}
-			} else if (inputMessage.type == msgType.READFILE) {
-				if(inputMessage.sender == serverType.CLIENT)
-				{
-					ReadFile(inputMessage, server.operationID);
-				}
-				else if (inputMessage.sender == serverType.CHUNKSERVER)
-				{
-					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
+				else if (inputMessage.success == msgSuccess.REQUESTERROR)
+					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
+			}
+		}
+		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
+		{
+			if(inputMessage.sender == serverType.CLIENT) {
+				//should retrieve ip and port for chunkserver who has the filepath here
+				AppendToTFSFile(inputMessage, server.operationID);
+			}
+			else if(inputMessage.sender == serverType.CHUNKSERVER) {
+				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
+				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
+					System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
 				}
 			}
-			else if(inputMessage.type == msgType.APPENDTOFILE)
-			{
-				if(inputMessage.sender == serverType.CLIENT)
-					AssignChunkServer(inputMessage, server.operationID);//, operationID);
-				else if (inputMessage.sender == serverType.CHUNKSERVER){
-					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-						System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
-					}
-					else if (inputMessage.success == msgSuccess.REQUESTERROR)
-						System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
-				}
-			}
-			else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
-			{
-				if(inputMessage.sender == serverType.CLIENT) {
-					//should retrieve ip and port for chunkserver who has the filepath here
-					AppendToTFSFile(inputMessage, server.operationID);
-				}
-				else if(inputMessage.sender == serverType.CHUNKSERVER) {
-					RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-						System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
-					}
-				}
-			}else if(inputMessage.type == msgType.WRITETONEWFILE) // Test 4 & Unit 4
-			{
-				AssignChunkServer(inputMessage, server.operationID);
-			}	
-			/*
+		}else if(inputMessage.type == msgType.WRITETONEWFILE) // Test 4 & Unit 4
+		{
+			AssignChunkServer(inputMessage, server.operationID);
+		}	
+		/*
 				else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 				{
 
@@ -190,9 +177,11 @@ public class MasterServerThread extends ServerThread {
 					RemoveParentLocks(inputMessage.filePath);
 					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 				}*/
+
 		server.messageList.remove(inputMessage);
+
 	}
-	
+
 
 	/**
 	 * 
@@ -211,9 +200,9 @@ public class MasterServerThread extends ServerThread {
 					entry.getValue().lockList.remove(lock);
 				}
 			}
-			
+
 		}
-		
+
 	}
 
 	/**
@@ -224,13 +213,13 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public boolean AddExclusiveParentLocks(String filePath, int opID)
 	{
-		try {
+		/*{
 			lockChange.acquire();
 		} catch (InterruptedException e) {
 			System.out.println("Couldn't acquire semaphore");
 			e.printStackTrace();
 			return false;
-		}
+		}*/
 		String[] tokens = filePath.split(File.pathSeparator);
 		String parentPath = tokens[0];
 		for(int i=1;i<tokens.length-1;i++)
@@ -275,11 +264,11 @@ public class MasterServerThread extends ServerThread {
 						}
 					}
 				}
-				
+
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
-		lockChange.release();
+		//lockChange.release();
 		return true;
 	}
 
@@ -293,7 +282,7 @@ public class MasterServerThread extends ServerThread {
 	public boolean AddSharedParentLocks(String filePath, int opID)
 	{
 		try{
-		lockChange.acquire();
+			lockChange.acquire();
 		}
 		catch (InterruptedException e){
 			System.out.println("Couldn't acquire semaphore");
@@ -338,7 +327,7 @@ public class MasterServerThread extends ServerThread {
 						}
 					}
 				}
-				
+
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
@@ -747,8 +736,9 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void CreateDirectory(Message message, int opID) {
 		String filepath = message.filePath;
+		System.out.println("Trying to create file path: "+ message.filePath);
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			if(AddExclusiveParentLocks(filepath, opID))
+			if(true)//AddExclusiveParentLocks(filepath, opID))
 			{
 				File path = new File(filepath);
 				String parentPath = path.getParent();
@@ -758,12 +748,19 @@ public class MasterServerThread extends ServerThread {
 				} else {
 					parent = parentPath;
 				}
-				if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
-					// parent directory does not exist
-					SendErrorMessageToClient(message);
-					return;
-				} else if (NamespaceMap.containsKey(parent)) {
-					NamespaceMap.get(parent).children.add(filepath);
+				for(int r=0;r<10;r++){
+					if (!NamespaceMap.containsKey(parent) && !(parent.equals(filepath))) {
+						// parent directory does not exist
+						System.out.println("Parent directory doesnt exist");
+						if(r<9){
+							continue;
+						}
+						SendErrorMessageToClient(message);
+						return;
+					} else if (NamespaceMap.containsKey(parent)) {
+						NamespaceMap.get(parent).children.add(filepath);
+						break;
+					}
 				}
 
 				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
@@ -772,12 +769,12 @@ public class MasterServerThread extends ServerThread {
 				tfsLogger.LogMsg("Created directory " + filepath);
 
 				WritePersistentNamespaceMap(filepath, newNode);
-				System.out.print("\t OPID " + opID + " Finished");
+				System.out.println("OPID " + opID + " Finished");
 			}
-			else
+			/*else
 			{
 				SendErrorMessageToClient(message);
-			}
+			}*/
 
 		} else // directory already exists
 		{
@@ -1009,7 +1006,7 @@ public class MasterServerThread extends ServerThread {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param key
 	 * @param nsNode
@@ -1058,7 +1055,7 @@ public class MasterServerThread extends ServerThread {
 		}
 	}
 
-	
+
 
 	/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
 	////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////

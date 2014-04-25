@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Apr 24, 2014 4:36:12 AM Utility.TFSLogger LogMsg
 FINE: Created directory 1
 Apr 24, 2014 9:21:57 PM Utility.TFSLogger LogMsg
@@ -44,3 +45,17 @@ Apr 25, 2014 4:08:35 PM Utility.TFSLogger LogMsg
 FINE: Created file 1\2\File2
 Apr 25, 2014 4:08:35 PM Utility.TFSLogger LogMsg
 FINE: Created file 1\2\File1
+=======
+>>>>>>> e06f06efa60f6783028c6ddff9d9a41b1d53ec6a
+Apr 25, 2014 4:30:36 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 25, 2014 4:30:37 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 25, 2014 4:32:07 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 25, 2014 4:32:08 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
+Apr 25, 2014 4:35:26 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1
+Apr 25, 2014 4:35:27 PM Utility.TFSLogger LogMsg
+FINE: Created directory 1\2
