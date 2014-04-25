@@ -115,7 +115,7 @@ public class MasterServerThread extends ServerThread {
 			else if(inputMessage.type == msgType.APPENDTOFILE)
 			{
 				if(inputMessage.sender == serverType.CLIENT)
-					server.AssignChunkServer(inputMessage);//, operationID);
+					server.AssignChunkServer(inputMessage, server.operationID);//, operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER){
 					server.RemoveParentLocks(inputMessage.filePath);
 					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
@@ -139,7 +139,7 @@ public class MasterServerThread extends ServerThread {
 				}
 			}else if(inputMessage.type == msgType.WRITETONEWFILE) // Test 4 & Unit 4
 			{
-				server.AssignChunkServer(inputMessage);
+				server.AssignChunkServer(inputMessage, server.operationID);
 			}	
 			/*
 				else if (inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
