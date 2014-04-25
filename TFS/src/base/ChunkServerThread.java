@@ -76,8 +76,8 @@ public class ChunkServerThread extends ServerThread {
 					else
 						server.WriteToNewFile(message);
 				}
-				messageList.remove(0);
 			}
+			server.messageList.remove(message);
 		}
 	//}
 }
