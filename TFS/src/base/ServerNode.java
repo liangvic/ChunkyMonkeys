@@ -2,6 +2,7 @@ package base;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import Utility.Message;
@@ -37,15 +38,14 @@ public class ServerNode {
 			message.senderPort = myPortNumber;
 		}
 
-		try(Socket serverSocket =  new Socket(message.receiverIP, message.recieverPort);)
+		try(Socket outSocket =  new Socket(message.receiverIP, message.recieverPort);)
 		{
-
-			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
+			ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 			out.writeObject(message);
 			out.close();
 		}
 		catch (IOException e){
-			System.err.println("Unable to send Message from " + myIP + " to " + message.senderIP);
+			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
 			e.printStackTrace();
 		}
 

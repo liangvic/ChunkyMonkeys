@@ -50,7 +50,6 @@ public class ClientServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
 				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
-				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
 					messageList.add(incoming);
