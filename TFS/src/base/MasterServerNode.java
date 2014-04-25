@@ -595,23 +595,14 @@ public class MasterServerNode extends ServerNode {
 			ChunkMetadata testExistence = chunkServerMap.get(hashstring);
 			if(testExistence != null)
 			{
-				//System.out.println("MSN AssignChunkServer: Filepath exists.");
+				System.err.println("MSN AssignChunkServer: Filepath exists.");
 				return;
 			}
 		}
 		Random rand = new Random();
 
-		int targetFileNumber = rand.nextInt(5);
-
-
-		//Assigns a file number from 0 - 4
-		
-
-
-		//do a check to see what the offset is
-
-
-		//Get information about all chunkservers
+		int targetFileNumber = rand.nextInt(5);//random selection of file
+//		sets a random file, checks to see if it is full
 
 		for(String ip:ServerMap.keySet()){
 			allAvailableServerList.add(ServerMap.get(ip));
@@ -619,8 +610,8 @@ public class MasterServerNode extends ServerNode {
 		//Random replica assignment
 		int chunkServerAssignment = 0;
 		while(replicaList.size()<inputMessage.replicaCount){
-			chunkServerAssignment = rand.nextInt(4);
-			if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment)))
+			chunkServerAssignment = rand.nextInt(4); //random selection of chunkserver
+			if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment)) || allAvailableServerList.get(chunkServerAssignment).status == HeartBeat.serverStatus.ALIVE)
 				replicaList.add(allAvailableServerList.get(chunkServerAssignment));
 		}
 		int[] replicaListLargestOffset = new int[replicaList.size()];
