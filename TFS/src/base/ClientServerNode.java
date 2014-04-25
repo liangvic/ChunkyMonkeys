@@ -52,13 +52,13 @@ public class ClientServerNode extends ServerNode {
 		{
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				ServerThread st = new ClientServerThread(this, otherSocket);
-				st.start();
+				//ServerThread st = new ClientServerThread(this, otherSocket);
+				//st.start();
 				
-				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
-				
-				if(incoming != null) {
+				System.out.println("got it " + incoming.senderIP);
+				/*if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
 					//outToClient.writeBytes(capitalizedSentence); 

@@ -46,7 +46,7 @@ public class ServerNode {
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
-				out.close();			
+				//out.close();			
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
