@@ -87,6 +87,7 @@ public class MasterServerNode extends ServerNode {
 
 			while(true) { 
 				Socket otherSocket = serverSocket.accept();
+
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
 			}

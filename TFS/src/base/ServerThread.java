@@ -20,6 +20,7 @@ public abstract class ServerThread extends Thread {
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
 		socket = s; 
+		System.out.println("socket port:"+s.getPort());
 	}
 	
 	public void run() {
@@ -45,8 +46,7 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
-	public void DealWithMessage(Message message) {
-	}
+	public abstract void DealWithMessage(Message message);
 	public void SendMessage(Message smessage) {
 		//MESSAGE MUST HAVE IP and Socket Number
 
@@ -57,12 +57,15 @@ public abstract class ServerThread extends Thread {
 			message.type = msgType.CREATEDIRECTORY;
 			message.sender = server.myType;
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			System.out.println("socket port:"+socket.getPort());			
+			System.out.println(socket.getReceiveBufferSize());
+			System.out.println();
 			out.writeObject(message);
-			out.flush();
+//			out.flush();
 			//out.close();			
 		}
 		catch (IOException e){
-			System.err.println("Unable to send Message from " + server.myIP + " to " + smessage.receiverIP);
+			System.err.println("Unable to send Message from " + server.myIP + " to " + smessage.senderIP);
 			e.printStackTrace();
 		}
 
