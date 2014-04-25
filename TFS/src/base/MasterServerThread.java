@@ -191,6 +191,8 @@ public class MasterServerThread extends ServerThread {
 					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 				}*/
 
+		server.messageList.remove(inputMessage);
+
 	}
 
 

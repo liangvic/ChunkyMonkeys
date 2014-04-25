@@ -17,7 +17,7 @@ public class ClientServerThread extends ServerThread {
 
 	public void DealWithMessage(Message message) {
 //		if(!messageList.isEmpty()) {
-//			Message message = messageList.get(0);
+//			messageList.add(message);
 			if (message.type == msgType.DELETEDIRECTORY) {
 				if (message.success == msgSuccess.REQUESTSUCCESS) {
 					System.out.println("Deleted directory sucessfully!");
@@ -85,7 +85,7 @@ public class ClientServerThread extends ServerThread {
 				// later.lol
 				// uses the location to contact the chunkserver
 			}
-//			messageList.remove(0);
+			server.messageList.remove(message);
 		}
 //	}
 }
