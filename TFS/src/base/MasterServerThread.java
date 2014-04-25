@@ -355,14 +355,14 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void SendMessageToChunkServer(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
-		SendMessage(message);
+		server.SendMessage(message);
 	}
 
 	/** 
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
-		SendMessage(message);
+		server.SendMessage(message);
 	}
 
 	/**
