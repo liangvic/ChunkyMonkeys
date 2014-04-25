@@ -23,8 +23,6 @@ public abstract class ServerThread extends Thread {
 	public void run() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-
 			Message incoming = (Message)in.readObject();
 			
 			if(incoming != null) {
@@ -33,8 +31,7 @@ public abstract class ServerThread extends Thread {
 			}
 			
 			long time = System.currentTimeMillis();
-            in.close();
-            out.close();
+            //in.close();
             System.out.println("Request processed: " + time);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -46,5 +43,22 @@ public abstract class ServerThread extends Thread {
 	}
 	
 	public void DealWithMessage(Message message) {
+	}
+	public void SendMessage(Message message) {
+		//MESSAGE MUST HAVE IP and Socket Number
+
+		//if created new message, don't flip addressing data
+
+		try{
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			out.writeObject(message);
+			out.flush();
+			//out.close();			
+		}
+		catch (IOException e){
+			System.err.println("Unable to send Message from " + server.myIP + " to " + message.receiverIP);
+			e.printStackTrace();
+		}
+
 	}
 }

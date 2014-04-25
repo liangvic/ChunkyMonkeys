@@ -11,7 +11,7 @@ import Utility.Message.serverType;
 public class ServerNode {
 
 	protected 
-	static	String myIP;
+	String myIP;
 	static int myInputPortNumber; 
 	static int myOutputPortNumber;
 	static serverType myType;
@@ -43,18 +43,10 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		try (ServerSocket serverSocket = new ServerSocket(myOutputPortNumber);)
-		{
-			try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
+		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
-				out.close();
-			}
-			catch (IOException e){
-				System.out.println("Unable to establish connection with IP " + message.receiverIP + " on Port " + message.receiverInputPort);
-				e.printStackTrace();
-			}
-
+				out.close();			
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
