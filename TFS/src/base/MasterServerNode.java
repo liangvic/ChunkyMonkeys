@@ -1127,7 +1127,7 @@ public class MasterServerNode extends ServerNode {
 
 	public void SetChunkServerOutdated(String IPaddress)
 	{
-		chunksNeedToBeChecked = chunkServerMap.size();
+		chunksNeedToBeChecked = 0;
 		if(ServerMap.containsKey(IPaddress))
 		{
 			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
@@ -1147,7 +1147,6 @@ public class MasterServerNode extends ServerNode {
 					chunkMessage.senderIP = myIP;
 					chunkMessage.receiverIP = IPaddress;
 					chunkMessage.SOSserver = IPaddress;
-					//chunkNeed
 					SendMessageToChunkServer(chunkMessage);
 
 				}
@@ -1173,6 +1172,15 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	public void CheckIfDoneUpdatingServer(HeartBeat msg)
+	{
+		chunksNeedToBeChecked++;
+		if(chunksNeedToBeChecked == chunkServerMap.size())
+		{
+			SetChunkServerAlive(msg.senderIP); //need to change?
+		}
+	}
+	
 
 	public void SetChunkServerAlive(String IPaddress)
 	{
