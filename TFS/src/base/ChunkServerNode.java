@@ -26,7 +26,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import base.MasterServerNode.ServerData;
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
 import Utility.Config;
@@ -59,12 +62,12 @@ public class ChunkServerNode extends ServerNode {
 	List<TFSFile> file_list = new ArrayList<TFSFile>();
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
-	public ChunkServerNode(String IP, int port) {
-		myIP = IP;
-		myPortNumber = port;
+	public ChunkServerNode(String ip, int inPort, int outPort) {
+		super(ip, inPort, outPort);
+		
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
-		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
+		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
 		for (int i = 0; i <= 4; i++){
 			file_list.add(new TFSFile(i));
 		}
@@ -104,19 +107,31 @@ public class ChunkServerNode extends ServerNode {
 	 */
 	public void main() throws Exception {	
 		toString();
-		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
+		try (ServerSocket mySocket = new ServerSocket(myInputPortNumber);)
 
 		{
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new TimerTask() {
+				@Override
+				public void run() {
+						HeartBeat HBMessage = new HeartBeat(myIP, myType, myInputPortNumber, 
+								masterIP,serverType.MASTER, masterPort,serverStatus.ALIVE);
+						SendMessage(HBMessage);
+				}
+			}, 10000, 10000);
+			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ServerThread st = new ChunkServerThread(this, otherSocket);
+				st.start();
+				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
 					//outToClient.writeBytes(capitalizedSentence); 
-				}
+				}*/
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -126,7 +141,7 @@ public class ChunkServerNode extends ServerNode {
 		catch (IOException e) {
 			System.out
 			.println("Exception caught when trying to listen on port "
-					+ myPortNumber + " or listening for a connection");
+					+ myInputPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		finally{
@@ -136,79 +151,6 @@ public class ChunkServerNode extends ServerNode {
 
 	/**
 	 * @param message
-	 */
-	public void DealWithMessage() {
-		if(!messageList.isEmpty()) {
-			Message message = messageList.get(0);
-
-			if(message instanceof HeartBeat)
-			{
-				PingMaster((HeartBeat)message);
-			}
-			else if(message instanceof SOSMessage)
-			{
-				if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
-				{
-					CheckVersionAfterStarting((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
-				{
-					SendingDataToUpdateChunkServer((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
-				{
-					ReplacingData((SOSMessage)message);
-				}
-			}
-			else if (message.type == msgType.DELETEDIRECTORY) {
-				DeleteChunk(message.chunkClass);
-			}
-
-			else if (message.type == msgType.CREATEFILE) {
-				AddNewBlankChunk(message);
-			} else if (message.type == msgType.READFILE) {
-				ReadChunks(message);
-			} else if (message.type == msgType.APPENDTOFILE) {
-				if (message.chunkClass == null) {
-					System.out.println("chunkClass is null");
-				}
-				else if (message.type == msgType.CREATEFILE) {
-					AddNewBlankChunk(message);
-				} else if (message.type == msgType.READFILE) {
-					ReadChunks(message);
-				} else if (message.type == msgType.APPENDTOFILE) {
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						AppendToFile(message.chunkClass, message.fileData);
-				} else if (message.type == msgType.APPENDTOTFSFILE) {
-					if(message.sender == serverType.MASTER) {
-						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-						chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
-					}
-					else if (message.sender == serverType.CLIENT) {
-						System.out.println("Calling AppendToTSFFile Method");
-						AppendToTFSFile(message);
-					}
-				} else if (message.type == msgType.COUNTFILES) {
-					CountNumInFile(message.chunkClass);
-				}
-				else if (message.type == msgType.WRITETONEWFILE)
-				{
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						WriteToNewFile(message);
-				}
-				messageList.remove(0);
-			}
-		}
-	}
-
-	/**
-	 * @param metadata
 	 */
 	public void ReadChunks(Message message){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
@@ -236,7 +178,7 @@ public class ChunkServerNode extends ServerNode {
 					dataINeed[i] = fileData.data[offSetIndex];
 					offSetIndex++;
 				}
-				Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myPortNumber, message.senderIP, serverType.CLIENT, message.senderPort);
+				Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myInputPortNumber, message.senderIP, serverType.CLIENT, message.senderInputPort);
 				//Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
 				m.fileData = dataINeed;
 				SendMessageToClient(m);
@@ -276,7 +218,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("toobad");
 			e.printStackTrace();
 		}
-		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
@@ -291,7 +233,7 @@ public class ChunkServerNode extends ServerNode {
 	 */
 	public void AppendToFile(ChunkMetadata metadata, byte[] byteArray) {
 
-		TFSFile current = new TFSFile(0);
+		TFSFile current = new TFSFile(0); // TODO: remove hardcoding
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
 			if(tf.fileNumber == metadata.filenumber)
@@ -352,7 +294,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(metadata.chunkHash, metadata);
 
-		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 
 		//appending on
@@ -364,7 +306,7 @@ public class ChunkServerNode extends ServerNode {
 
 	public void WriteToNewFile(Message message) {
 
-		TFSFile current = new TFSFile(0);
+		TFSFile current = new TFSFile(message.chunkClass.filenumber);
 		//Get the corresponding file number
 		for(TFSFile tf:file_list){
 			if(tf.fileNumber == message.chunkClass.filenumber)
@@ -400,7 +342,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 
-		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.chunkClass = message.chunkClass;
 		m.success = msgSuccess.REQUESTSUCCESS;
 
@@ -435,7 +377,7 @@ public class ChunkServerNode extends ServerNode {
 				}
 				chunkToDelete = entry.getKey();
 
-				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToMaster(successMessageToMaster);
 
@@ -482,7 +424,7 @@ public class ChunkServerNode extends ServerNode {
 							numCounted++;
 						}
 
-						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
@@ -532,7 +474,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 
-			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 
 			m.success = msgSuccess.REQUESTSUCCESS;
 			m.chunkClass = metadata;
@@ -808,7 +750,7 @@ public class ChunkServerNode extends ServerNode {
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
 	public void PingMaster (HeartBeat ping){
-		//HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}

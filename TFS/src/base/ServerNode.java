@@ -2,6 +2,7 @@ package base;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import Utility.Message;
@@ -11,16 +12,22 @@ public class ServerNode {
 
 	protected 
 	static	String myIP;
-	static int myPortNumber;  
+	static int myInputPortNumber; 
+	static int myOutputPortNumber;
 	static serverType myType;
 	//int targetPortNumber;	
 
+	public ServerNode(String ip, int inPort, int outPort){
+		myIP = ip;
+		myInputPortNumber = inPort;
+		myOutputPortNumber = outPort;
+	}
 	public String toString(){
 		String type = "";
 		if (myType == serverType.CHUNKSERVER) type = "ChunkServer";
 		if (myType == serverType.MASTER) type = "Master";
 		if (myType == serverType.CLIENT) type = "Client";
-		type = type + ": IP " + myIP + " Port " + myPortNumber;
+		type = type + ": IP " + myIP + " inputPort: " + myInputPortNumber + " outputPort: " + myOutputPortNumber;
 		System.out.println(type);
 		return type;
 	}
@@ -33,19 +40,24 @@ public class ServerNode {
 			message.sender = myType;
 			message.receiverIP = message.senderIP;
 			message.senderIP = myIP;
-			message.recieverPort = message.senderPort;
-			message.senderPort = myPortNumber;
+			message.receiverInputPort = message.senderInputPort;
+			message.senderInputPort = myInputPortNumber;
 		}
-
-		try(Socket serverSocket =  new Socket(message.receiverIP, message.recieverPort);)
+		try (ServerSocket serverSocket = new ServerSocket(myOutputPortNumber);)
 		{
+			try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
+				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
+				out.writeObject(message);
+				out.close();
+			}
+			catch (IOException e){
+				System.out.println("Unable to establish connection with IP " + message.receiverIP + " on Port " + message.receiverInputPort);
+				e.printStackTrace();
+			}
 
-			ObjectOutputStream out = new ObjectOutputStream(serverSocket.getOutputStream());
-			out.writeObject(message);
-			out.close();
 		}
 		catch (IOException e){
-			System.err.println("Unable to send Message from " + myIP + " to " + message.senderIP);
+			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
 			e.printStackTrace();
 		}
 
