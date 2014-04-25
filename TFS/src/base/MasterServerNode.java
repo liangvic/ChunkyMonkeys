@@ -107,36 +107,6 @@ public class MasterServerNode extends ServerNode {
 
 	}
 	
-	/*public void SetChunkServerOutdated(String IPaddress)
-	{
-		chunksNeedToBeChecked = chunkServerMap.size();
-		if(ServerMap.containsKey(IPaddress))
-		{
-			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
-		}
-
-		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
-		{
-			for(ChunkLocation location: cmEntry.getValue().listOfLocations)
-			{
-				if(location.chunkIP == IPaddress) //&& cmEntry.getValue().listOfLocations.size() > 1)
-				{
-					//Send message with the chunkMetaData to the chunkserver
-					//from there, the chunkserver can determine if it has the correct version
-
-					SOSMessage chunkMessage = new SOSMessage(myIP,myType,myInputPortNumber,IPaddress,serverType.CHUNKSERVER,location.chunkPort);
-					chunkMessage.chunkClass = cmEntry.getValue();
-					chunkMessage.senderIP = myIP;
-					chunkMessage.receiverIP = IPaddress;
-					chunkMessage.SOSserver = IPaddress;
-					//chunkNeed
-					SendMessageToChunkServer(chunkMessage);
-
-				}
-			}
-		}
-
-	}*/
 	/**
 	 * 
 	 */
@@ -285,7 +255,57 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
+	/**
+	 * 
+	 */
+	public void ClearChunkServerMapFile() {
+		BufferedWriter out = null;
+		try {
+			File file = new File("dataStorage/MData_ChunkServerMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); // true
+			// tells
+			// to
+			// append
+			// data.
+			out = new BufferedWriter(fstream);
+			// System.out.println("Writing out to file");
+			out.write("");
+		} catch (IOException e) {
+			System.err.println("Error: " + e.getMessage());
+		} finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
+	/**
+	 * 
+	 */
+	public void ClearNamespaceMapFile() {
+		BufferedWriter out = null;
+		try {
+			File file = new File("dataStorage/MData_NamespaceMap.txt");
+			FileWriter fstream = new FileWriter(file.getAbsoluteFile(), false); // true
+			// tells
+			// to
+			// append
+			// data.
+			out = new BufferedWriter(fstream);
+			// System.out.println("Writing out to file");
+			out.write("");
+		} catch (IOException e) {
+			System.err.println("Error: " + e.getMessage());
+		} finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
 	public void LoadServerData() {
 		for (int i = 2; i <= 5; i++) {

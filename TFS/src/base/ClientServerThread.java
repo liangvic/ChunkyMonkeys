@@ -60,7 +60,8 @@ public class ClientServerThread extends ServerThread {
 				{
 					if(message.success == msgSuccess.REQUESTERROR)
 					{
-						server.CWriteToNewFile(server.localPathToReadFile, message.filePath, 3);
+						//server.CWriteToNewFile(server.localPathToReadFile, message.filePath, 3);
+						server.CWriteToNewFile(message.localFilePath, message.filePath, 3);
 					}
 					else
 					{
