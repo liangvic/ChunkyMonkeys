@@ -78,5 +78,5 @@ public class Message implements Serializable{
 	public String senderIP;
 	public String receiverIP;
 	public int expectNumChunkForRead;
-	
+	public int opID;
 }

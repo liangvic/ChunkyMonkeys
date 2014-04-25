@@ -39,7 +39,7 @@ public class MasterServerThread extends ServerThread {
 			else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
 				server.MDeleteDirectory(inputMessage, server.operationID);
 			} else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CHUNKSERVER) {
-				server.RemoveParentLocks(inputMessage.filePath);
+				server.RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 					// SendSuccessMessageToClient();
 				} else {
@@ -53,7 +53,7 @@ public class MasterServerThread extends ServerThread {
 						e.printStackTrace();
 					}
 				} else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
 						// SendSuccessMessageToClient();
 					} else {
@@ -65,7 +65,7 @@ public class MasterServerThread extends ServerThread {
 				if (inputMessage.sender == serverType.CLIENT)
 					server.CreateFile(inputMessage, server.operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
 						System.out.println("File "
 								+ inputMessage.chunkClass.filename
@@ -82,7 +82,7 @@ public class MasterServerThread extends ServerThread {
 				}
 				else if (inputMessage.sender == serverType.CHUNKSERVER)
 				{
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
 				}
 			}
@@ -91,7 +91,7 @@ public class MasterServerThread extends ServerThread {
 				if (inputMessage.sender == serverType.CLIENT)
 					server.CreateFile(inputMessage, server.operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER) {
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 					if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
 						System.out.println("File "
 								+ inputMessage.chunkClass.filename
@@ -108,7 +108,7 @@ public class MasterServerThread extends ServerThread {
 				}
 				else if (inputMessage.sender == serverType.CHUNKSERVER)
 				{
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
 				}
 			}
@@ -117,7 +117,7 @@ public class MasterServerThread extends ServerThread {
 				if(inputMessage.sender == serverType.CLIENT)
 					server.AssignChunkServer(inputMessage, server.operationID);//, operationID);
 				else if (inputMessage.sender == serverType.CHUNKSERVER){
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 						System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
 					}
@@ -132,7 +132,7 @@ public class MasterServerThread extends ServerThread {
 					server.AppendToTFSFile(inputMessage, server.operationID);
 				}
 				else if(inputMessage.sender == serverType.CHUNKSERVER) {
-					server.RemoveParentLocks(inputMessage.filePath);
+					server.RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 					if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
 						System.out.println("File "+ inputMessage.chunkClass.filename + " append successful");
 					}

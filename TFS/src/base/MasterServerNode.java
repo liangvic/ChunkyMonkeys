@@ -20,6 +20,7 @@ import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
 import Utility.NamespaceNode;
+import Utility.lockInfo;
 
 public class MasterServerNode extends ServerNode {
 	Semaphore lockChange = new Semaphore(1, true);
@@ -112,21 +113,20 @@ public class MasterServerNode extends ServerNode {
 	 * 
 	 * @param opID
 	 */
-	public void RemoveParentLocks(String filePath)
+	public void RemoveParentLocks(String filePath, int opID)
 	{
-		int opID = 0;
-		if(NamespaceMap.containsKey(filePath))
-		{
-			opID = NamespaceMap.get(filePath).lockData.operationID;
-		}
-
 		for(Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
 		{
 			//if this operation previously made the lock
-			if(entry.getValue().lockData.operationID == opID)
+			for(lockInfo lock: entry.getValue().lockList)
 			{
-				entry.getValue().lockData.lockStatus = lockType.NONE;
+				if(lock.operationID == opID)
+				{
+					//lock.lockStatus = lockType.NONE;
+					entry.getValue().lockList.remove(lock);
+				}
 			}
+			
 		}
 		
 	}
@@ -152,35 +152,45 @@ public class MasterServerNode extends ServerNode {
 		{
 			if(NamespaceMap.containsKey(filePath))
 			{
-				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+				for(lockInfo nsNode: NamespaceMap.get(parentPath).lockList)
 				{
-					if(parentPath != filePath)
+					if(nsNode.operationID == opID)
 					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_EXCLUSIVE;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
-					}
-					else
-					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
+						if(nsNode.lockStatus == lockType.NONE)
+						{
+							if(parentPath != filePath)
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.I_EXCLUSIVE,opID));
+								//nsNode.lockStatus = lockType.I_EXCLUSIVE;
+								//nsNode.operationID = opID;
+							}
+							else
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.EXCLUSIVE,opID));
+								//NamespaceMap.get(parentPath).lockList.remove(opID);
+								//NamespaceMap.get(parentPath).lockData.lockStatus = lockType.EXCLUSIVE;
+								//NamespaceMap.get(parentPath).lockData.operationID = opID;
+							}
+						}
+						else if(nsNode.lockStatus == lockType.I_EXCLUSIVE ||
+								nsNode.lockStatus == lockType.I_SHARED)
+						{
+							if(parentPath == filePath)
+							{
+								RemoveParentLocks(filePath, opID);
+								return false;
+							}
+							//if not the final node, allow it to pass
+						}
+						else if(nsNode.lockStatus == lockType.SHARED ||
+								nsNode.lockStatus == lockType.EXCLUSIVE)
+						{
+							RemoveParentLocks(parentPath, opID);
+							return false;
+						}
 					}
 				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
-				{
-					if(parentPath == filePath)
-					{
-						RemoveParentLocks(filePath);
-						return false;
-					}
-					//if not the final node, allow it to pass
-				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.SHARED ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
-				{
-					RemoveParentLocks(parentPath);
-					return false;
-				}
+				
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
@@ -211,34 +221,39 @@ public class MasterServerNode extends ServerNode {
 		{
 			if(NamespaceMap.containsKey(filePath))
 			{
-				if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.NONE)
+				for(lockInfo nsNode: NamespaceMap.get(parentPath).lockList)
 				{
-					if(parentPath != filePath)
+					if(nsNode.operationID == opID)
 					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.I_SHARED;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
-					}
-					else
-					{
-						NamespaceMap.get(parentPath).lockData.lockStatus = lockType.SHARED;
-						NamespaceMap.get(parentPath).lockData.operationID = opID;
+						if(nsNode.lockStatus == lockType.NONE)
+						{
+							if(parentPath != filePath)
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.I_SHARED,opID));
+							}
+							else
+							{
+								NamespaceMap.get(filePath).lockList.add(new lockInfo(lockType.SHARED,opID));
+							}
+						}
+						else if(nsNode.lockStatus == lockType.I_EXCLUSIVE ||
+								nsNode.lockStatus == lockType.I_SHARED)
+						{
+							if(parentPath == filePath)
+							{
+								RemoveParentLocks(filePath,opID);
+								return false;
+							}
+							//if not the final node, allow it to pass
+						}
+						else if(nsNode.lockStatus == lockType.EXCLUSIVE)
+						{
+							RemoveParentLocks(parentPath,opID);
+							return false;
+						}
 					}
 				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_EXCLUSIVE ||
-						NamespaceMap.get(parentPath).lockData.lockStatus == lockType.I_SHARED)
-				{
-					if(parentPath == filePath)
-					{
-						RemoveParentLocks(filePath);
-						return false;
-					}
-					//if not the final node, allow it to pass
-				}
-				else if(NamespaceMap.get(parentPath).lockData.lockStatus == lockType.EXCLUSIVE)
-				{
-					RemoveParentLocks(parentPath);
-					return false;
-				}
+				
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
@@ -284,6 +299,7 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void MDeleteDirectory(Message msg, int opID) {
 		String filePath = msg.filePath;
+		msg.opID = opID;
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
@@ -418,8 +434,9 @@ public class MasterServerNode extends ServerNode {
 			//			client.ExpectChunkNumberForRead(indexCounter - 1);
 
 			Message expectMsg = inputMessage;
+			inputMessage.opID = opID;
 			expectMsg.type = msgType.EXPECTEDNUMCHUNKREAD;
-
+			
 			expectMsg.success = msgSuccess.REQUESTSUCCESS;
 			expectMsg.expectNumChunkForRead = indexCounter-1;
 			SendMessageToClient(expectMsg);
@@ -448,6 +465,7 @@ public class MasterServerNode extends ServerNode {
 		//TODO: NEED TO ADD IN THE LOCK CHECKING
 		if(AddExclusiveParentLocks(inputMessage.filePath, opID))
 		{
+			inputMessage.opID = opID;
 			List<ServerData> replicaList = new ArrayList<ServerData>();
 			List<ServerData> allAvailableServerList = new ArrayList<ServerData>();
 			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
@@ -570,6 +588,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param opID
 	 */
 	public void CreateFile(Message message, int opID){
+		message.opID = opID;
 		String filepath = message.filePath;
 		String filename = message.fileName;
 		int index = message.chunkindex;
@@ -646,6 +665,7 @@ public class MasterServerNode extends ServerNode {
 	 * @param opID
 	 */
 	public void CreateDirectory(Message message, int opID) {
+		message.opID = opID;
 		String filepath = message.filePath;
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			if(AddExclusiveParentLocks(filepath, opID))
@@ -694,6 +714,7 @@ public class MasterServerNode extends ServerNode {
 	{
 		if(AddExclusiveParentLocks(message.filePath, opID))
 		{
+			message.opID = opID;
 			ChunkMetadata chunkData = GetTFSFile(message.filePath);
 			if(chunkData != null) {
 				message.chunkClass = chunkData;
