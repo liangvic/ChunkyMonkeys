@@ -33,7 +33,7 @@ public class ServerNode {
 	}
 	public void SendMessage(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
-
+/*
 		//if created new message, don't flip addressing data
 		if (message.sender != myType){
 			message.addressedTo = message.sender;
@@ -60,7 +60,7 @@ public class ServerNode {
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
 			e.printStackTrace();
 		}
-
+*/
 	}
 }
 

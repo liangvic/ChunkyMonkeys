@@ -55,9 +55,13 @@ public class ClientServerNode extends ServerNode {
 				Socket otherSocket = mySocket.accept();
 				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
+				
 				if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
+					ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
+					out.writeObject(incoming);
+					out.close();
 					//outToClient.writeBytes(capitalizedSentence); 
 				}
 			}
