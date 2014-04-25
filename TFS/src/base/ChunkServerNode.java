@@ -122,14 +122,16 @@ public class ChunkServerNode extends ServerNode {
 			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ServerThread st = new ChunkServerThread(this, otherSocket);
+				st.start();
+				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
 					//outToClient.writeBytes(capitalizedSentence); 
-				}
+				}*/
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -147,9 +149,6 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
-	/**
-	 * @param message
-	 */
 	public void DealWithMessage() {
 		if(!messageList.isEmpty()) {
 			Message message = messageList.get(0);
