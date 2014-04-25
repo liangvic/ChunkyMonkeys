@@ -121,14 +121,16 @@ public class ChunkServerNode extends ServerNode {
 			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				ServerThread st = new ChunkServerThread(this, otherSocket);
+				st.start();
+				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
 				Message incoming = (Message)in.readObject();
 				if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
 					//outToClient.writeBytes(capitalizedSentence); 
-				}
+				}*/
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
@@ -148,79 +150,6 @@ public class ChunkServerNode extends ServerNode {
 
 	/**
 	 * @param message
-	 */
-	public void DealWithMessage() {
-		if(!messageList.isEmpty()) {
-			Message message = messageList.get(0);
-
-			if(message instanceof HeartBeat)
-			{
-				PingMaster((HeartBeat)message);
-			}
-			else if(message instanceof SOSMessage)
-			{
-				if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
-				{
-					CheckVersionAfterStarting((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
-				{
-					SendingDataToUpdateChunkServer((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
-				{
-					ReplacingData((SOSMessage)message);
-				}
-			}
-			else if (message.type == msgType.DELETEDIRECTORY) {
-				DeleteChunk(message.chunkClass);
-			}
-
-			else if (message.type == msgType.CREATEFILE) {
-				AddNewBlankChunk(message);
-			} else if (message.type == msgType.READFILE) {
-				ReadChunks(message);
-			} else if (message.type == msgType.APPENDTOFILE) {
-				if (message.chunkClass == null) {
-					System.out.println("chunkClass is null");
-				}
-				else if (message.type == msgType.CREATEFILE) {
-					AddNewBlankChunk(message);
-				} else if (message.type == msgType.READFILE) {
-					ReadChunks(message);
-				} else if (message.type == msgType.APPENDTOFILE) {
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						AppendToFile(message.chunkClass, message.fileData);
-				} else if (message.type == msgType.APPENDTOTFSFILE) {
-					if(message.sender == serverType.MASTER) {
-						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-						chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
-					}
-					else if (message.sender == serverType.CLIENT) {
-						System.out.println("Calling AppendToTSFFile Method");
-						AppendToTFSFile(message);
-					}
-				} else if (message.type == msgType.COUNTFILES) {
-					CountNumInFile(message.chunkClass);
-				}
-				else if (message.type == msgType.WRITETONEWFILE)
-				{
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						WriteToNewFile(message);
-				}
-				messageList.remove(0);
-			}
-		}
-	}
-
-	/**
-	 * @param metadata
 	 */
 	public void ReadChunks(Message message){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
