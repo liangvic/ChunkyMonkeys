@@ -45,7 +45,6 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
-	public void DealWithMessage(Message message) {
-	}
+	public abstract void DealWithMessage(Message message);
 	
 }

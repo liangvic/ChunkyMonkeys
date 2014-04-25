@@ -52,8 +52,8 @@ public class ClientServerNode extends ServerNode {
 		{
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				//ServerThread st = new ClientServerThread(this, otherSocket);
-				//st.start();
+				ServerThread st = new ClientServerThread(this, otherSocket);
+				st.start();
 				
 				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
@@ -86,7 +86,7 @@ public class ClientServerNode extends ServerNode {
 	protected void TestInterface() throws Exception {
 		Scanner a = new Scanner(System.in);
 		String input;
-		do {
+	//	do {
 			System.out
 			.print("Please Enter the Test/Unit/Command you want to run (Enter X to exit)\n");
 			System.out.print("Enter parameters separated by a space (Enter C for commands)\n");
@@ -175,7 +175,7 @@ public class ClientServerNode extends ServerNode {
 				//e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
-		} while (input != "X" || input != "x");
+		//} while (input != "X" || input != "x");
 
 	}
 

@@ -56,7 +56,6 @@ public class MasterServerThread extends ServerThread {
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-		if(!messageList.isEmpty()) {
 			server.operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
 			if(inputMessage instanceof HeartBeat)
@@ -191,8 +190,6 @@ public class MasterServerThread extends ServerThread {
 					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 				}*/
 			
-			messageList.remove(inputMessage);
-		}
 	}
 	
 
@@ -362,8 +359,6 @@ public class MasterServerThread extends ServerThread {
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
-		message.receiverIP = "68.181.174.114";
-		message.receiverInputPort = 6060;
 		server.SendMessage(message);
 	}
 
