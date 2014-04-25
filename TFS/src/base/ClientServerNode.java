@@ -52,6 +52,7 @@ public class ClientServerNode extends ServerNode {
 		{
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
+				System.out.println("Recieved message from " + otherSocket.getInetAddress());
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
 				

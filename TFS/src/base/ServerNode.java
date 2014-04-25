@@ -12,9 +12,9 @@ public class ServerNode {
 
 	protected 
 	String myIP;
-	static int myInputPortNumber; 
+	int myInputPortNumber; 
 	static int myOutputPortNumber;
-	static serverType myType;
+	serverType myType;
 	//int targetPortNumber;	
 
 	public ServerNode(String ip, int inPort, int outPort){
