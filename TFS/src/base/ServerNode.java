@@ -43,7 +43,7 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		try(Socket outSocket =  new Socket("68.181.174.114", 6060);){
+		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort);){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
 				//out.close();			

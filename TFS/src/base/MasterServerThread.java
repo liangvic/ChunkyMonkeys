@@ -362,6 +362,8 @@ public class MasterServerThread extends ServerThread {
 	 * @param clientServerMessage
 	 */
 	public void SendMessageToClient(Message message) {
+		message.receiverIP = "68.181.174.114";
+		message.receiverInputPort = 6060;
 		server.SendMessage(message);
 	}
 
