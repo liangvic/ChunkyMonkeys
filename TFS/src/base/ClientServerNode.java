@@ -21,7 +21,7 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
-	Semaphore action = new Semaphore(1, true);
+	//Semaphore action = new Semaphore(1, true);
 
 	public ClientServerNode(String ip, int inPort, int outPort)
 	{
@@ -53,7 +53,7 @@ public class ClientServerNode extends ServerNode {
 			System.out.println("is it closed? "+mySocket.isClosed());
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				System.out.println("got something");
+				System.out.println("Recieved message from " + otherSocket.getInetAddress());
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
 				
@@ -364,7 +364,7 @@ public class ClientServerNode extends ServerNode {
 
 		public void unit1(int NumFolders, int numSubDirectories){
 			List<String> queue = new ArrayList<String>();
-			//		CCreateDirectory("1");
+			CCreateDirectory("1");
 			System.out.println("Creating 1");
 
 			String parentfilepath = "1";
@@ -384,7 +384,16 @@ public class ClientServerNode extends ServerNode {
 				}
 
 				newfilepath = parentfilepath + "\\" + folderName;
-				//			CCreateDirectory("1");
+				final String finalFilePath = newfilepath;
+				Timer timer = new Timer();
+				timer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						CCreateDirectory(finalFilePath);
+					}
+					
+				}, 1000);
+//							CCreateDirectory(newfilepath);
 				System.out.println("Creating "+newfilepath);
 				queue.add(newfilepath);
 				folderName++;
@@ -409,31 +418,28 @@ public class ClientServerNode extends ServerNode {
 		/**
 		 * @param NumFolders
 		 */
-		public void test1(int NumFolders) {
-			int count = 1;
+		public void test1(final int NumFolders) {
+			Timer timer = new Timer();
+			final int count = 1;
 			CCreateDirectory("1");
 			
 			if (NumFolders > 1) {
-				try{
-					action.acquire();
-					wait(5000);
-					action.release();
-				}
-				catch(InterruptedException e){
-					e.printStackTrace();
-				}
-				helper("1", count * 2, NumFolders);
+				timer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						helper("1", count * 2, NumFolders);
+					}
+					
+				}, 1000);
 			}
 			if (NumFolders > 2) {
-				try{
-					action.acquire();
-					wait(5000);
-					action.release();
-				}
-				catch(InterruptedException e){
-					e.printStackTrace();
-				}
-				helper("1", count * 2 + 1, NumFolders);
+				timer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						helper("1", count * 2 + 1, NumFolders);
+					}
+					
+				}, 1000);
 			}
 		}
 
@@ -442,20 +448,19 @@ public class ClientServerNode extends ServerNode {
 		 * @param folderName
 		 * @param NumMaxFolders
 		 */
-		public void helper(String parentfilepath, int folderName, int NumMaxFolders) {
+		public void helper(String parentfilepath, final int folderName, final int NumMaxFolders) {
 			if (folderName <= NumMaxFolders) {
-				String newfilepath = parentfilepath + "\\" + folderName;
+				Timer timer = new Timer();
+				final String newfilepath = parentfilepath + "\\" + folderName;
 				CCreateDirectory(newfilepath);
-				try{
-					action.acquire();
-					wait(5000);
-					action.release();
-				}
-				catch(InterruptedException e){
-					e.printStackTrace();
-				}
-				helper(newfilepath, folderName * 2, NumMaxFolders);
-				helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
+				timer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						helper(newfilepath, folderName * 2, NumMaxFolders);
+						helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
+					}
+					
+				}, 1000);
 			}
 
 		}

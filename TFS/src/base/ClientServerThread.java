@@ -85,7 +85,7 @@ public class ClientServerThread extends ServerThread {
 				// later.lol
 				// uses the location to contact the chunkserver
 			}
-			
+			server.messageList.remove(message);
 		}
 //	}
 }
