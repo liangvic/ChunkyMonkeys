@@ -3,6 +3,7 @@ package base;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
@@ -34,11 +35,11 @@ public class ClientServerNode extends ServerNode {
 	String masterIP = null;
 	int masterPort = 0;
 
-	int chunkCountToExpect = 99;
-	int chunkReadsRecieved = 0;
-	List<Byte> readFileData = new ArrayList<Byte>();
-	String localPathToCreateFile;
-	String localPathToReadFile;
+	int chunkCountToExpect = 99; // TODO: remove
+	int chunkReadsRecieved = 0; // TODO: remove
+	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
+	String localPathToCreateFile; // TODO: remove
+	String localPathToReadFile; // TODO: remove
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -190,9 +191,10 @@ public class ClientServerNode extends ServerNode {
 				System.out.println("Client: recieved all "+chunkCountToExpect+ " chunks. Now writing file");
 				System.out.print(dataMessage.fileData);
 				byte[] finalByteArray = new byte[readFileData.size()];
-				for (int n = 0; n < readFileData.size(); n++)
+				synchronized(readFileData) {
+					for (int n = 0; n < readFileData.size(); n++)
 					finalByteArray[n] = readFileData.get(n);
-
+				}
 				try {
 					File file = new File(localPathToCreateFile);
 					file.createNewFile();
