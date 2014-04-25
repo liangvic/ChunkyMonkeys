@@ -53,17 +53,17 @@ public class ClientServerNode extends ServerNode {
 		{
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
-				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+				//ServerThread st = new ClientServerThread(this, otherSocket);
+				//st.start();
+				
+				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
 				Message incoming = (Message)in.readObject();
 				
 				if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
-					ObjectOutputStream out = new ObjectOutputStream(otherSocket.getOutputStream());
-					out.writeObject(incoming);
-					out.close();
 					//outToClient.writeBytes(capitalizedSentence); 
-				}
+				}*/
 			}
 
 			//TODO: Put in timer to increase TTL and check on status of all servers in ServerMap
