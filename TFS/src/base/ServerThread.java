@@ -47,27 +47,5 @@ public abstract class ServerThread extends Thread {
 	}
 	
 	public abstract void DealWithMessage(Message message);
-	public void SendMessage(Message smessage) {
-		//MESSAGE MUST HAVE IP and Socket Number
 
-		//if created new message, don't flip addressing data
-
-		try{
-			Message message = new Message(server.myIP,server.myType,server.myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);
-			message.type = msgType.CREATEDIRECTORY;
-			message.sender = server.myType;
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-			System.out.println("socket port:"+socket.getPort());			
-			System.out.println(socket.getReceiveBufferSize());
-			System.out.println();
-			out.writeObject(message);
-//			out.flush();
-			//out.close();			
-		}
-		catch (IOException e){
-			System.err.println("Unable to send Message from " + server.myIP + " to " + smessage.senderIP);
-			e.printStackTrace();
-		}
-
-	}
 }

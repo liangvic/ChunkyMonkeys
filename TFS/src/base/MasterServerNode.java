@@ -88,6 +88,8 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = serverSocket.accept();
 
+				System.out.println("Recieved Messagr from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
+
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
 			}
