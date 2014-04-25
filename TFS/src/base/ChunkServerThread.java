@@ -12,8 +12,9 @@ import Utility.SOSMessage.msgTypeToServer;
 public class ChunkServerThread extends ServerThread {
 	ChunkServerNode server;
 
-	public ChunkServerThread(ServerNode sn, Socket s) {
-		super(sn, s);
+	public ChunkServerThread(ChunkServerNode sn, Socket s) {
+		super(sn,s);
+		server = sn;
 	}
 	
 	public void DealWithMessage() {

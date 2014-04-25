@@ -12,11 +12,12 @@ public class ClientServerThread extends ServerThread {
 
 	public ClientServerThread(ClientServerNode sn, Socket s) {
 		super(sn, s);
+		server = sn;
 	}
 
-	public void DealWithMessage() {
-		if(!messageList.isEmpty()) {
-			Message message = messageList.get(0);
+	public void DealWithMessage(Message message) {
+//		if(!messageList.isEmpty()) {
+//			Message message = messageList.get(0);
 			if (message.type == msgType.DELETEDIRECTORY) {
 				if (message.success == msgSuccess.REQUESTSUCCESS) {
 					System.out.println("Deleted directory sucessfully!");
@@ -60,7 +61,8 @@ public class ClientServerThread extends ServerThread {
 				{
 					if(message.success == msgSuccess.REQUESTERROR)
 					{
-						server.CWriteToNewFile(server.localPathToReadFile, message.filePath, 3);
+						//server.CWriteToNewFile(server.localPathToReadFile, message.filePath, 3);
+						server.CWriteToNewFile(message.localFilePath, message.filePath, 3);
 					}
 					else
 					{
@@ -83,7 +85,7 @@ public class ClientServerThread extends ServerThread {
 				// later.lol
 				// uses the location to contact the chunkserver
 			}
-			messageList.remove(0);
+//			messageList.remove(0);
 		}
-	}
+//	}
 }

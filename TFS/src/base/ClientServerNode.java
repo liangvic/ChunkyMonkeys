@@ -38,8 +38,6 @@ public class ClientServerNode extends ServerNode {
 	int chunkCountToExpect = 99; // TODO: remove
 	int chunkReadsRecieved = 0; // TODO: remove
 	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
-	String localPathToCreateFile; // TODO: remove
-	String localPathToReadFile; // TODO: remove
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -49,18 +47,26 @@ public class ClientServerNode extends ServerNode {
 	public void main() throws Exception {	
 		toString();
 		TestInterface();
+		System.out.println("Try before");
 		try (ServerSocket mySocket = new ServerSocket(myInputPortNumber);)
-
 		{
+			System.out.println("is it closed? "+mySocket.isClosed());
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
+				System.out.println("got something");
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
 				
-				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
-				Message incoming = (Message)in.readObject();
+
 				
-				if(incoming != null) {
+				
+				/*ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+
+				ObjectInputStream in = new ObjectInputStream(otherSocket.getInputStream());
+
+				Message incoming = (Message)in.readObject();
+				System.out.println("got it " + incoming.senderIP);
+				/*if(incoming != null) {
 					messageList.add(incoming);
 					DealWithMessage();
 					//outToClient.writeBytes(capitalizedSentence); 
@@ -88,7 +94,6 @@ public class ClientServerNode extends ServerNode {
 	protected void TestInterface() throws Exception {
 		Scanner a = new Scanner(System.in);
 		String input;
-		do {
 			System.out
 			.print("Please Enter the Test/Unit/Command you want to run (Enter X to exit)\n");
 			System.out.print("Enter parameters separated by a space (Enter C for commands)\n");
@@ -141,6 +146,7 @@ public class ClientServerNode extends ServerNode {
 					}
 				break;
 				case ("Test5"):
+				case ("Unit5"):
 					if (tokens.length == 3)
 						test5(tokens[1].toString(), tokens[2].toString());
 					else
@@ -153,10 +159,14 @@ public class ClientServerNode extends ServerNode {
 						throw new Exception();
 				break;
 				case ("Test7"):
+				case("Unit7"):
 					if (tokens.length == 2)
 						test7(tokens[1].toString());
 					else
 						throw new Exception();
+				break;
+				case ("Unit8"): 
+					System.out.println("Input Test6 on mutiple clients to run unit 8");
 				break;
 				case ("X"):
 					System.exit(0);
@@ -172,9 +182,10 @@ public class ClientServerNode extends ServerNode {
 				//e.printStackTrace();
 				System.out.println("Unable to Complete Request\n");
 			}
-		} while (input != "X" || input != "x");
+
 
 	}
+
 
 		/**
 		 * @param dataMessage
@@ -186,7 +197,8 @@ public class ClientServerNode extends ServerNode {
 			//		chunkCountToExpect = 2;
 			for (byte b : dataMessage.fileData)
 				readFileData.add(b);
-			System.out.print(localPathToCreateFile);
+			System.out.print(dataMessage.localFilePath);
+			//System.out.print(localPathToCreateFile);
 			if (chunkReadsRecieved == chunkCountToExpect) {
 				System.out.println("Client: recieved all "+chunkCountToExpect+ " chunks. Now writing file");
 				System.out.print(dataMessage.fileData);
@@ -196,9 +208,11 @@ public class ClientServerNode extends ServerNode {
 					finalByteArray[n] = readFileData.get(n);
 				}
 				try {
-					File file = new File(localPathToCreateFile);
+					//File file = new File(localPathToCreateFile);
+					File file = new File(dataMessage.localFilePath);
 					file.createNewFile();
-					FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
+					//FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
+					FileOutputStream fileOuputStream = new FileOutputStream(dataMessage.localFilePath);
 					fileOuputStream.write(finalByteArray);
 					fileOuputStream.close();
 
@@ -618,7 +632,10 @@ public class ClientServerNode extends ServerNode {
 		}
 
 		public void unit4(String localPath, String filePath, int numberOfReplicas){
-			CWriteToNewFile(localPath, filePath,numberOfReplicas);
+			if(numberOfReplicas<1 || numberOfReplicas>4){
+				System.out.println("Invalid replica number!");
+			}else
+				CWriteToNewFile(localPath, filePath,numberOfReplicas);
 		}
 
 		// Test 4 stores a file on the local machine in a target TFS specified by
@@ -629,7 +646,6 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void test4(String localPath, String filePath) {
 
-			localPathToReadFile = localPath;
 			CWriteToNewFile(localPath, filePath,0);
 
 		}
@@ -683,10 +699,10 @@ public class ClientServerNode extends ServerNode {
 				return;
 			}
 
-			localPathToCreateFile = localPath;
 			Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 			m.type = msgType.READFILE;
 			m.filePath = filePath;
+			m.localFilePath = localPath;
 			m.sender = serverType.CLIENT;
 			SendMessageToMaster(m);
 
@@ -726,6 +742,14 @@ public class ClientServerNode extends ServerNode {
 		public void test6(String localPath, String filePath){
 			CAppendToTFSFile(localPath, filePath);
 		}
+		
+		/**
+		 * @param localPath
+		 * @param filePath
+		 */
+		public void unit6(String localPath, String filePath){
+			CAppendToTFSFile(localPath, filePath);
+		}
 
 		/**
 		 * Retrieves chunkClass from Master, which contains chunk locations of all replicas
@@ -735,10 +759,10 @@ public class ClientServerNode extends ServerNode {
 		public void CAppendToTFSFile(String localPath, String filePath){
 			int index = filePath.lastIndexOf('\\');
 			Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
-			localPathToCreateFile = localPath;
 			m.type = msgType.APPENDTOTFSFILE;
 			m.filePath = filePath;
 			m.fileName = filePath.substring(index + 1);
+			m.localFilePath = localPath;
 			m.sender = serverType.CLIENT;
 			SendMessageToMaster(m);
 		}
@@ -764,7 +788,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void ReadLocalFile(Message message) {
 			FileInputStream fileInputStream = null;
-			File file = new File(localPathToCreateFile);
+			File file = new File(message.localFilePath);
 			byte[] byteFile = new byte[(int) file.length()];
 
 			// convert file into array of bytes

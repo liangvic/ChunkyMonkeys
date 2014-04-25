@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 import Utility.Message;
+import Utility.Message.msgType;
+import Utility.Message.serverType;
 
 public abstract class ServerThread extends Thread {
 	ServerNode server;
@@ -18,13 +20,12 @@ public abstract class ServerThread extends Thread {
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
 		socket = s; 
+		System.out.println("socket port:"+s.getPort());
 	}
 	
 	public void run() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-
 			Message incoming = (Message)in.readObject();
 			
 			if(incoming != null) {
@@ -33,8 +34,8 @@ public abstract class ServerThread extends Thread {
 			}
 			
 			long time = System.currentTimeMillis();
-            in.close();
-            out.close();
+            //in.close();
+            //out.close();
             System.out.println("Request processed: " + time);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -45,6 +46,6 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
-	public void DealWithMessage(Message message) {
-	}
+	public abstract void DealWithMessage(Message message);
+
 }
