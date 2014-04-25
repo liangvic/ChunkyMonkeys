@@ -17,8 +17,8 @@ public class Message implements Serializable{
 		sender = sendertype;
 		receiverIP = recieverip;
 		senderIP = senderip;
-		recieverPort = receiverport;
-		senderPort = senderport;
+		receiverInputPort = receiverport;
+		senderInputPort = senderport;
 	}
 	
 	public Message(msgType msgtype, String senderip, serverType sendertype, int senderport, 
@@ -28,8 +28,8 @@ public class Message implements Serializable{
 		sender = sendertype;
 		receiverIP = recieverip;
 		senderIP = senderip;
-		recieverPort = receiverport;
-		senderPort = senderport;
+		receiverInputPort = receiverport;
+		senderInputPort = senderport;
 	}
 	/*
 	public Message(String fp, msgType msgT){
@@ -66,8 +66,8 @@ public class Message implements Serializable{
 	public serverType sender;
 	public String filePath;
 	public String fileName;
-	public int senderPort;
-	public int recieverPort;
+	public int senderInputPort;
+	public int receiverInputPort;
 	int startByte;
 	int byteLength;
 	public int chunkindex;

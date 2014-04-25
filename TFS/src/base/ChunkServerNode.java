@@ -62,9 +62,9 @@ public class ChunkServerNode extends ServerNode {
 	List<TFSFile> file_list = new ArrayList<TFSFile>();
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
-	public ChunkServerNode(String IP, int port) {
-		myIP = IP;
-		myPortNumber = port;
+	public ChunkServerNode(String ip, int inPort, int outPort) {
+		super(ip, inPort, outPort);
+		
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTERPORT"));
@@ -107,14 +107,14 @@ public class ChunkServerNode extends ServerNode {
 	 */
 	public void main() throws Exception {	
 		toString();
-		try (ServerSocket mySocket = new ServerSocket(myPortNumber);)
+		try (ServerSocket mySocket = new ServerSocket(myInputPortNumber);)
 
 		{
 			Timer timer = new Timer();
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
-						HeartBeat HBMessage = new HeartBeat(myIP, myType, myPortNumber, 
+						HeartBeat HBMessage = new HeartBeat(myIP, myType, myInputPortNumber, 
 								masterIP,serverType.MASTER, masterPort,serverStatus.ALIVE);
 						SendMessage(HBMessage);
 				}
@@ -139,7 +139,7 @@ public class ChunkServerNode extends ServerNode {
 		catch (IOException e) {
 			System.out
 			.println("Exception caught when trying to listen on port "
-					+ myPortNumber + " or listening for a connection");
+					+ myInputPortNumber + " or listening for a connection");
 			System.out.println(e.getMessage());
 		}
 		finally{
@@ -249,7 +249,7 @@ public class ChunkServerNode extends ServerNode {
 					dataINeed[i] = fileData.data[offSetIndex];
 					offSetIndex++;
 				}
-				Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myPortNumber, message.senderIP, serverType.CLIENT, message.senderPort);
+				Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myInputPortNumber, message.senderIP, serverType.CLIENT, message.senderInputPort);
 				//Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
 				m.fileData = dataINeed;
 				SendMessageToClient(m);
@@ -289,7 +289,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("toobad");
 			e.printStackTrace();
 		}
-		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
@@ -365,7 +365,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(metadata.chunkHash, metadata);
 
-		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.APPENDTOFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
 
 		//appending on
@@ -413,7 +413,7 @@ public class ChunkServerNode extends ServerNode {
 
 		chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 
-		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.chunkClass = message.chunkClass;
 		m.success = msgSuccess.REQUESTSUCCESS;
 
@@ -448,7 +448,7 @@ public class ChunkServerNode extends ServerNode {
 				}
 				chunkToDelete = entry.getKey();
 
-				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+				Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 				successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToMaster(successMessageToMaster);
 
@@ -495,7 +495,7 @@ public class ChunkServerNode extends ServerNode {
 							numCounted++;
 						}
 
-						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+						Message successMessageToMaster = new Message(msgType.COUNTFILES, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 						successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 						successMessageToMaster.countedLogicalFiles = numCounted;
 						successMessageToMaster.filePath = metadata.filename;
@@ -545,7 +545,7 @@ public class ChunkServerNode extends ServerNode {
 			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 
-			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort);
+			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 
 			m.success = msgSuccess.REQUESTSUCCESS;
 			m.chunkClass = metadata;
@@ -821,7 +821,7 @@ public class ChunkServerNode extends ServerNode {
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
 	public void PingMaster (HeartBeat ping){
-		//HeartBeat ping = new HeartBeat(myIP, myType, myPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
