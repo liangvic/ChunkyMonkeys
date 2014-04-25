@@ -52,11 +52,10 @@ public abstract class ServerThread extends Thread {
 
 		//if created new message, don't flip addressing data
 
-		try{
+		try(Socket outSocket =  new Socket(socket.getInetAddress(), smessage.senderInputPort);)
+		{
 			Message message = new Message(server.myIP,server.myType,server.myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);
-			message.type = msgType.CREATEDIRECTORY;
-			message.sender = server.myType;
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());			
 			out.writeObject(message);
 			out.flush();
 			//out.close();			
