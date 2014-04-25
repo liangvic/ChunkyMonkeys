@@ -17,9 +17,8 @@ public class MasterServerThread extends ServerThread {
 		super(sn, s);
 	}
 
-	public void DealWithMessage() {
+	public void DealWithMessage(Message inputMessage) {
 		while(!messageList.isEmpty()) {
-			Message inputMessage = messageList.get(0);
 			server.operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
 			if(inputMessage instanceof HeartBeat)
@@ -153,8 +152,8 @@ public class MasterServerThread extends ServerThread {
 					RemoveParentLocks(inputMessage.filePath);
 					System.out.println("There are " + inputMessage.countedLogicalFiles + " logical files in " + inputMessage.filePath);
 				}*/
-
-			messageList.remove(0);
+			
+			messageList.remove(inputMessage);
 		}
 	}
 }

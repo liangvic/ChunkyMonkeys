@@ -29,7 +29,7 @@ public abstract class ServerThread extends Thread {
 			
 			if(incoming != null) {
 				messageList.add(incoming);
-				DealWithMessage();
+				DealWithMessage(incoming);
 			}
 			
 			long time = System.currentTimeMillis();
@@ -45,5 +45,6 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
-	public void DealWithMessage() {}
+	public void DealWithMessage(Message message) {
+	}
 }

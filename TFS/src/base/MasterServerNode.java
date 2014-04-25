@@ -3,6 +3,7 @@ package base;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
@@ -21,13 +22,9 @@ import Utility.Message.serverType;
 import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode {
-	//public ClientServerNode client;
-	//public ChunkServerNode chunkServer;
-
+	Semaphore lockChange = new Semaphore(1, true);
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
-	// private static ServerSocket welcomeSocket;
-	// chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
