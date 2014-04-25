@@ -3,6 +3,7 @@ package base;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 import Utility.ChunkLocation;
 import Utility.ChunkMetadata;
@@ -21,13 +22,10 @@ import Utility.Message.serverType;
 import Utility.NamespaceNode;
 
 public class MasterServerNode extends ServerNode {
-	//public ClientServerNode client;
-	//public ChunkServerNode chunkServer;
-
+	Semaphore lockChange = new Semaphore(1, true);
+	Semaphore fileWriteSemaphore = new Semaphore(1, true); //TODO;
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
-	// private static ServerSocket welcomeSocket;
-	// chunkServerMap key is the filepath + chunk index
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
@@ -82,7 +80,7 @@ public class MasterServerNode extends ServerNode {
 						temp.TTL+=1;
 						if (temp.TTL >= 10 && temp.status == serverStatus.ALIVE)
 							temp.status = serverStatus.DEAD;
-						
+
 					}
 				}
 			}, 10000, 10000);
@@ -91,13 +89,6 @@ public class MasterServerNode extends ServerNode {
 				Socket otherSocket = serverSocket.accept();
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
-				/*ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-				Message incoming = (Message)in.readObject();
-				if(incoming != null) {
-					System.out.println("Message from IP: " + incoming.senderIP + " recieved.");
-					messageList.add(incoming);
-					DealWithMessage();
-				}*/
 			}
 
 
@@ -115,8 +106,8 @@ public class MasterServerNode extends ServerNode {
 		}
 
 	}
-		
-	
+
+
 	/**
 	 * 
 	 * @param opID
@@ -137,6 +128,7 @@ public class MasterServerNode extends ServerNode {
 				entry.getValue().lockData.lockStatus = lockType.NONE;
 			}
 		}
+		
 	}
 
 	/**
@@ -147,6 +139,13 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public boolean AddExclusiveParentLocks(String filePath, int opID)
 	{
+		try {
+			lockChange.acquire();
+		} catch (InterruptedException e) {
+			System.out.println("Couldn't acquire semaphore");
+			e.printStackTrace();
+			return false;
+		}
 		String[] tokens = filePath.split(File.pathSeparator);
 		String parentPath = tokens[0];
 		for(int i=1;i<tokens.length-1;i++)
@@ -185,6 +184,7 @@ public class MasterServerNode extends ServerNode {
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
+		lockChange.release();
 		return true;
 	}
 
@@ -197,6 +197,14 @@ public class MasterServerNode extends ServerNode {
 
 	public boolean AddSharedParentLocks(String filePath, int opID)
 	{
+		try{
+		lockChange.acquire();
+		}
+		catch (InterruptedException e){
+			System.out.println("Couldn't acquire semaphore");
+			e.printStackTrace();
+			return false;
+		}
 		String[] tokens = filePath.split(File.pathSeparator);
 		String parentPath = tokens[0];
 		for(int i=1;i<tokens.length-1;i++)
@@ -234,6 +242,7 @@ public class MasterServerNode extends ServerNode {
 				parentPath = parentPath + "\\" + tokens[i]; 
 			}
 		}
+		lockChange.release();
 		return true;
 	}
 
@@ -278,7 +287,6 @@ public class MasterServerNode extends ServerNode {
 		if (NamespaceMap.containsKey(filePath)) {
 			// now that have the node in the NamespaceTree, you iterate through
 			// it's children
-
 			if(AddExclusiveParentLocks(filePath, opID))
 			{
 				if (NamespaceMap.get(filePath).children.size() > 0) {
@@ -328,6 +336,7 @@ public class MasterServerNode extends ServerNode {
 				SendErrorMessageToClient(msg);
 				return;
 			}
+
 		}
 	}
 
@@ -423,8 +432,6 @@ public class MasterServerNode extends ServerNode {
 				returnMessage.success = msgSuccess.REQUESTSUCCESS;
 				SendMessageToClient(returnMessage);
 			}
-
-
 		}
 		else
 		{
@@ -437,121 +444,123 @@ public class MasterServerNode extends ServerNode {
 	 * @param inputMessage
 	 * @return
 	 */
-	public void AssignChunkServer(Message inputMessage){//assign multiple chunk servers
+	public void AssignChunkServer(Message inputMessage, int opID){//assign multiple chunk servers
 		//TODO: NEED TO ADD IN THE LOCK CHECKING
-		//if(AddExclusiveParentLocks(inputMessage.filePath, opID))
-		//{
-		List<ServerData> replicaList = new ArrayList<ServerData>();
-		List<ServerData> allAvailableServerList = new ArrayList<ServerData>();
-		String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-
-		if(inputMessage.type == msgType.WRITETONEWFILE)
+		if(AddExclusiveParentLocks(inputMessage.filePath, opID))
 		{
-			ChunkMetadata testExistence = chunkServerMap.get(hashstring);
-			if(testExistence != null)
+			List<ServerData> replicaList = new ArrayList<ServerData>();
+			List<ServerData> allAvailableServerList = new ArrayList<ServerData>();
+			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+
+			if(inputMessage.type == msgType.WRITETONEWFILE)
 			{
-				//System.out.println("MSN AssignChunkServer: Filepath exists.");
-				return;
+				ChunkMetadata testExistence = chunkServerMap.get(hashstring);
+				if(testExistence != null)
+				{
+					//System.out.println("MSN AssignChunkServer: Filepath exists.");
+					return;
+				}
 			}
-		}
-		Random rand = new Random();
+			Random rand = new Random();
 
-		int targetFileNumber = rand.nextInt(5);
-
-
-		//Assigns a file number from 0 - 4
-		
+			int targetFileNumber = rand.nextInt(5);
 
 
-		//do a check to see what the offset is
+			//Assigns a file number from 0 - 4
 
 
-		//Get information about all chunkservers
 
-		for(String ip:ServerMap.keySet()){
-			allAvailableServerList.add(ServerMap.get(ip));
-		}
-		//Random replica assignment
-		int chunkServerAssignment = 0;
-		while(replicaList.size()<inputMessage.replicaCount){
-			chunkServerAssignment = rand.nextInt(4);
-			if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment)))
-				replicaList.add(allAvailableServerList.get(chunkServerAssignment));
-		}
-		int[] replicaListLargestOffset = new int[replicaList.size()];
-		Arrays.fill(replicaListLargestOffset, 0);
-		//now were going to try to find the offset to write the new file
-		//go through each of the chunk locations of all chunks
+			//do a check to see what the offset is
 
-		for(String key: chunkServerMap.keySet()){
-			for(ChunkLocation cl: chunkServerMap.get(key).listOfLocations){ //browsing all chunkserver locations
-				if(cl.fileNumber == targetFileNumber){ //Same fileNumber
-					//After finding correct filenumber, see if byteoffset is largest
-					for(int n=0;n<replicaList.size();n++){ //Browsing all chosen replica servers for match
-						if(cl.chunkIP == replicaList.get(n).IP){ //Same chunk server match with index n
-							//							check if the same index n in largest byte array is actually the largest
-							if(replicaListLargestOffset[n]<cl.byteOffset){
-								replicaListLargestOffset[n] = cl.byteOffset+chunkServerMap.get(key).size+4;
+
+			//Get information about all chunkservers
+
+			for(String ip:ServerMap.keySet()){
+				allAvailableServerList.add(ServerMap.get(ip));
+			}
+			//Random replica assignment
+			int chunkServerAssignment = 0;
+			while(replicaList.size()<inputMessage.replicaCount){
+				chunkServerAssignment = rand.nextInt(4);
+				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment)))
+					replicaList.add(allAvailableServerList.get(chunkServerAssignment));
+			}
+			int[] replicaListLargestOffset = new int[replicaList.size()];
+			Arrays.fill(replicaListLargestOffset, 0);
+			//now were going to try to find the offset to write the new file
+			//go through each of the chunk locations of all chunks
+
+			for(String key: chunkServerMap.keySet()){
+				for(ChunkLocation cl: chunkServerMap.get(key).listOfLocations){ //browsing all chunkserver locations
+					if(cl.fileNumber == targetFileNumber){ //Same fileNumber
+						//After finding correct filenumber, see if byteoffset is largest
+						for(int n=0;n<replicaList.size();n++){ //Browsing all chosen replica servers for match
+							if(cl.chunkIP == replicaList.get(n).IP){ //Same chunk server match with index n
+								//							check if the same index n in largest byte array is actually the largest
+								if(replicaListLargestOffset[n]<cl.byteOffset){
+									replicaListLargestOffset[n] = cl.byteOffset+chunkServerMap.get(key).size+4;
+								}
 							}
 						}
 					}
 				}
 			}
-		}
-		//Sending a create file for each replica
-		for(int i = 0;i<replicaList.size();i++){
+			//Sending a create file for each replica
+			for(int i = 0;i<replicaList.size();i++){
 
-			ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
-			newMetaData.chunkHash = hashstring;
-			newMetaData.filenumber = targetFileNumber;
-			
-			newMetaData.byteoffset = replicaListLargestOffset[i];
-			newMetaData.size = inputMessage.fileData.length;
-			//populate location
-			List<ChunkLocation> newLocations = new ArrayList<ChunkLocation>();
-			for(int j=0;j<replicaList.size();j++){
-				ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort);
-				location.fileNumber = targetFileNumber;
-				location.byteOffset = replicaListLargestOffset[j];
-				newLocations.add(location);
+				ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
+				newMetaData.chunkHash = hashstring;
+				newMetaData.filenumber = targetFileNumber;
+
+				newMetaData.byteoffset = replicaListLargestOffset[i];
+				newMetaData.size = inputMessage.fileData.length;
+				//populate location
+				List<ChunkLocation> newLocations = new ArrayList<ChunkLocation>();
+				for(int j=0;j<replicaList.size();j++){
+					ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort);
+					location.fileNumber = targetFileNumber;
+					location.byteOffset = replicaListLargestOffset[j];
+					newLocations.add(location);
+				}
+				chunkServerMap.put(hashstring, newMetaData);
+				inputMessage.chunkClass = newMetaData;
+				inputMessage.addressedTo = serverType.CLIENT;
+				inputMessage.sender = serverType.MASTER;
+				SendMessageToClient(inputMessage);
 			}
-			chunkServerMap.put(hashstring, newMetaData);
-			inputMessage.chunkClass = newMetaData;
-			inputMessage.addressedTo = serverType.CLIENT;
-			inputMessage.sender = serverType.MASTER;
-			SendMessageToClient(inputMessage);
-		}
-		//create a new namespace node
-		//filename and get parent, add child.
+			//create a new namespace node
+			//filename and get parent, add child.
 
-		//============================Name Space Issues=========================================
+			//============================Name Space Issues=========================================
 
-		NamespaceNode nn = new NamespaceNode(nodeType.FILE);
-		NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
-		//System.out.println("Got to the file");
-		NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
+			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+			NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+			//System.out.println("Got to the file");
+			NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 
-		ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
-		//need to update children to, so have to clear and write again
-		for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-		{
-			WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
-		}
-		//only appending on
-		WritePersistentChunkServerMap(hashstring,
-				chunkServerMap.get(hashstring));
+			ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
+			//need to update children to, so have to clear and write again
+			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+			{
+				WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+			}
+			//only appending on
+			WritePersistentChunkServerMap(hashstring,
+					chunkServerMap.get(hashstring));
 
-		//client.AppendToChunkServer(hashstring, myServer);
-		//client.AppendToChunkServer(newMetaData, chunkServer);
-		/*}
+			//client.AppendToChunkServer(hashstring, myServer);
+			//client.AppendToChunkServer(newMetaData, chunkServer);
+			/*}
 		else
 		{
 			SendErrorMessageToClient(new Message(msgType.DELETEDIRECTORY, inputMessage.filePath));
 			return null;
 		}*/
-
-
-
+		}
+		else
+		{
+			System.out.println("AssignChunkServerFunction failed");
+		}
 	}
 	/**
 	 * 
