@@ -13,7 +13,7 @@ public class ChunkServerThread extends ServerThread {
 	ChunkServerNode server;
 
 	public ChunkServerThread(ChunkServerNode sn, Socket s) {
-		super(s);
+		super(sn, s);
 		server = sn;
 	}
 	
