@@ -21,7 +21,7 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
-
+	Semaphore action = new Semaphore(1, true);
 
 	public ClientServerNode(String ip, int inPort, int outPort)
 	{
@@ -234,35 +234,7 @@ public class ClientServerNode extends ServerNode {
 			SendMessageToChunkServer(m);
 		}
 
-		/**
-		 * 
-		 */
-		public void msgEcho() {
-
-			try (Socket echoSocket = new Socket(hostName, portNumber);
-					PrintWriter out = new PrintWriter(echoSocket.getOutputStream(),
-							true);
-					BufferedReader in = new BufferedReader(new InputStreamReader(
-							echoSocket.getInputStream()));
-					BufferedReader stdIn = new BufferedReader(
-							new InputStreamReader(System.in))) {
-
-				String userInput;
-				while ((userInput = stdIn.readLine()) != null) {
-					out.println(userInput);
-					System.out.println("echo: " + in.readLine());
-				}
-			} catch (UnknownHostException e) {
-				System.err.println("Don't know about host " + hostName);
-				System.exit(1);
-			} catch (IOException e) {
-				e.printStackTrace();
-				System.err.println("Couldn't get I/O for the connection to "
-						+ hostName);
-				System.exit(1);
-			}
-		}
-
+		
 		/**
 		 * @param filepath
 		 * @param nFiles
@@ -440,10 +412,27 @@ public class ClientServerNode extends ServerNode {
 		public void test1(int NumFolders) {
 			int count = 1;
 			CCreateDirectory("1");
+			
 			if (NumFolders > 1) {
+				try{
+					action.acquire();
+					wait(5000);
+					action.release();
+				}
+				catch(InterruptedException e){
+					e.printStackTrace();
+				}
 				helper("1", count * 2, NumFolders);
 			}
 			if (NumFolders > 2) {
+				try{
+					action.acquire();
+					wait(5000);
+					action.release();
+				}
+				catch(InterruptedException e){
+					e.printStackTrace();
+				}
 				helper("1", count * 2 + 1, NumFolders);
 			}
 		}
@@ -457,6 +446,14 @@ public class ClientServerNode extends ServerNode {
 			if (folderName <= NumMaxFolders) {
 				String newfilepath = parentfilepath + "\\" + folderName;
 				CCreateDirectory(newfilepath);
+				try{
+					action.acquire();
+					wait(5000);
+					action.release();
+				}
+				catch(InterruptedException e){
+					e.printStackTrace();
+				}
 				helper(newfilepath, folderName * 2, NumMaxFolders);
 				helper(newfilepath, folderName * 2 + 1, NumMaxFolders);
 			}
