@@ -38,8 +38,8 @@ public class ClientServerNode extends ServerNode {
 	int chunkCountToExpect = 99; // TODO: remove
 	int chunkReadsRecieved = 0; // TODO: remove
 	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
-	String localPathToCreateFile; // TODO: remove
-	String localPathToReadFile; // TODO: remove
+	//String localPathToCreateFile; // TODO: remove
+	//String localPathToReadFile; // TODO: remove
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -192,7 +192,8 @@ public class ClientServerNode extends ServerNode {
 			//		chunkCountToExpect = 2;
 			for (byte b : dataMessage.fileData)
 				readFileData.add(b);
-			System.out.print(localPathToCreateFile);
+			System.out.print(dataMessage.localFilePath);
+			//System.out.print(localPathToCreateFile);
 			if (chunkReadsRecieved == chunkCountToExpect) {
 				System.out.println("Client: recieved all "+chunkCountToExpect+ " chunks. Now writing file");
 				System.out.print(dataMessage.fileData);
@@ -202,9 +203,11 @@ public class ClientServerNode extends ServerNode {
 					finalByteArray[n] = readFileData.get(n);
 				}
 				try {
-					File file = new File(localPathToCreateFile);
+					//File file = new File(localPathToCreateFile);
+					File file = new File(dataMessage.localFilePath);
 					file.createNewFile();
-					FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
+					//FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
+					FileOutputStream fileOuputStream = new FileOutputStream(dataMessage.localFilePath);
 					fileOuputStream.write(finalByteArray);
 					fileOuputStream.close();
 
@@ -638,7 +641,6 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void test4(String localPath, String filePath) {
 
-			localPathToReadFile = localPath;
 			CWriteToNewFile(localPath, filePath,0);
 
 		}
@@ -692,10 +694,10 @@ public class ClientServerNode extends ServerNode {
 				return;
 			}
 
-			localPathToCreateFile = localPath;
 			Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 			m.type = msgType.READFILE;
 			m.filePath = filePath;
+			m.localFilePath = localPath;
 			m.sender = serverType.CLIENT;
 			SendMessageToMaster(m);
 
@@ -744,10 +746,10 @@ public class ClientServerNode extends ServerNode {
 		public void CAppendToTFSFile(String localPath, String filePath){
 			int index = filePath.lastIndexOf('\\');
 			Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
-			localPathToCreateFile = localPath;
 			m.type = msgType.APPENDTOTFSFILE;
 			m.filePath = filePath;
 			m.fileName = filePath.substring(index + 1);
+			m.localFilePath = localPath;
 			m.sender = serverType.CLIENT;
 			SendMessageToMaster(m);
 		}
@@ -773,7 +775,7 @@ public class ClientServerNode extends ServerNode {
 		 */
 		public void ReadLocalFile(Message message) {
 			FileInputStream fileInputStream = null;
-			File file = new File(localPathToCreateFile);
+			File file = new File(message.localFilePath);
 			byte[] byteFile = new byte[(int) file.length()];
 
 			// convert file into array of bytes
