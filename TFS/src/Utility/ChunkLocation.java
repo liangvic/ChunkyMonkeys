@@ -1,10 +1,13 @@
 package Utility;
 
-/**
- * 
- *
- */
-public class ChunkLocation{
+import java.io.Serializable;
+
+public class ChunkLocation implements Serializable{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public String chunkIP;
 	public int chunkPort;
 	public int byteOffset;
