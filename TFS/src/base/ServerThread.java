@@ -11,12 +11,10 @@ import java.util.List;
 import Utility.Message;
 
 public abstract class ServerThread extends Thread {
-	ServerNode server;
 	Socket socket;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	
-	public ServerThread(ServerNode sn, Socket s) {
-		server = sn;
+	public ServerThread(Socket s) {
 		socket = s; 
 	}
 	
@@ -33,8 +31,8 @@ public abstract class ServerThread extends Thread {
 			}
 			
 			long time = System.currentTimeMillis();
-            in.close();
-            out.close();
+            //in.close();
+            //out.close();
             System.out.println("Request processed: " + time);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

@@ -11,7 +11,8 @@ public class ClientServerThread extends ServerThread {
 	ClientServerNode server;
 
 	public ClientServerThread(ClientServerNode sn, Socket s) {
-		super(sn, s);
+		super(s);
+		server = sn;
 	}
 
 	public void DealWithMessage() {

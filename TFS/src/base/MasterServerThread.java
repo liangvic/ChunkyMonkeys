@@ -14,11 +14,12 @@ public class MasterServerThread extends ServerThread {
 	MasterServerNode server;
 
 	public MasterServerThread(MasterServerNode sn, Socket s) {
-		super(sn, s);
+		super(s);
+		server = sn;
 	}
 
 	public void DealWithMessage(Message inputMessage) {
-		while(!messageList.isEmpty()) {
+		if(!messageList.isEmpty()) {
 			server.operationID++; //used to differentiate operations
 			System.out.println("inputMessagetype "+ inputMessage.type);
 			if(inputMessage instanceof HeartBeat)
