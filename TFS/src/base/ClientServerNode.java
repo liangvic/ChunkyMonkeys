@@ -38,8 +38,6 @@ public class ClientServerNode extends ServerNode {
 	int chunkCountToExpect = 99; // TODO: remove
 	int chunkReadsRecieved = 0; // TODO: remove
 	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
-	//String localPathToCreateFile; // TODO: remove
-	//String localPathToReadFile; // TODO: remove
 	String hostName = "68.181.174.149";
 	int portNumber = 8111;
 
@@ -735,6 +733,14 @@ public class ClientServerNode extends ServerNode {
 		 * @param filePath
 		 */
 		public void test6(String localPath, String filePath){
+			CAppendToTFSFile(localPath, filePath);
+		}
+		
+		/**
+		 * @param localPath
+		 * @param filePath
+		 */
+		public void unit6(String localPath, String filePath){
 			CAppendToTFSFile(localPath, filePath);
 		}
 
