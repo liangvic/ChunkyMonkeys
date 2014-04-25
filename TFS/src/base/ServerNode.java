@@ -54,5 +54,25 @@ public class ServerNode {
 		}
 
 	}
+	public void SendMessage(Message smessage, Socket socket) {
+		//MESSAGE MUST HAVE IP and Socket Number
+
+		//if created new message, don't flip addressing data
+		System.out.println("Sending message to " + socket.getInetAddress() + " port " + socket.getLocalPort() + " " + socket.getPort());
+		
+		try
+		{
+			Message message = new Message(myIP,myType,myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());			
+			out.writeObject(message);
+			out.flush();
+			//out.close();			
+		}
+		catch (IOException e){
+			System.err.println("Unable to send Message from " + myIP + " to " + smessage.senderIP);
+			e.printStackTrace();
+		}
+
+	}
 }
 
