@@ -72,6 +72,7 @@ public class ChunkServerNode extends ServerNode {
 			file_list.add(new TFSFile(i));
 		}
 
+		
 		LoadServerNodeMap();
 		LoadFileData();
 	}
