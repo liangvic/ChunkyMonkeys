@@ -59,9 +59,11 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
-	List<TFSFile> file_list = new ArrayList<TFSFile>();
+	List<TFSFile> file_list = Collections.synchronizedList(new ArrayList<TFSFile>());
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
-
+	// hash to data
+	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();
+	
 	public ChunkServerNode(String ip, int inPort, int outPort) {
 		super(ip, inPort, outPort);
 		
@@ -79,10 +81,6 @@ public class ChunkServerNode extends ServerNode {
 
 	String masterIP = null;
 	int masterPort = 0;
-
-	// hash to data
-
-	Map<String, ChunkMetadata> chunkMap = new HashMap<String, ChunkMetadata>();
 
 	/*
 	 * public static void main(String argv[]) throws Exception
