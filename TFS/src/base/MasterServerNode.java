@@ -535,9 +535,8 @@ public class MasterServerNode extends ServerNode {
 				//populate location
 				List<ChunkLocation> newLocations = new ArrayList<ChunkLocation>();
 				for(int j=0;j<replicaList.size();j++){
-					ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort);
-					location.fileNumber = targetFileNumber;
-					location.byteOffset = replicaListLargestOffset[j];
+					ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort,
+							replicaListLargestOffset[j],targetFileNumber);
 					newLocations.add(location);
 				}
 				chunkServerMap.put(hashstring, newMetaData);
@@ -836,8 +835,9 @@ public class MasterServerNode extends ServerNode {
 
 		// STRUCTURE///
 		// KEY VERSION# SIZEOF_LOCATIONLIST
-		// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
-		// CHUNKLOCATIONN_PORT
+		// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT 
+		// CHUNKLOCATION1_BYTEOFFSET CHUNKLOCATION1_FILENUMBER
+		//... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
 		// CHUNKHASH
 		// REFERENCECOUNT
 		// FILENAME
@@ -860,7 +860,9 @@ public class MasterServerNode extends ServerNode {
 					+ chunkmd.listOfLocations.size() + "\t");
 			for (int i = 0; i < chunkmd.listOfLocations.size(); i++) {
 				out.write(chunkmd.listOfLocations.get(i).chunkIP + "\t"
-						+ chunkmd.listOfLocations.get(i).chunkPort + "\t");
+						+ chunkmd.listOfLocations.get(i).chunkPort + "\t"
+						+ chunkmd.listOfLocations.get(i).byteOffset + "\t"
+						+ chunkmd.listOfLocations.get(i).fileNumber + "\t");
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
@@ -885,7 +887,9 @@ public class MasterServerNode extends ServerNode {
 	 */
 	public void WritePersistentNamespaceMap(String key, NamespaceNode nsNode) {
 		// STRUCTURE///
-		// KEY TYPE CHILD CHILD CHILD ...//
+		// KEY TYPE CHILDLIST_SIZE CHILD CHILD CHILD 
+		// LOCKLIST_SIZE LOCKSTATUS1 LOCKOPID1 ...
+		// LOCKSTATUSN LOCKOPIDN 
 		BufferedWriter out = null;
 		try {
 			File file = new File("dataStorage/MData_NamespaceMap.txt");
@@ -898,8 +902,18 @@ public class MasterServerNode extends ServerNode {
 			// System.out.println("Writing out to file");
 			out.write(key + "\t" + nsNode.type.toString() + "\t");
 			if (nsNode.children.size() > 0) {
+				out.write(nsNode.children.size() + "\t");
 				for (int i = 0; i < nsNode.children.size(); i++) {
 					out.write(nsNode.children.get(i) + "\t");
+				}
+			}
+			if (nsNode.lockList.size() > 0)
+			{
+				out.write(nsNode.lockList.size() + "\t");
+				for (int i = 0; i < nsNode.lockList.size(); i++)
+				{
+					out.write(nsNode.lockList.get(i).lockStatus + "\t"
+							+ nsNode.lockList.get(i).operationID + "\t");
 				}
 			}
 
@@ -929,8 +943,9 @@ public class MasterServerNode extends ServerNode {
 			while ((textLine = textReader.readLine()) != null) {
 				// STRUCTURE///
 				// KEY VERSION# SIZEOF_LOCATIONLIST
-				// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT ... CHUNKLOCATIONN_IP
-				// CHUNKLOCATIONN_PORT
+				// CHUNKLOCATION1_IP CHUNKLOCATION1_PORT 
+				// CHUNKLOCATION1_BYTEOFFSET CHUNKLOCATION1_FILENUMBER
+				//... CHUNKLOCATIONN_IP CHUNKLOCATIONN_PORT
 				// CHUNKHASH
 				// REFERENCECOUNT
 				// FILENAME
@@ -951,9 +966,10 @@ public class MasterServerNode extends ServerNode {
 				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = Integer.parseInt(data[2]);
 				int newIndexCounter = 3 + (locationSize / 2);
-				for (int i = 3; i < newIndexCounter; i = i + 2) {
+				for (int i = 3; i < newIndexCounter; i = i + 4) {
 					locations.add(new ChunkLocation(data[i], Integer
-							.parseInt(data[i + 1])));
+							.parseInt(data[i + 1]),Integer.parseInt(data[i+2]),
+							Integer.parseInt(data[i+3])));
 				}
 
 				// hash
@@ -1026,26 +1042,61 @@ public class MasterServerNode extends ServerNode {
 
 			while ((textLine = textReader.readLine()) != null) {
 				// STRUCTURE///
-				// KEY CHILD CHILD CHILD ...//
+				// KEY TYPE CHILDLIST_SIZE CHILD CHILD CHILD 
+				// LOCKLIST_SIZE LOCKSTATUS1 LOCKOPID1 ...
+				// LOCKSTATUSN LOCKOPIDN 
 				String[] data = textLine.split("\t");
 				String key;
 				List<String> children = new ArrayList<String>();
+				List<lockInfo> tempLockList = new ArrayList<lockInfo>();
 				key = data[0];
 				String stringEnum = data[1];
+				String lockEnum;
 				nodeType type;
+				lockType lType = null;
+				int opID;
 				if (stringEnum.equals("DIRECTORY")) {
 					type = nodeType.DIRECTORY;
 				} else {
 					type = nodeType.FILE;
 				}
-				for (int i = 2; i < data.length; i++) {
+				
+				for (int i = 3; i < 3 + Integer.parseInt(data[2]); i=i+2) {
 					children.add(data[i]);
 				}
-
-				// TODO fix
+				
+				int newIndex = 3 + Integer.parseInt(data[2]);
+				for (int i = newIndex + 1; i < newIndex + 1 + Integer.parseInt(data[newIndex])*2;i++)
+				{
+					lockEnum = data[i];
+					if(lockEnum.equals("NONE"))
+					{
+						lType = lockType.NONE;
+					}
+					else if(lockEnum.equals("I_SHARED"))
+					{
+						lType = lockType.I_SHARED;
+					}
+					else if(lockEnum.equals("I_EXCLUSIVE"))
+					{
+						lType = lockType.I_EXCLUSIVE;
+					}
+					else if(lockEnum.equals("SHARED"))
+					{
+						lType = lockType.SHARED;
+					}
+					else if(lockEnum.equals("EXCLUSIVE"))
+					{
+						lType = lockType.EXCLUSIVE;
+					}
+					opID = Integer.parseInt(data[i+1]);
+					tempLockList.add(new lockInfo(lType,opID));
+				}
+				
 				NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
 				addingNode.children = children;
 				addingNode.type = type;
+				addingNode.lockList = tempLockList;
 
 				NamespaceMap.put(key, addingNode);
 			}
