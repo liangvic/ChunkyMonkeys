@@ -66,6 +66,7 @@ public class Message implements Serializable{
 	public serverType sender;
 	public String filePath;
 	public String fileName;
+	public String localFilePath; //for use in AppendToTFSFile for now
 	public int senderInputPort;
 	public int receiverInputPort;
 	int startByte;

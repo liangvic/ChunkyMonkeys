@@ -56,12 +56,6 @@ public class ChunkServerThread extends ServerThread {
 					server.AddNewBlankChunk(message);
 				} else if (message.type == msgType.READFILE) {
 					server.ReadChunks(message);
-				} else if (message.type == msgType.APPENDTOFILE) {
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						server.AppendToFile(message.chunkClass, message.fileData);
 				} else if (message.type == msgType.APPENDTOTFSFILE) {
 					if(message.sender == serverType.MASTER) {
 						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");

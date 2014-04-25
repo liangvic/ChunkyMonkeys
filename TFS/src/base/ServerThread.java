@@ -11,18 +11,18 @@ import java.util.List;
 import Utility.Message;
 
 public abstract class ServerThread extends Thread {
+	ServerNode server;
 	Socket socket;
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	
-	public ServerThread(Socket s) {
+	public ServerThread(ServerNode sn, Socket s) {
+		server = sn;
 		socket = s; 
 	}
 	
 	public void run() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-
 			Message incoming = (Message)in.readObject();
 			
 			if(incoming != null) {
@@ -44,5 +44,22 @@ public abstract class ServerThread extends Thread {
 	}
 	
 	public void DealWithMessage(Message message) {
+	}
+	public void SendMessage(Message message) {
+		//MESSAGE MUST HAVE IP and Socket Number
+
+		//if created new message, don't flip addressing data
+
+		try{
+			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+			out.writeObject(message);
+			out.flush();
+			//out.close();			
+		}
+		catch (IOException e){
+			System.err.println("Unable to send Message from " + server.myIP + " to " + message.receiverIP);
+			e.printStackTrace();
+		}
+
 	}
 }
