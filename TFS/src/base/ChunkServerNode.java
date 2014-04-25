@@ -149,78 +149,8 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
-	public void DealWithMessage() {
-		if(!messageList.isEmpty()) {
-			Message message = messageList.get(0);
-
-			if(message instanceof HeartBeat)
-			{
-				PingMaster((HeartBeat)message);
-			}
-			else if(message instanceof SOSMessage)
-			{
-				if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
-				{
-					CheckVersionAfterStarting((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
-				{
-					SendingDataToUpdateChunkServer((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
-				{
-					ReplacingData((SOSMessage)message);
-				}
-			}
-			else if (message.type == msgType.DELETEDIRECTORY) {
-				DeleteChunk(message.chunkClass);
-			}
-
-			else if (message.type == msgType.CREATEFILE) {
-				AddNewBlankChunk(message);
-			} else if (message.type == msgType.READFILE) {
-				ReadChunks(message);
-			} else if (message.type == msgType.APPENDTOFILE) {
-				if (message.chunkClass == null) {
-					System.out.println("chunkClass is null");
-				}
-				else if (message.type == msgType.CREATEFILE) {
-					AddNewBlankChunk(message);
-				} else if (message.type == msgType.READFILE) {
-					ReadChunks(message);
-				} else if (message.type == msgType.APPENDTOFILE) {
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						AppendToFile(message.chunkClass, message.fileData);
-				} else if (message.type == msgType.APPENDTOTFSFILE) {
-					if(message.sender == serverType.MASTER) {
-						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-						chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
-					}
-					else if (message.sender == serverType.CLIENT) {
-						System.out.println("Calling AppendToTSFFile Method");
-						AppendToTFSFile(message);
-					}
-				} else if (message.type == msgType.COUNTFILES) {
-					CountNumInFile(message.chunkClass);
-				}
-				else if (message.type == msgType.WRITETONEWFILE)
-				{
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						WriteToNewFile(message);
-				}
-				messageList.remove(0);
-			}
-		}
-	}
-
 	/**
-	 * @param metadata
+	 * @param message
 	 */
 	public void ReadChunks(Message message){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
