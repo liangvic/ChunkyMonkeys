@@ -137,6 +137,7 @@ public class ClientServerNode extends ServerNode {
 					}
 				break;
 				case ("Test5"):
+				case ("Unit5"):
 					if (tokens.length == 3)
 						test5(tokens[1].toString(), tokens[2].toString());
 					else
@@ -154,6 +155,9 @@ public class ClientServerNode extends ServerNode {
 						test7(tokens[1].toString());
 					else
 						throw new Exception();
+				break;
+				case ("Unit8"): 
+					System.out.println("Input Test6 on mutiple clients to run unit 8");
 				break;
 				case ("X"):
 					System.exit(0);
@@ -222,7 +226,7 @@ public class ClientServerNode extends ServerNode {
 				{
 					if(message.success == msgSuccess.REQUESTERROR)
 					{
-						CWriteToNewFile(localPathToReadFile, message.filePath, 3);
+						CWriteToNewFile(localPathToReadFile, message.filePath, 3);//Unit6
 					}
 					else
 					{
@@ -694,7 +698,10 @@ public class ClientServerNode extends ServerNode {
 		}
 
 		public void unit4(String localPath, String filePath, int numberOfReplicas){
-			CWriteToNewFile(localPath, filePath,numberOfReplicas);
+			if(numberOfReplicas<1 || numberOfReplicas>4){
+				System.out.println("Invalid replica number!");
+			}else
+				CWriteToNewFile(localPath, filePath,numberOfReplicas);
 		}
 
 		// Test 4 stores a file on the local machine in a target TFS specified by
