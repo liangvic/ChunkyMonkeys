@@ -61,7 +61,6 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	List<TFSFile> file_list = Collections.synchronizedList(new ArrayList<TFSFile>());
-	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	// hash to data
 	Map<String, ChunkMetadata> chunkMap = Collections.synchronizedMap(new HashMap<String, ChunkMetadata>());
 	
