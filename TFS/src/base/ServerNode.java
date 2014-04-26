@@ -4,8 +4,14 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import Utility.Message;
+import Utility.NamespaceNode;
 import Utility.Message.serverType;
 
 public class ServerNode {
@@ -16,6 +22,9 @@ public class ServerNode {
 	serverType myType;
 	//int targetPortNumber;	
 
+	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
+	
 	public ServerNode(String ip, int inPort){
 		myIP = ip;
 		myInputPortNumber = inPort;
@@ -44,7 +53,7 @@ public class ServerNode {
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
-
+				//out.flush();
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);

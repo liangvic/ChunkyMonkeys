@@ -28,11 +28,8 @@ public class MasterServerNode extends ServerNode {
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
-	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
-
-	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 
 	public class ServerData {
