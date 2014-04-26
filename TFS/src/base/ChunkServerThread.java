@@ -172,6 +172,7 @@ public class ChunkServerThread extends ServerThread {
 	public void AddNewBlankChunk(Message message) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
 		try{
+			System.out.println("Adding a new blank chunk");
 			chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 			TFSFile current = file_list.get(1);
 			message.chunkClass.byteoffset = current.spaceOccupied;

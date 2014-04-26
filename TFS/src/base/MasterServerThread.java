@@ -44,6 +44,7 @@ public class MasterServerThread extends ServerThread {
 	Map<String, ChunkMetadata> chunkServerMap;
 	Map<String, ServerData> ServerMap;
 	TFSLogger tfsLogger;
+	String myIP;
 
 	public MasterServerThread(MasterServerNode sn, Socket s) {
 		super(sn, s);
@@ -54,6 +55,7 @@ public class MasterServerThread extends ServerThread {
 		chunkServerMap = server.chunkServerMap;
 		ServerMap = server.ServerMap;
 		tfsLogger = server.tfsLogger;
+		myIP = server.myIP;
 	}
 
 	public void DealWithMessage(Message inputMessage) {
@@ -660,6 +662,7 @@ public class MasterServerThread extends ServerThread {
 	 * @param opID
 	 */
 	public void CreateFile(Message message, int opID){
+		//NOT ADDING IT TO THE CHUNKSERVER MAP. WHEN APPENDING LATER, THEN ADDING TO CHUNKSERVERMAP
 		String filepath = message.filePath;
 		String filename = message.fileName;
 		int index = message.chunkindex;
@@ -680,18 +683,51 @@ public class MasterServerThread extends ServerThread {
 
 					NamespaceMap.get(filepath).children.add(newName);
 
-					ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
+					/*ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
 
 					Random rand = new Random();
 					newChunk.filenumber = rand.nextInt(5); //only use one for now
-					newChunk.chunkHash = hashstring;
-					chunkServerMap.put(hashstring, newChunk);
+					newChunk.chunkHash = hashstring;*/
+					/*
+					//randomly selecting which 3 chunkservers to put it in
+					int numReplicas = 0, randomNum;
+					ServerData attemptServerData;
+					boolean validIP = false;
+					while(numReplicas < 1) //TODO: FIX boundary
+					{
+						validIP = true;
+						randomNum = rand.nextInt(1); //TODO: Change back to 4
+						attemptServerData = ServerMap.get(randomNum);
+						for(ChunkLocation location : newChunk.listOfLocations) //check if already given to that IP
+						{
+							if(attemptServerData.IP.equals(location.chunkIP) && attemptServerData.serverPort == location.chunkPort) //if already added chunk to that chunkserver already, then don't use it again
+							{
+								validIP = false;
+							}
+							
+						}		
+						if(validIP)
+						{
+							newChunk.listOfLocations.add(new ChunkLocation(attemptServerData.IP,attemptServerData.clientPort));
+							numReplicas++;
+						}
+					}
+					*/
+					//chunkServerMap.put(hashstring, newChunk);
 
 					message.type = msgType.CREATEFILE;
-					message.chunkClass = newChunk;
+					//message.sender = serverType.MASTER;
+					//message.senderIP = myIP;
+					//message.chunkClass = newChunk;
 					try {
 						SendMessageToClient(message);
-
+						/*for(ChunkLocation entry : message.chunkClass.listOfLocations)
+						{
+							message.receiverIP = entry.chunkIP;
+							message.receiverInputPort = entry.chunkPort;
+							SendMessageToChunkServer(message);
+						}*/
+	
 					} catch (Exception e) {
 						//TODO: deal with message failure
 						//newMessage.success = msgSuccess.REQUESTERROR;
@@ -700,8 +736,8 @@ public class MasterServerThread extends ServerThread {
 				}
 
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
-				WritePersistentChunkServerMap(hashstring,
-						chunkServerMap.get(hashstring));
+				//WritePersistentChunkServerMap(hashstring,
+				//		chunkServerMap.get(hashstring));
 				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created file " + newName);
 
