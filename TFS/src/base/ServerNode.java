@@ -49,7 +49,12 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		System.out.println("Sending message "+message.type+ " to "+message.receiverIP);
+		System.out.println("Sending message: "+message.type+ " to "+message.receiverIP);
+		System.out.println("	Addressed to: "+message.addressedTo);
+		System.out.println("	sender: "+message.sender);
+		System.out.println("	sender ip: "+message.senderIP);
+		System.out.println("	receiverInputPort: "+message.receiverInputPort);
+		System.out.println("	senderInputPort: "+message.senderInputPort);
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);

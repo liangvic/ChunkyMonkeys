@@ -535,7 +535,22 @@ public class ClientServerNode extends ServerNode {
 		{
 			System.out.println("New chunkmetadata hash "+ msg.chunkClass.chunkHash);
 			msg.addressedTo = serverType.CHUNKSERVER;
-			SendMessageToChunkServer(msg);
+			msg.sender = myType;
+			msg.senderInputPort = myInputPortNumber;
+			msg.senderIP = myIP;
+			
+
+			
+			System.out.println("Writing chunks to "+msg.chunkClass.listOfLocations.size()+" replica(s)");
+			for(int j=0;j<msg.chunkClass.listOfLocations.size();j++){
+//				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
+//				msg.receiverInputPort = msg.chunkClass.listOfLocations.get(j).chunkPort;
+				//Testing Hack
+				msg.receiverIP = "68.181.174.61";
+				msg.receiverInputPort =5060;
+				System.out.println("Sending message to ip: "+msg.receiverIP+" port: "+msg.receiverInputPort);
+				SendMessageToChunkServer(msg);
+			}
 		}
 	}
 

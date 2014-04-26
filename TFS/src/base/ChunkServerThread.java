@@ -31,11 +31,11 @@ import Utility.TFSFile;
 
 public class ChunkServerThread extends ServerThread {
 	ChunkServerNode server;
-	
+
 	List<TFSFile> file_list;
 	// hash to data
 	Map<String, ChunkMetadata> chunkMap;
-	
+
 	String myIP;
 	int myInputPortNumber; 
 	serverType myType;
@@ -55,71 +55,73 @@ public class ChunkServerThread extends ServerThread {
 		masterIP = Config.prop.getProperty("MASTERIP");
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
 	}
-	
+
 	public void DealWithMessage(Message message) {
 		//if(!messageList.isEmpty()) {
 		//	Message message = messageList.get(0);
-
-			if(message instanceof HeartBeat)
-			{
-				PingMaster((HeartBeat)message);
-			}
-			else if(message instanceof SOSMessage)
-			{
-				if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
-				{
-					CheckVersionAfterStarting((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
-				{
-					SendingDataToUpdateChunkServer((SOSMessage)message);
-				}
-				else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
-				{
-					ReplacingData((SOSMessage)message);
-				}
-			}
-			else if (message.type == msgType.DELETEDIRECTORY) {
-				DeleteChunk(message.chunkClass);
-			}
-
-			else if (message.type == msgType.CREATEFILE) {
-				AddNewBlankChunk(message);
-			} else if (message.type == msgType.READFILE) {
-				ReadChunks(message);
-			} else if (message.type == msgType.APPENDTOFILE) {
-				if (message.chunkClass == null) {
-					System.out.println("chunkClass is null");
-				}
-				else if (message.type == msgType.CREATEFILE) {
-					AddNewBlankChunk(message);
-				} else if (message.type == msgType.READFILE) {
-					ReadChunks(message);
-				} else if (message.type == msgType.APPENDTOTFSFILE) {
-					if(message.sender == serverType.MASTER) {
-						System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
-						chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
-					}
-					else if (message.sender == serverType.CLIENT) {
-						System.out.println("Calling AppendToTSFFile Method");
-						AppendToTFSFile(message);
-					}
-				} else if (message.type == msgType.COUNTFILES) {
-					CountNumInFile(message.chunkClass);
-				}
-				else if (message.type == msgType.WRITETONEWFILE)
-				{
-					if (message.chunkClass == null) {
-						System.out.println("chunkClass is null");
-					}
-					else
-						WriteToNewFile(message);
-				}
-			}
-			server.messageList.remove(message);
+		System.out.println("Chunkserve: I GOT MESSAGE. Type = "+message.type.toString());
+		if(message instanceof HeartBeat)
+		{
+			PingMaster((HeartBeat)message);
 		}
+		else if(message instanceof SOSMessage)
+		{
+			if(((SOSMessage) message).msgToServer == msgTypeToServer.TO_SOSSERVER)
+			{
+				CheckVersionAfterStarting((SOSMessage)message);
+			}
+			else if (((SOSMessage) message).msgToServer == msgTypeToServer.TO_OTHERSERVER)
+			{
+				SendingDataToUpdateChunkServer((SOSMessage)message);
+			}
+			else if (((SOSMessage) message).msgToServer == msgTypeToServer.RECEIVINGDATA)
+			{
+				ReplacingData((SOSMessage)message);
+			}
+		}
+		else if (message.type == msgType.DELETEDIRECTORY) {
+			DeleteChunk(message.chunkClass);
+		}
+
+		else if (message.type == msgType.CREATEFILE) {
+			AddNewBlankChunk(message);
+		} else if (message.type == msgType.READFILE) {
+			ReadChunks(message);
+		} else if (message.type == msgType.APPENDTOFILE) {
+			if (message.chunkClass == null) {
+				System.out.println("chunkClass is null");
+			}
+		}
+		else if (message.type == msgType.CREATEFILE) {
+			AddNewBlankChunk(message);
+		} else if (message.type == msgType.READFILE) {
+			ReadChunks(message);
+		} else if (message.type == msgType.APPENDTOTFSFILE) {
+			if(message.sender == serverType.MASTER) {
+				System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
+				chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+			}
+			else if (message.sender == serverType.CLIENT) {
+				System.out.println("Calling AppendToTSFFile Method");
+				AppendToTFSFile(message);
+			}
+		} else if (message.type == msgType.COUNTFILES) {
+			CountNumInFile(message.chunkClass);
+		}
+		else if (message.type == msgType.WRITETONEWFILE)
+		{
+			if (message.chunkClass == null) {
+				System.out.println("chunkClass is null");
+			}
+			else
+				WriteToNewFile(message);
+		}
+
+		server.messageList.remove(message);
+
+	}
 	//}
-	
+
 	/**
 	 * @param message
 	 */
@@ -160,7 +162,7 @@ public class ChunkServerThread extends ServerThread {
 				}
 			}
 		}
-	
+
 		// client.DealWithMessage(new Message(msgType.PRINTFILEDATA,
 		// fileMetaData));
 
@@ -244,15 +246,16 @@ public class ChunkServerThread extends ServerThread {
 
 
 		chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
+		System.out.println("Write to file!");
 
-		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
-		m.chunkClass = message.chunkClass;
-		m.success = msgSuccess.REQUESTSUCCESS;
-
-		//appending on
-		WritePersistentServerNodeMap(message.chunkClass.chunkHash,message.chunkClass);
-		WriteDataToFile(current, current.data);
-		SendMessageToMaster(m);
+//		Message m = new Message(msgType.WRITETONEWFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
+//		m.chunkClass = message.chunkClass;
+//		m.success = msgSuccess.REQUESTSUCCESS;
+//
+//		//appending on
+//		WritePersistentServerNodeMap(message.chunkClass.chunkHash,message.chunkClass);
+//		WriteDataToFile(current, current.data);
+//		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 	}
 
@@ -293,7 +296,7 @@ public class ChunkServerThread extends ServerThread {
 				}
 			}
 		}
-		
+
 		if (chunkToDelete != null) {
 			chunkMap.remove(chunkToDelete);
 
@@ -353,10 +356,10 @@ public class ChunkServerThread extends ServerThread {
 						break;
 					}
 				}
-					
+
 			}
 		}
-		
+
 
 	}
 
@@ -416,7 +419,7 @@ public class ChunkServerThread extends ServerThread {
 			appendToFileSemaphore.release();
 		}
 	}
-	
+
 	/**
 	 * @param key
 	 * @param chunkmd
@@ -451,7 +454,7 @@ public class ChunkServerThread extends ServerThread {
 						+ chunkmd.listOfLocations.get(i).chunkPort + "\t"
 						+ chunkmd.listOfLocations.get(i).byteOffset + "\t"
 						+ chunkmd.listOfLocations.get(i).fileNumber + "\t");
-			
+
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
@@ -476,39 +479,39 @@ public class ChunkServerThread extends ServerThread {
 		}
 	}
 
-/**
- * @param file
- * @param data
- */
-public void WriteDataToFile(TFSFile file, byte[] data)
-{
-	//BufferedWriter out = null;
-	fileWriteSemaphore.tryAcquire();
-	OutputStream os = null;
-	try{
-		os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
-		os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
-		os.write(data);
-		os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
-	}
-	catch (IOException e)
+	/**
+	 * @param file
+	 * @param data
+	 */
+	public void WriteDataToFile(TFSFile file, byte[] data)
 	{
-		System.err.println("Error: " + e.getMessage());
-	}
-	finally
-	{
-		try {
-			os.close();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		//BufferedWriter out = null;
+		fileWriteSemaphore.tryAcquire();
+		OutputStream os = null;
+		try{
+			os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber),true);//"dataStorage/File"+file.fileNumber+".txt"));
+			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
+			os.write(data);
+			os.write(ByteBuffer.allocate(4).putInt(file.spaceOccupied).array());
 		}
-		fileWriteSemaphore.release();
+		catch (IOException e)
+		{
+			System.err.println("Error: " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				os.close();
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			fileWriteSemaphore.release();
+		}
 	}
-}
-	
-	
+
+
 	/**
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
 	 */
@@ -563,7 +566,7 @@ public void WriteDataToFile(TFSFile file, byte[] data)
 				}
 			}
 		}
-		
+
 	}
 
 	public void ReplacingData(SOSMessage msg) //MESSAGE THAT COMES FROM CHUNKSERVER TO GIVE DATA
@@ -634,12 +637,12 @@ public void WriteDataToFile(TFSFile file, byte[] data)
 						return;
 					}
 				}
-					
+
 			}
 		}
 
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -690,7 +693,7 @@ public void WriteDataToFile(TFSFile file, byte[] data)
 	public void SendMessageToMaster(Message message) {
 		server.SendMessage(message);
 	}
-	
-	
-	
+
+
+
 }
