@@ -16,6 +16,7 @@ public class ClientServerThread extends ServerThread {
 	}
 
 	public void DealWithMessage(Message message) {
+		System.out.println("YOU GOT MESSAGE. Type = "+message.type.toString());
 //		if(!messageList.isEmpty()) {
 //			messageList.add(message);
 			if (message.type == msgType.DELETEDIRECTORY) {
@@ -79,6 +80,7 @@ public class ClientServerThread extends ServerThread {
 			}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
 				server.ExpectChunkNumberForRead(message.expectNumChunkForRead);
 			} else if (message.type == msgType.WRITETONEWFILE) {
+				System.out.println("Got the return message from client!");
 				server.CWriteToNewFile2(message);
 
 				// Supposedly going to cache it. Implementation will be completed

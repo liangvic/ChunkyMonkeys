@@ -43,10 +43,11 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
+		System.out.println("Sending message "+message.type+ " to "+message.receiverIP);
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
-
+				out.flush();
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
