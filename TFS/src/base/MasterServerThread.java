@@ -72,6 +72,7 @@ public class MasterServerThread extends ServerThread {
 			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
 			{
 				//TODO: finished with the sending of data -- release semaphore-kind of thing?
+
 			}
 		}
 		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
@@ -356,6 +357,7 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void SendMessageToChunkServer(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
+		//TODO: CHeck message integrity
 		server.SendMessage(message);
 	}
 

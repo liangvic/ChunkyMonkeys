@@ -20,7 +20,6 @@ public class ClientServerNode extends ServerNode {
 
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
-	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	//Semaphore action = new Semaphore(1, true);
 	Timer timer = new Timer();
 
@@ -39,8 +38,7 @@ public class ClientServerNode extends ServerNode {
 	int chunkCountToExpect = 99; // TODO: remove
 	int chunkReadsRecieved = 0; // TODO: remove
 	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
-	String hostName = "68.181.174.149";
-	int portNumber = 8111;
+
 
 	/**
 	 * @throws Exception
@@ -55,6 +53,7 @@ public class ClientServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
 				System.out.println("Recieved message from " + otherSocket.getInetAddress());
+				TestInterface();
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
 				
@@ -241,15 +240,15 @@ public class ClientServerNode extends ServerNode {
 		 * @param nFiles
 		 */
 		public void test2(String filepath, int nFiles) {
-			//TODO: FIX THE COMMENT BELOW
-			/*if (master.NamespaceMap.get(filepath) != null) {
-			if (master.NamespaceMap.get(filepath).children.size() > 0) {
-				List<String> childs = master.NamespaceMap.get(filepath).children;
-				for (int a = 0; a < childs.size(); a++) {
-					test2helper(childs.get(a), nFiles);
+			if (NamespaceMap.get(filepath) != null) {
+				if (NamespaceMap.get(filepath).children.size() > 0) {
+					System.out.println("Finding the children!");
+					List<String> childs = NamespaceMap.get(filepath).children;
+					for (int a = 0; a < childs.size(); a++) {
+						test2helper(childs.get(a), nFiles);
+					}
 				}
 			}
-		}*/
 
 			for (int i = 1; i <= nFiles; i++) {
 				try {
@@ -267,27 +266,25 @@ public class ClientServerNode extends ServerNode {
 		 * @param nFiles
 		 */
 		public void test2helper(String filepath, int nFiles) {
-
 			String filename = "File";
-			//TODO: FIX THIS COMMENT BELOW
-			/*if (master.NamespaceMap.get(filepath) != null) {
-			if (master.NamespaceMap.get(filepath).type != nodeType.FILE) {
-				if (master.NamespaceMap.get(filepath).children.size() > 0) {
-					List<String> childs = master.NamespaceMap.get(filepath).children;
-					for (int a = 0; a < childs.size(); a++) {
-						test2helper(childs.get(a), nFiles);
+			if (NamespaceMap.get(filepath) != null) {
+				if (NamespaceMap.get(filepath).type != nodeType.FILE) {
+					if (NamespaceMap.get(filepath).children.size() > 0) {
+						List<String> childs = NamespaceMap.get(filepath).children;
+						for (int a = 0; a < childs.size(); a++) {
+							test2helper(childs.get(a), nFiles);
+						}
+					}
+				}
+
+				for (int i = 1; i <= nFiles; i++) {
+					try {
+						CCreateFile(filepath, (String) (filename + i));
+					} catch (Exception e) {
+						System.out.println("Unable to create files");
 					}
 				}
 			}
-
-			for (int i = 1; i <= nFiles; i++) {
-				try {
-					CCreateFile(filepath, (String) (filename + i));
-				} catch (Exception e) {
-					System.out.println("Unable to create files");
-				}
-			}
-		}*/
 
 		}
 
@@ -303,6 +300,7 @@ public class ClientServerNode extends ServerNode {
 			message.fileName = fileName;
 			message.addressedTo = serverType.MASTER;
 			message.sender = serverType.CLIENT;
+			System.out.println("Sending message to create file");
 			try {
 				SendMessageToMaster(message);
 			} catch (Exception e) {
@@ -352,6 +350,7 @@ public class ClientServerNode extends ServerNode {
 			String parentfilepath = "1";
 			int folderName = 2;
 			String newfilepath = parentfilepath + "\\" + folderName;
+			
 			int subDirectoryCounter = 0;
 			while(folderName<=NumFolders){
 				subDirectoryCounter++;
@@ -359,6 +358,7 @@ public class ClientServerNode extends ServerNode {
 					subDirectoryCounter=1;
 					//				parentfilepath = newfilepath;
 					parentfilepath = queue.get(0);
+					
 					for(int i=1;i<queue.size();i++){
 						queue.set(i-1,  queue.get(i));
 					}
@@ -366,6 +366,17 @@ public class ClientServerNode extends ServerNode {
 				}
 
 				newfilepath = parentfilepath + "\\" + folderName;
+				
+				NamespaceNode nn = new NamespaceNode(nodeType.DIRECTORY);
+				NamespaceMap.put(newfilepath, nn);
+				System.out.println("Added " + newfilepath + "to the map");
+				if(NamespaceMap.containsKey(parentfilepath))
+				{
+					NamespaceMap.get(parentfilepath).children.add(newfilepath);
+				}
+				System.out.println("Added " + newfilepath + "to " + parentfilepath + "as child");
+				
+				
 				final String finalFilePath = newfilepath;
 				timer.schedule(new TimerTask() {
 					@Override
@@ -431,7 +442,19 @@ public class ClientServerNode extends ServerNode {
 		public void helper(String parentfilepath, final int folderName, final int NumMaxFolders) {
 			if (folderName <= NumMaxFolders) {
 				final String newfilepath = parentfilepath + "\\" + folderName;
+				
+				NamespaceNode nn = new NamespaceNode(nodeType.DIRECTORY);
+				NamespaceMap.put(newfilepath, nn);
+				System.out.println("Added " + newfilepath + "to the map");
+				if(NamespaceMap.containsKey(parentfilepath))
+				{
+					NamespaceMap.get(parentfilepath).children.add(newfilepath);
+				}
+				
+				System.out.println("Added " + newfilepath + "to " + parentfilepath + "as child");
+				
 				CCreateDirectory(newfilepath);
+
 				timer.schedule(new TimerTask() {
 					@Override
 					public void run() {
