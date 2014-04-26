@@ -51,8 +51,8 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public MasterServerNode(String ip, int inPort, int outPort) {
-		super(ip, inPort, outPort);
+	public MasterServerNode(String ip, int inPort) {
+		super(ip, inPort);
 		myType = serverType.MASTER;
 
 		LoadChunkServerMap();
@@ -89,7 +89,7 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = serverSocket.accept();
 
-				System.out.println("Recieved Messagr from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
+				System.out.println("Recieved Message from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
 
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
@@ -242,45 +242,51 @@ public class MasterServerNode extends ServerNode {
 				} else {
 					type = nodeType.FILE;
 				}
-				
-				for (int i = 3; i < 3 + Integer.parseInt(data[2]); i=i+2) {
-					children.add(data[i]);
-				}
-				
-				int newIndex = 3 + Integer.parseInt(data[2]);
-				for (int i = newIndex + 1; i < newIndex + 1 + Integer.parseInt(data[newIndex])*2;i++)
+				if(data.length > 2) //if there are children
 				{
-					lockEnum = data[i];
-					if(lockEnum.equals("NONE"))
-					{
-						lType = lockType.NONE;
+					for (int i = 3; i < 3 + Integer.parseInt(data[2]); i++) {
+						children.add(data[i]);
 					}
-					else if(lockEnum.equals("I_SHARED"))
+					
+					if(data.length > 3 + Integer.parseInt(data[2])) //if there are locks
 					{
-						lType = lockType.I_SHARED;
+						int newIndex = 3 + Integer.parseInt(data[2]);
+						for (int i = newIndex + 1; i < newIndex + 1 + Integer.parseInt(data[newIndex])*2;i++)
+						{
+							lockEnum = data[i];
+							if(lockEnum.equals("NONE"))
+							{
+								lType = lockType.NONE;
+							}
+							else if(lockEnum.equals("I_SHARED"))
+							{
+								lType = lockType.I_SHARED;
+							}
+							else if(lockEnum.equals("I_EXCLUSIVE"))
+							{
+								lType = lockType.I_EXCLUSIVE;
+							}
+							else if(lockEnum.equals("SHARED"))
+							{
+								lType = lockType.SHARED;
+							}
+							else if(lockEnum.equals("EXCLUSIVE"))
+							{
+								lType = lockType.EXCLUSIVE;
+							}
+							opID = Integer.parseInt(data[i+1]);
+							tempLockList.add(new lockInfo(lType,opID));
+						}
 					}
-					else if(lockEnum.equals("I_EXCLUSIVE"))
-					{
-						lType = lockType.I_EXCLUSIVE;
-					}
-					else if(lockEnum.equals("SHARED"))
-					{
-						lType = lockType.SHARED;
-					}
-					else if(lockEnum.equals("EXCLUSIVE"))
-					{
-						lType = lockType.EXCLUSIVE;
-					}
-					opID = Integer.parseInt(data[i+1]);
-					tempLockList.add(new lockInfo(lType,opID));
-				}
-				
-				NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
-				addingNode.children = children;
-				addingNode.type = type;
-				addingNode.lockList = tempLockList;
+					
+					NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
+					addingNode.children = children;
+					addingNode.type = type;
+					addingNode.lockList = tempLockList;
 
-				NamespaceMap.put(key, addingNode);
+					NamespaceMap.put(key, addingNode);
+				}
+
 			}
 
 		} catch (FileNotFoundException e) {
@@ -357,7 +363,7 @@ public class MasterServerNode extends ServerNode {
 					+ i + "_SERVER_INPORT"));
 			ServerData temp = new ServerData(IP, clientPort, serverPort);
 			ServerMap.put(IP, temp);
-			System.out.println("Server at IP " + IP + " added to network");
+			System.out.print("Server at IP " + IP + " added to network:");
 			System.out.println("ClientPort: " + clientPort + "\t ServerPort: "
 					+ serverPort);
 		}

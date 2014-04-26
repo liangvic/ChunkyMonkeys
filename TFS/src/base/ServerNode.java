@@ -13,21 +13,19 @@ public class ServerNode {
 	protected 
 	String myIP;
 	int myInputPortNumber; 
-	static int myOutputPortNumber;
 	serverType myType;
 	//int targetPortNumber;	
 
-	public ServerNode(String ip, int inPort, int outPort){
+	public ServerNode(String ip, int inPort){
 		myIP = ip;
 		myInputPortNumber = inPort;
-		myOutputPortNumber = outPort;
 	}
 	public String toString(){
 		String type = "";
 		if (myType == serverType.CHUNKSERVER) type = "ChunkServer";
 		if (myType == serverType.MASTER) type = "Master";
 		if (myType == serverType.CLIENT) type = "Client";
-		type = type + ": IP " + myIP + " inputPort: " + myInputPortNumber + " outputPort: " + myOutputPortNumber;
+		type = type + ": IP " + myIP + " inputPort: " + myInputPortNumber;
 		System.out.println(type);
 		return type;
 	}
@@ -43,9 +41,16 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
+		System.out.println("Sending message "+message.type+ " to IP "+message.receiverIP);
+		System.out.println("	Addressed to: "+message.addressedTo);
+		System.out.println("	Sender: "+message.sender);
+		System.out.println("	Reciever Ip "+message.receiverIP);
+		System.out.println("	Sender Ip "+message.senderIP);
+		System.out.println(message.receiverInputPort);
+		System.out.println(message.senderInputPort);
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
-				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
-				out.writeObject(message);
+			ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
+			out.writeObject(message);
 
 		}
 		catch (IOException e){
@@ -59,7 +64,7 @@ public class ServerNode {
 
 		//if created new message, don't flip addressing data
 		System.out.println("Sending message to " + socket.getInetAddress() + " port " + socket.getLocalPort() + " " + socket.getPort());
-		
+
 		try
 		{
 			Message message = new Message(myIP,myType,myInputPortNumber,smessage.senderIP,smessage.sender,smessage.senderInputPort);

@@ -24,9 +24,9 @@ public class ClientServerNode extends ServerNode {
 	//Semaphore action = new Semaphore(1, true);
 	Timer timer = new Timer();
 
-	public ClientServerNode(String ip, int inPort, int outPort)
+	public ClientServerNode(String ip, int inPort)
 	{
-		super(ip, inPort, outPort);
+		super(ip, inPort);
 		
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
