@@ -28,11 +28,8 @@ public class MasterServerNode extends ServerNode {
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
-	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
-
-	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 
 
 	public class ServerData {
@@ -51,8 +48,8 @@ public class MasterServerNode extends ServerNode {
 		}
 	}
 
-	public MasterServerNode(String ip, int inPort, int outPort) {
-		super(ip, inPort, outPort);
+	public MasterServerNode(String ip, int inPort) {
+		super(ip, inPort);
 		myType = serverType.MASTER;
 
 		LoadChunkServerMap();
@@ -89,7 +86,7 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = serverSocket.accept();
 
-				System.out.println("Recieved Messagr from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
+				System.out.println("Recieved Message from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
 
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
@@ -363,7 +360,7 @@ public class MasterServerNode extends ServerNode {
 					+ i + "_SERVER_INPORT"));
 			ServerData temp = new ServerData(IP, clientPort, serverPort);
 			ServerMap.put(IP, temp);
-			System.out.println("Server at IP " + IP + " added to network");
+			System.out.print("Server at IP " + IP + " added to network:");
 			System.out.println("ClientPort: " + clientPort + "\t ServerPort: "
 					+ serverPort);
 		}

@@ -42,8 +42,7 @@ public class launch {
 			Config.prop.load(new FileInputStream("config/config.properties"));
 			String myIP = Config.prop.getProperty("MASTERIP");
 			int inPortNumber = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
-			int outPortNumber = Integer.parseInt(Config.prop.getProperty("MASTER_OUTPORT"));
-			MasterServerNode master = new MasterServerNode(myIP, inPortNumber, outPortNumber); 
+			MasterServerNode master = new MasterServerNode(myIP, inPortNumber); 
 			master.main();
 		}
 		else if (input == 2){
@@ -52,8 +51,7 @@ public class launch {
 			Config.prop.load(new FileInputStream("config/config.properties"));
 			String IPkey = Config.prop.getProperty("IP" + Integer.toString(input));
 			String inPortNumber = Config.prop.getProperty("PORT" + Integer.toString(input) + "_CLIENT_INPORT");
-			String outPortNumber = Config.prop.getProperty("PORT" + Integer.toString(input) + "_CLIENT_OUTPORT");
-			ClientServerNode client = new ClientServerNode(IPkey, Integer.parseInt(inPortNumber), Integer.parseInt(outPortNumber)); 
+			ClientServerNode client = new ClientServerNode(IPkey, Integer.parseInt(inPortNumber)); 
 			client.main();
 		}
 		else if (input == 3){
@@ -62,8 +60,7 @@ public class launch {
 			Config.prop.load(new FileInputStream("config/config.properties"));
 			String IPkey = Config.prop.getProperty("IP" + Integer.toString(input));
 			String inPortNumber = Config.prop.getProperty("PORT" + Integer.toString(input) + "_SERVER_INPORT");
-			String outPortNumber = Config.prop.getProperty("PORT" + Integer.toString(input) + "_SERVER_OUTPORT");
-			ChunkServerNode chunkServer = new ChunkServerNode(IPkey, Integer.parseInt(inPortNumber), Integer.parseInt(outPortNumber));
+			ChunkServerNode chunkServer = new ChunkServerNode(IPkey, Integer.parseInt(inPortNumber));
 			chunkServer.main();
 		}
 		else{

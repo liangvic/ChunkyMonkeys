@@ -83,6 +83,7 @@ public class MasterServerThread extends ServerThread {
 			} else {
 				// SendErrorMessageToClient();
 			}
+
 		} else if (inputMessage.type == msgType.CREATEDIRECTORY) {
 			if (inputMessage.sender == serverType.CLIENT) {
 				try {
@@ -93,25 +94,11 @@ public class MasterServerThread extends ServerThread {
 			} else if (inputMessage.sender == serverType.CHUNKSERVER) {
 				RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
 				if (inputMessage.success == msgSuccess.REQUESTSUCCESS) {
-					// SendSuccessMessageToClient();
+					SendSuccessMessageToClient(inputMessage);
 				} else {
-					// SendErrorMessageToClient();
+					SendErrorMessageToClient(inputMessage);
 				}
-			} 
-		}
-		else if (inputMessage.type == msgType.CREATEFILE) {
-			if (inputMessage.sender == serverType.CLIENT)
-				CreateFile(inputMessage, server.operationID);
-			else if (inputMessage.sender == serverType.CHUNKSERVER) {
-				RemoveParentLocks(inputMessage.filePath,inputMessage.opID);
-				if (inputMessage.success == msgSuccess.REQUESTSUCCESS)
-					System.out.println("File "
-							+ inputMessage.chunkClass.filename
-							+ " creation successful");
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File "
-							+ inputMessage.chunkClass.filename
-							+ " creation failed");
+
 			}
 		} else if (inputMessage.type == msgType.READFILE) {
 			if(inputMessage.sender == serverType.CLIENT)
@@ -369,6 +356,7 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void SendMessageToChunkServer(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
+		//TODO: CHeck message integrity
 		server.SendMessage(message);
 	}
 
@@ -749,7 +737,7 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void CreateDirectory(Message message, int opID) {
 		String filepath = message.filePath;
-		System.out.println("Trying to create filename: "+message.fileName + "with file path: "+message.filePath);
+		System.out.println("Trying to create file path: "+ message.filePath);
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
 			if(true)//AddExclusiveParentLocks(filepath, opID))
 			{
@@ -782,7 +770,7 @@ public class MasterServerThread extends ServerThread {
 				tfsLogger.LogMsg("Created directory " + filepath);
 
 				WritePersistentNamespaceMap(filepath, newNode);
-				System.out.println("output " + opID);
+				System.out.println("OPID " + opID + " Finished");
 			}
 			/*else
 			{

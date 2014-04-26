@@ -1,11 +1,14 @@
 package base;
 
+import java.io.File;
 import java.net.Socket;
 
 import Utility.Message;
+import Utility.NamespaceNode;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
+import Utility.NamespaceNode.nodeType;
 
 public class ClientServerThread extends ServerThread {
 	ClientServerNode server;
@@ -29,6 +32,10 @@ public class ClientServerThread extends ServerThread {
 			else if (message.type == msgType.CREATEDIRECTORY) {
 				if(message.success == msgSuccess.REQUESTSUCCESS) {
 					System.out.println("Successfully created directory "+message.filePath);
+					/*NamespaceNode nn = new NamespaceNode(nodeType.DIRECTORY);
+					server.NamespaceMap.put(message.filePath, nn);
+					File file = new File(message.filePath);
+					server.NamespaceMap.get(file.getParent()).children.add(message.filePath);*/
 				}
 				else {
 					System.out.println("Failed to create directory "+message.filePath);
@@ -37,6 +44,10 @@ public class ClientServerThread extends ServerThread {
 			else if (message.type == msgType.CREATEFILE) {
 				if(message.success == msgSuccess.REQUESTSUCCESS) {
 					System.out.println("Successfully created file "+message.filePath);
+					/*NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+					server.NamespaceMap.put(message.filePath, nn);
+					File file = new File(message.filePath);
+					server.NamespaceMap.get(file.getParent()).children.add(message.filePath);*/
 				}
 				else {
 					System.out.println("Failed to create file "+message.filePath);

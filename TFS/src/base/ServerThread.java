@@ -15,7 +15,6 @@ import Utility.Message.serverType;
 public abstract class ServerThread extends Thread {
 	ServerNode server;
 	Socket socket;
-	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
@@ -29,14 +28,14 @@ public abstract class ServerThread extends Thread {
 			Message incoming = (Message)in.readObject();
 			
 			if(incoming != null) {
-				messageList.add(incoming);
+				server.messageList.add(incoming);
 				DealWithMessage(incoming);
 			}
 			
-			long time = System.currentTimeMillis();
+			//long time = System.currentTimeMillis();
             //in.close();
             //out.close();
-            System.out.println("Request processed: " + time);
+           // System.out.println("Request processed: " + time);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
