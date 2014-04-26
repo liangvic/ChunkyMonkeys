@@ -37,8 +37,7 @@ public class ClientServerNode extends ServerNode {
 	int chunkCountToExpect = 99; // TODO: remove
 	int chunkReadsRecieved = 0; // TODO: remove
 	List<Byte> readFileData = Collections.synchronizedList(new ArrayList<Byte>());
-	String hostName = "68.181.174.149";
-	int portNumber = 8111;
+
 
 	/**
 	 * @throws Exception

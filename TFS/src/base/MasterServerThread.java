@@ -356,6 +356,7 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void SendMessageToChunkServer(Message message) {
 		//MESSAGE MUST HAVE IP and Socket Number
+		//TODO: CHeck message integrity
 		server.SendMessage(message);
 	}
 
