@@ -51,7 +51,7 @@ public class launch {
 			Config.prop.load(new FileInputStream("config/config.properties"));
 			String IPkey = Config.prop.getProperty("IP" + Integer.toString(input));
 			String inPortNumber = Config.prop.getProperty("PORT" + Integer.toString(input) + "_CLIENT_INPORT");
-			ClientServerNode client = new ClientServerNode(IPkey, Integer.parseInt(inPortNumber)); 
+			ClientServerNode client = new ClientServerNode(IPkey, Integer.parseInt(inPortNumber));
 			client.main();
 		}
 		else if (input == 3){

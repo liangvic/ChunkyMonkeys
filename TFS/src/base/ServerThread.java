@@ -9,8 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 import Utility.Message;
-import Utility.Message.msgType;
-import Utility.Message.serverType;
 
 public abstract class ServerThread extends Thread {
 	ServerNode server;
