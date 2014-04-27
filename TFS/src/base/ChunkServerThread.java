@@ -133,26 +133,33 @@ public class ChunkServerThread extends ServerThread {
 		{
 			int offSetIndex = -1;
 			
-			ChunkMetadata current = message.chunkClass;
-			for (ChunkLocation a : current.listOfLocations){
-				if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
-					offSetIndex = a.byteOffset;
-				}
-			}
+			ChunkMetadata current = chunkMap.get(message.chunkClass.chunkHash);
+			
+			//offSetIndex = 4;
 			
 			for(TFSFile fileData:file_list){
 				System.out.println("ChunkServer: Looking at file "+fileData.fileNumber + " looking for file " + message.chunkClass.filenumber);
 				if(message.chunkClass.filenumber == fileData.fileNumber){
+					for (ChunkLocation a : current.listOfLocations){
+						System.out.println("myIP:" + myIP + " myPort:" + myInputPortNumber);
+						System.out.println("chunkIP:" + a.chunkIP + " chunkPort:" + a.chunkPort);
+						if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+							System.out.println("Fixing the byteoffset to be " + a.byteOffset);
+							offSetIndex = a.byteOffset;
+						}
+					}
+					
+					
 					System.out.println("ChunkServer: Available free byte size: "+(fileData.data.length-fileData.spaceOccupied));
 					System.out.println("ChunkServer: Reading from file number "+message.chunkClass.filenumber);
 					System.out.println("ChunkServer: Reading array size is "+message.chunkClass.size +" with byteoffset: "+ offSetIndex);
 					System.out.println("ChunkServer: File data occupied space: "+fileData.spaceOccupied);
 
 
-					byte[] dataINeed = new byte[message.chunkClass.size+4];
+					byte[] dataINeed = new byte[fileData.spaceOccupied-8];//message.chunkClass.size];
 					// check byte offset
 					
-					for (int i = 0; i < message.chunkClass.size; i++) {
+					for (int i = 0; i < fileData.spaceOccupied-8; i++) {
 						dataINeed[i] = fileData.data[offSetIndex];
 						offSetIndex++;
 					}
@@ -172,6 +179,7 @@ public class ChunkServerThread extends ServerThread {
 					m.filePath = message.filePath;
 					m.fileName = message.fileName;
 					m.fileData = dataINeed;
+			
 					
 					SendMessageToClient(m);
 
@@ -266,13 +274,15 @@ public class ChunkServerThread extends ServerThread {
 
 				System.out.println("assigning chunk loc");
 
-				chunkloc = a;
+				//chunkloc = a;
+				a.byteOffset = current.spaceOccupied;
 			}
 		}
-		System.out.println(chunkloc.byteOffset);
+		
 		System.out.println(current.spaceOccupied);
 		
-		chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
+		//chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
+		//System.out.println("byteOffset: " + chunkloc.byteOffset);
 		//message.chunkClass.listOfLocations.get(0).byteOffset = current.spaceOccupied;
 		message.chunkClass.size = message.fileData.length;
 
