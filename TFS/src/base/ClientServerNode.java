@@ -541,11 +541,11 @@ public class ClientServerNode extends ServerNode {
 			
 			System.out.println("Writing chunks to "+msg.chunkClass.listOfLocations.size()+" replica(s)");
 			for(int j=0;j<msg.chunkClass.listOfLocations.size();j++){
-//				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
-//				msg.receiverInputPort = msg.chunkClass.listOfLocations.get(j).chunkPort;
+				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
+				msg.receiverInputPort = msg.chunkClass.listOfLocations.get(j).chunkPort;
 				//Testing Hack
-				msg.receiverIP = "68.181.174.75";//"68.181.174.61";
-				msg.receiverInputPort =4040;//5060;
+				//msg.receiverIP = "68.181.174.61";
+				//msg.receiverInputPort = 7070;
 				System.out.println("Sending message to ip: "+msg.receiverIP+" port: "+msg.receiverInputPort);
 				SendMessageToChunkServer(msg);
 			}

@@ -76,7 +76,8 @@ public class MasterServerNode extends ServerNode {
 					for (Map.Entry<String, ServerData> entry : ServerMap.entrySet())
 					{
 						ServerData temp = entry.getValue();
-						/*temp.TTL+=1;
+						/*ServerData temp = entry.getValue();
+						temp.TTL+=1;
 						if (temp.TTL >= 10 && temp.status == serverStatus.ALIVE)
 							temp.status = serverStatus.DEAD;*/
 
