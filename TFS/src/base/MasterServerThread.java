@@ -64,7 +64,7 @@ public class MasterServerThread extends ServerThread {
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
-			
+			SetChunkServerAlive(inputMessage.senderIP);
 		}
 		else if(inputMessage instanceof SOSMessage)
 		{
@@ -586,12 +586,20 @@ public class MasterServerThread extends ServerThread {
 			}
 			//Random replica assignment
 			int chunkServerAssignment = 0;
+			int maxAttempts = 3; //TODO: DETERMINE IF NEED
+			int currentAttemptNum = 0;
 			System.out.println("Selecting "+inputMessage.replicaCount+" replicas");
 			while(replicaList.size()<inputMessage.replicaCount){
 				chunkServerAssignment = rand.nextInt(4);
-				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))){
+				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))){ //TODO: CHECK IF THIS IS CORRECT
 					replicaList.add(allAvailableServerList.get(chunkServerAssignment));
 					System.out.println("	selected replica "+allAvailableServerList.get(chunkServerAssignment).IP);
+				}
+				currentAttemptNum++;
+				if(currentAttemptNum == maxAttempts)
+				{
+					System.out.println("Could only create " + replicaList.size() + " instead of " + inputMessage.replicaCount);
+					break;
 				}
 			}
 			int[] replicaListLargestOffset = new int[replicaList.size()];

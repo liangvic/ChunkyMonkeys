@@ -16,6 +16,7 @@ public class ChunkLocation implements Serializable{
 	{
 		chunkIP = ip;
 		chunkPort = port;
+		byteOffset = 0;
 	}
 	
 	public ChunkLocation(String ip, int port, 
