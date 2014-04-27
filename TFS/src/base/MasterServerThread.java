@@ -55,7 +55,7 @@ public class MasterServerThread extends ServerThread {
 		fileWriteSemaphore = server.fileWriteSemaphore;
 		chunkServerMap = server.chunkServerMap;
 		ServerMap = server.ServerMap;
-		tfsLogger = server.tfsLogger;
+		tfsLogger = server.logger;
 		myIP = server.myIP;
 	}
 
@@ -75,6 +75,7 @@ public class MasterServerThread extends ServerThread {
 			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
 			{
 				//TODO: finished with the sending of data -- release semaphore-kind of thing?
+
 			}
 		}
 		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
@@ -437,45 +438,48 @@ public class MasterServerThread extends ServerThread {
 	 * @param startingNodeFilePath
 	 */
 	public void deleteAllChildNodes(String startingNodeFilePath, Message msg) {
-		if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
-			// initially start at chunk index 1
-			int chunkIndex = 1;
-			String chunkServerKey = startingNodeFilePath + chunkIndex;
+		if(NamespaceMap.containsKey(startingNodeFilePath))
+		{
+			if (NamespaceMap.get(startingNodeFilePath).children.size() == 0) {
+				// initially start at chunk index 1
+				int chunkIndex = 1;
+				String chunkServerKey = startingNodeFilePath + chunkIndex;
 
-			// Send message to client server to erase data IF IS FILE
-			if (NamespaceMap.get(startingNodeFilePath).type == nodeType.FILE) {
-				while (chunkServerMap.containsKey(chunkServerKey)) {
-					// System.out.println("Going to delete the value");
-					// sending protocol
-					//TODO: send delete message to respective server
-					//		ChunkMetadata metadata = chunkServerMap.get(chunkServerKey);
-					//		String rip = metadata.listOfLocations.
-					//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
-					//		chunkMessage.chunkClass = chunkServerMap
-					//				.get(chunkServerKey);
-					//AAA		SendMessageToChunkServer(chunkMessage);
+				// Send message to client server to erase data IF IS FILE
+				if (NamespaceMap.get(startingNodeFilePath).type == nodeType.FILE) {
+					while (chunkServerMap.containsKey(chunkServerKey)) {
+						// System.out.println("Going to delete the value");
+						// sending protocol
+						//TODO: send delete message to respective server
+						//		ChunkMetadata metadata = chunkServerMap.get(chunkServerKey);
+						//		String rip = metadata.listOfLocations.
+						//		Message chunkMessage = new Message(myIP, myType, myPortNumber, rip, 
+						//		chunkMessage.chunkClass = chunkServerMap
+						//				.get(chunkServerKey);
+						//AAA		SendMessageToChunkServer(chunkMessage);
 
-					// delete the file from master's chunk server map
-					chunkServerMap.remove(chunkServerKey);
+						// delete the file from master's chunk server map
+						chunkServerMap.remove(chunkServerKey);
 
-					// increment for checking if there are more chunks
-					chunkIndex++;
-					chunkServerKey = startingNodeFilePath + chunkIndex;
+						// increment for checking if there are more chunks
+						chunkIndex++;
+						chunkServerKey = startingNodeFilePath + chunkIndex;
+					}
 				}
-			}
 
-			// remove the FILE or DIRECTORY from namespace map
-			NamespaceMap.remove(startingNodeFilePath);
-			// tfsLogger.LogMsg("Created file " + startingNodeFilePath);
-			return;
-		} else {
-			for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children
-					.size(); i++) {
-				deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children
-						.get(i),msg);
+				// remove the FILE or DIRECTORY from namespace map
+				NamespaceMap.remove(startingNodeFilePath);
+				// tfsLogger.LogMsg("Created file " + startingNodeFilePath);
+				return;
+			} else {
+				for (int i = 0; i < NamespaceMap.get(startingNodeFilePath).children
+						.size(); i++) {
+					deleteAllChildNodes(NamespaceMap.get(startingNodeFilePath).children
+							.get(i),msg);
+				}
+				NamespaceMap.get(startingNodeFilePath).children.clear();
+				NamespaceMap.remove(startingNodeFilePath);
 			}
-			NamespaceMap.get(startingNodeFilePath).children.clear();
-			NamespaceMap.remove(startingNodeFilePath);
 		}
 	}
 
@@ -557,7 +561,7 @@ public class MasterServerThread extends ServerThread {
 				ChunkMetadata testExistence = chunkServerMap.get(hashstring);
 				if(testExistence != null)
 				{
-					//System.out.println("MSN AssignChunkServer: Filepath exists.");
+					System.out.println("MSN AssignChunkServer: Filepath exists.");
 					return;
 				}
 			}
@@ -565,7 +569,7 @@ public class MasterServerThread extends ServerThread {
 
 			int targetFileNumber = rand.nextInt(5);
 
-
+			System.out.println("Target file number to input = "+targetFileNumber);
 			//Assigns a file number from 0 - 4
 
 
@@ -574,16 +578,21 @@ public class MasterServerThread extends ServerThread {
 
 
 			//Get information about all chunkservers
-
+			System.out.println("Getting all ip");
 			for(String ip:ServerMap.keySet()){
 				allAvailableServerList.add(ServerMap.get(ip));
+				System.out.println("	Added "+ip);
+				
 			}
 			//Random replica assignment
 			int chunkServerAssignment = 0;
+			System.out.println("Selecting "+inputMessage.replicaCount+" replicas");
 			while(replicaList.size()<inputMessage.replicaCount){
 				chunkServerAssignment = rand.nextInt(4);
-				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment)))
+				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))){
 					replicaList.add(allAvailableServerList.get(chunkServerAssignment));
+					System.out.println("	selected replica "+allAvailableServerList.get(chunkServerAssignment).IP);
+				}
 			}
 			int[] replicaListLargestOffset = new int[replicaList.size()];
 			Arrays.fill(replicaListLargestOffset, 0);
@@ -630,7 +639,6 @@ public class MasterServerThread extends ServerThread {
 			
 			//Sending a create file for each replica
 			for(int i = 0;i<replicaList.size();i++){
-
 				
 			}
 			//create a new namespace node

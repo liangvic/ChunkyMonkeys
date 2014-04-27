@@ -29,7 +29,7 @@ public class MasterServerNode extends ServerNode {
 	int chunksNeedToBeChecked = 0;
 	Map<String, ChunkMetadata> chunkServerMap = Collections.synchronizedMap(new HashMap<String, ChunkMetadata>());
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
-	TFSLogger tfsLogger = new TFSLogger();
+	public static TFSLogger logger = new TFSLogger();
 	String myIP;
 
 	public class ServerData {
@@ -276,7 +276,6 @@ public class MasterServerNode extends ServerNode {
 							tempLockList.add(new lockInfo(lType,opID));
 						}
 					}
-					
 					NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
 					addingNode.children = children;
 					addingNode.type = type;
@@ -354,7 +353,7 @@ public class MasterServerNode extends ServerNode {
 
 	public void LoadServerData() {
 		//TODO: change back to 5 as last boundary. changed to 6 for testing purposes
-		for (int i = 2; i <= 6; i++) {
+		for (int i = 2; i <= 5; i++) {
 			String IP = Config.prop.getProperty("IP" + i);
 			int clientPort = Integer.parseInt(Config.prop.getProperty("PORT"
 					+ i + "_CLIENT_INPORT"));

@@ -21,6 +21,7 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 	//Semaphore action = new Semaphore(1, true);
+	Timer timer = new Timer();
 
 
 	public ClientServerNode(String ip, int inPort)
@@ -223,15 +224,12 @@ public class ClientServerNode extends ServerNode {
 		CDeleteDirectory(filepath);
 	}
 
-
 	/**
 	 * @param m
 	 */
 	public void msgRequestAReadToChunkserver(Message m) {
 		SendMessageToChunkServer(m);
 	}
-
-
 
 
 	/**
@@ -287,7 +285,6 @@ public class ClientServerNode extends ServerNode {
 				}
 				queue.remove(queue.size()-1);
 			}
-
 
 			newfilepath = parentfilepath + "\\" + folderName;
 
@@ -368,7 +365,6 @@ public class ClientServerNode extends ServerNode {
 		
 		
 	}
-
 
 	/**
 	 * @param parentfilepath
