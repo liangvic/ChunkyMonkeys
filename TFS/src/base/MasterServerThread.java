@@ -615,13 +615,24 @@ public class MasterServerThread extends ServerThread {
 			synchronized(replicaList) {
 				while(replicaList.size()<inputMessage.replicaCount){
 					chunkServerAssignment = rand.nextInt(4);
-					if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
-						int serverIP = chunkServerAssignment + 2;
+					int serverIP = chunkServerAssignment + 2;
+					boolean foundIP = false;
+					for(int i=0; i< replicaList.size();i++)	{
+						if(replicaList.get(i).IP.equals(Config.prop.get(("IP"+Integer.toString(serverIP))))) {
+							foundIP = true;
+						}	
+					}
+					if(!foundIP) {
 						if(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))).status == serverStatus.ALIVE){
 							replicaList.add(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))));
 							System.out.println("	selected replica "+ Config.prop.get("IP" + Integer.toString(serverIP)));
 						}
 					}
+					
+					//if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
+						
+						
+					//}
 					/*currentAttemptNum++;
 				if(currentAttemptNum == maxAttempts)
 				{
