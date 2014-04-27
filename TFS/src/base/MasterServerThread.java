@@ -797,7 +797,7 @@ public class MasterServerThread extends ServerThread {
 		String filepath = message.filePath;
 		System.out.println("Trying to create file path: "+ message.filePath);
 		if (!NamespaceMap.containsKey(filepath)) { // directory doesn't exist
-			if(true)//AddExclusiveParentLocks(filepath, opID))
+			if(AddExclusiveParentLocks(filepath, opID))
 			{
 				File path = new File(filepath);
 				String parentPath = path.getParent();
@@ -824,14 +824,12 @@ public class MasterServerThread extends ServerThread {
 
 				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
 				NamespaceMap.put(filepath, newNode);
+				
 				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created directory " + filepath);
-
-				ClearNamespaceMapFile();
-				for(Map.Entry<String, NamespaceNode> cmEntry : NamespaceMap.entrySet())
-				{
-					WritePersistentNamespaceMap(cmEntry.getKey(), cmEntry.getValue());
-				}
+				//System.out.println("Creating direcotry " + filepath);
+				//WritePersistentNamespaceMap(filepath, newNode);
+				
 				System.out.println("OPID " + opID + " Finished");
 			}
 			/*else
@@ -843,6 +841,17 @@ public class MasterServerThread extends ServerThread {
 		{
 			SendErrorMessageToClient(message);
 		}
+		
+		synchronized(NamespaceMap)
+		{
+			ClearNamespaceMapFile();
+			for(String key : NamespaceMap.keySet())
+			{
+				WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+				System.out.println("Key: " + key);
+			}
+		}
+		
 	}
 
 	/**
