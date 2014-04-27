@@ -27,7 +27,6 @@ public class ChunkMetadata implements Serializable{
 	public int referenceCount;
 	public String filename;
 	public int filenumber;
-	public int byteoffset;
 	public int index;
 	public int size;	
 
