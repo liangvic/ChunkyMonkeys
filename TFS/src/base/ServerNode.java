@@ -21,12 +21,13 @@ public class ServerNode {
 	serverType myType;
 	//int targetPortNumber;	
 
-	Map<String, NamespaceNode> NamespaceMap = new HashMap<String, NamespaceNode>();
+	Map<String, NamespaceNode> NamespaceMap = Collections.synchronizedMap(new HashMap<String, NamespaceNode>());
 	List<Message> messageList = Collections.synchronizedList(new ArrayList<Message>());
 	
 	public ServerNode(String ip, int inPort){
 		myIP = ip;
 		myInputPortNumber = inPort;
+		NamespaceMap.clear();
 	}
 	public String toString(){
 		String type = "";

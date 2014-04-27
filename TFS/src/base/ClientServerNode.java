@@ -22,11 +22,12 @@ public class ClientServerNode extends ServerNode {
 	//public ChunkServerNode chunkServer;
 	//Semaphore action = new Semaphore(1, true);
 
+
 	public ClientServerNode(String ip, int inPort)
 	{
 
 		super(ip, inPort);
-
+		
 
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
@@ -381,14 +382,14 @@ public class ClientServerNode extends ServerNode {
 
 			NamespaceNode nn = new NamespaceNode(nodeType.DIRECTORY);
 			NamespaceMap.put(newfilepath, nn);
-			System.out.println("Added " + newfilepath + "to the map");
+			System.out.println("Added " + newfilepath + " to the map");
 			if(NamespaceMap.containsKey(parentfilepath))
 			{
 				NamespaceMap.get(parentfilepath).children.add(newfilepath);
 			}
 
-			System.out.println("Added " + newfilepath + "to " + parentfilepath + "as child");
 			CCreateDirectory(newfilepath);
+			
 
 			timer.schedule(new TimerTask() {
 				@Override

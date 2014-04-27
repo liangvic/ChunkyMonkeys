@@ -27,7 +27,7 @@ public class MasterServerNode extends ServerNode {
 	Semaphore fileWriteSemaphore = new Semaphore(1, true); //TODO;
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
-	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
+	Map<String, ChunkMetadata> chunkServerMap = Collections.synchronizedMap(new HashMap<String, ChunkMetadata>());
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
 	String myIP;
