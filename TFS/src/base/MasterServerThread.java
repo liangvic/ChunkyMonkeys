@@ -854,7 +854,7 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(AddExclusiveParentLocks(message.filePath, opID))
 		{
-			ChunkMetadata chunkData = GetTFSFile(message.filePath);
+			ChunkMetadata chunkData = GetTFSFile(message, opID);
 			if(chunkData != null) {
 				message.chunkClass = chunkData;
 				//TODO: FIX THIS
@@ -875,9 +875,10 @@ public class MasterServerThread extends ServerThread {
 	 * @param filepath
 	 * @return
 	 */
-	public ChunkMetadata GetTFSFile(String filepath)
+	public ChunkMetadata GetTFSFile(Message message, int opID)
 	{
 		int index = 1;
+		String filepath = message.filePath;
 		String hashString = filepath + index;
 		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
 		{
@@ -902,23 +903,15 @@ public class MasterServerThread extends ServerThread {
 		}
 		else
 		{
-			// create file
-			NamespaceMap.put(filepath, new NamespaceNode(nodeType.FILE));
-			File filePath = new File(filepath);
-			String parentPath = filePath.getParent();
-			String parent;
-			if (parentPath == null) {
-				System.out.println("Can not find parent path");
-				return null;
-			} else {
-				parent = parentPath;
-			}
-			NamespaceMap.get(parent).children.add(filepath);
+			CreateFile(message, opID);
+			AssignChunkServer(message, opID);
+			
+			/*//Random rand = new Random();
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
-			//Random rand = new Random();
 			newChunk.filenumber = 1; //only use one for now
 			newChunk.chunkHash = hashString;
-			chunkServerMap.put(hashString, newChunk);
+			chunkServerMap.put(hashString, newChunk);*/
+			ChunkMetadata newChunk = chunkServerMap.get(hashString);
 
 			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
 			WritePersistentChunkServerMap(hashString,
