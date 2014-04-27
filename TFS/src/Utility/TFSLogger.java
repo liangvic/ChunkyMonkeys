@@ -11,10 +11,10 @@ import java.util.logging.SimpleFormatter;
  *
  */
 public class TFSLogger {
-	private final static Logger tfsLogger = Logger.getLogger(TFSLogger.class.getName());
-	private FileHandler fh;
+	public final static Logger tfsLogger = Logger.getLogger(TFSLogger.class.getName());
+	private static FileHandler fh;
 	
-	public void LogMsg(String logMsg) 
+	public static void LogMsg(String logMsg) 
 	{
 		try {
 			fh = new FileHandler("logger.log", true);

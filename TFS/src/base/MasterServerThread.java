@@ -44,7 +44,6 @@ public class MasterServerThread extends ServerThread {
 	Semaphore fileWriteSemaphore;
 	Map<String, ChunkMetadata> chunkServerMap;
 	Map<String, ServerData> ServerMap;
-	TFSLogger tfsLogger;
 	String myIP;
 
 	public MasterServerThread(MasterServerNode sn, Socket s) {
@@ -55,7 +54,6 @@ public class MasterServerThread extends ServerThread {
 		fileWriteSemaphore = server.fileWriteSemaphore;
 		chunkServerMap = server.chunkServerMap;
 		ServerMap = server.ServerMap;
-		tfsLogger = server.tfsLogger;
 		myIP = server.myIP;
 	}
 
@@ -410,7 +408,7 @@ public class MasterServerThread extends ServerThread {
 				// finally delete directory wanted to delete
 				NamespaceMap.remove(filePath);
 
-				tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
+				TFSLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
 				ClearChunkServerMapFile();
 				ClearNamespaceMapFile();
@@ -758,7 +756,7 @@ public class MasterServerThread extends ServerThread {
 				//WritePersistentChunkServerMap(hashstring,
 				//		chunkServerMap.get(hashstring));
 				SendSuccessMessageToClient(message);
-				tfsLogger.LogMsg("Created file " + newName);
+				TFSLogger.LogMsg("Created file " + newName);
 
 			} else {
 
@@ -822,7 +820,7 @@ public class MasterServerThread extends ServerThread {
 				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
 				NamespaceMap.put(filepath, newNode);
 				SendSuccessMessageToClient(message);
-				tfsLogger.LogMsg("Created directory " + filepath);
+				TFSLogger.LogMsg("Created directory " + filepath);
 
 				ClearNamespaceMapFile();
 				for(Map.Entry<String, NamespaceNode> cmEntry : NamespaceMap.entrySet())
@@ -918,7 +916,7 @@ public class MasterServerThread extends ServerThread {
 			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
-			tfsLogger.LogMsg("Created file " + filepath);
+			TFSLogger.LogMsg("Created file " + filepath);
 			return newChunk;
 		}
 	}
