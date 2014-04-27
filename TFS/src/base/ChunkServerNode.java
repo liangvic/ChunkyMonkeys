@@ -112,6 +112,9 @@ public class ChunkServerNode extends ServerNode {
 				}
 			}, 10000, 10000);
 			
+			HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+			PingMaster(ping);
+			
 			while(true) { 
 				Socket otherSocket = mySocket.accept();
 				ServerThread st = new ChunkServerThread(this, otherSocket);
@@ -302,8 +305,24 @@ public class ChunkServerNode extends ServerNode {
 		}
 	}
 
+	
+	/**
+	 * TODO: Sends ping to Master telling it it's still alive and kicking
+	 * @param message 
+	 */
+	public void PingMaster (HeartBeat message){
+		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+		SendMessageToMaster(message);
+		//master.DealWithMessage(ping);
+	}
 		
 
+	/**
+	 * @param message
+	 */
+	public void SendMessageToMaster(Message message) {
+		SendMessage(message);
+	}
 	
 
 }

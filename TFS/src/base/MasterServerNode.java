@@ -43,7 +43,7 @@ public class MasterServerNode extends ServerNode {
 			IP = nIP;
 			clientPort = nClientPort;
 			serverPort = nServerPort;
-			status = null;
+			status = status.DEAD;
 			TTL = 0;
 		}
 	}

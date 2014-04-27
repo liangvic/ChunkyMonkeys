@@ -57,8 +57,6 @@ public class ChunkServerThread extends ServerThread {
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
-		HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
-		PingMaster(ping);
 	}
 
 	public void DealWithMessage(Message message) {
@@ -67,7 +65,7 @@ public class ChunkServerThread extends ServerThread {
 		System.out.println("Chunkserve: I GOT MESSAGE. Type = "+message.type.toString());
 		if(message instanceof HeartBeat)
 		{
-			PingMaster((HeartBeat)message);
+			server.PingMaster((HeartBeat)message);
 		}
 		else if(message instanceof SOSMessage)
 		{
@@ -225,7 +223,7 @@ public class ChunkServerThread extends ServerThread {
 		}
 		Message m = new Message(msgType.CREATEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 		m.success = msgSuccess.REQUESTSUCCESS;
-		SendMessageToMaster(m);
+		server.SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 
 
@@ -326,7 +324,7 @@ public class ChunkServerThread extends ServerThread {
 
 					Message successMessageToMaster = new Message(msgType.DELETEDIRECTORY, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
 					successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
-					SendMessageToMaster(successMessageToMaster);
+					server.SendMessageToMaster(successMessageToMaster);
 
 					break;
 				}
@@ -384,7 +382,7 @@ public class ChunkServerThread extends ServerThread {
 								successMessageToMaster.success = msgSuccess.REQUESTSUCCESS;
 								successMessageToMaster.countedLogicalFiles = numCounted;
 								successMessageToMaster.filePath = metadata.filename;
-								SendMessageToMaster(successMessageToMaster);
+								server.SendMessageToMaster(successMessageToMaster);
 								//master.DealWithMessage(successMessageToMaster);
 								break;
 							}
@@ -451,7 +449,7 @@ public class ChunkServerThread extends ServerThread {
 			//appending on
 			WritePersistentServerNodeMap(metadata.chunkHash,metadata);
 			WriteDataToFile(current, byteArray);
-			SendMessageToMaster(m);
+			server.SendMessageToMaster(m);
 			//master.DealWithMessage(newMessage);
 		}
 		catch(Exception e) {
@@ -556,15 +554,7 @@ public class ChunkServerThread extends ServerThread {
 	}
 
 
-	/**
-	 * TODO: Sends ping to Master telling it it's still alive and kicking
-	 * @param message 
-	 */
-	public void PingMaster (HeartBeat message){
-		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
-		SendMessageToMaster(message);
-		//master.DealWithMessage(ping);
-	}
+	
 	////////PROCEDURE FOR BRINGING A CHUNKSERVER BACK UP ////////////////////////////////////
 	//Master sends information to check version numbrer
 	//This chunkserver sends message to another chunkserver to send data if out of date
@@ -585,7 +575,7 @@ public class ChunkServerThread extends ServerThread {
 				{
 					//TODO: Message to Master to get new data
 					msg.msgToServer = msgTypeToServer.TO_OTHERSERVER;
-					SendMessageToMaster(msg);
+					server.SendMessageToMaster(msg);
 					return;
 				}
 			}
@@ -692,7 +682,7 @@ public class ChunkServerThread extends ServerThread {
 
 							}
 						}
-						SendMessageToMaster(msg);
+						server.SendMessageToMaster(msg);
 						return;
 					}
 				}
@@ -746,12 +736,7 @@ public class ChunkServerThread extends ServerThread {
 		server.SendMessage(message);
 	}
 
-	/**
-	 * @param message
-	 */
-	public void SendMessageToMaster(Message message) {
-		server.SendMessage(message);
-	}
+	
 
 
 
