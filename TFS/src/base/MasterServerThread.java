@@ -410,19 +410,6 @@ public class MasterServerThread extends ServerThread {
 				// finally delete directory wanted to delete
 				NamespaceMap.remove(filePath);
 				
-				int index = 1;
-				String chunkServerMapKey = filePath + index;
-				synchronized(chunkServerMap) {
-					while(chunkServerMap.containsKey(chunkServerMapKey)){
-						index++;
-						chunkServerMapKey = filePath + index;
-
-						for(ChunkLocation i : chunkServerMap.get(chunkServerMapKey).listOfLocations) {
-							Message message = new Message(msgType.DELETEDIRECTORY, server.myIP, serverType.MASTER, server.myInputPortNumber, i.chunkIP, serverType.CHUNKSERVER, i.chunkPort);
-							SendMessageToChunkServer(message);
-						}
-					}
-				}
 
 				tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
@@ -477,9 +464,27 @@ public class MasterServerThread extends ServerThread {
 							//				.get(chunkServerKey);
 							//AAA		SendMessageToChunkServer(chunkMessage);
 
+							for(ChunkLocation i : chunkServerMap.get(chunkServerKey).listOfLocations) {
+								Message message = new Message(msgType.DELETEDIRECTORY, server.myIP, serverType.MASTER, server.myInputPortNumber, i.chunkIP, serverType.CHUNKSERVER, i.chunkPort);
+								message.chunkClass = chunkServerMap.get(chunkServerKey);
+								SendMessageToChunkServer(message);
+							}
+							
+							
 							// delete the file from master's chunk server map
 							chunkServerMap.remove(chunkServerKey);
 
+							/*int index = 1;
+							String chunkServerMapKey = filePath + index;
+							synchronized(chunkServerMap) {
+								while(chunkServerMap.containsKey(chunkServerMapKey)){
+									index++;
+									chunkServerMapKey = filePath + index;*/
+
+									
+							//	}
+							//}
+							
 							// increment for checking if there are more chunks
 							chunkIndex++;
 							chunkServerKey = startingNodeFilePath + chunkIndex;
