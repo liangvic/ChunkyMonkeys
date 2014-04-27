@@ -28,7 +28,7 @@ public class ClientServerNode extends ServerNode {
 	{
 
 		super(ip, inPort);
-		
+
 
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
@@ -65,7 +65,7 @@ public class ClientServerNode extends ServerNode {
 
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
-//				TestInterface();
+				//				TestInterface();
 
 
 
@@ -126,7 +126,7 @@ public class ClientServerNode extends ServerNode {
 				file.createNewFile();
 				//FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
 				FileOutputStream fileOuputStream = new FileOutputStream(dataMessage.localFilePath);
-				fileOuputStream.write(finalByteArray);
+				fileOuputStream.write(dataMessage.fileData);//finalByteArray);
 				fileOuputStream.close();
 
 				System.out.println("Done");
@@ -313,7 +313,7 @@ public class ClientServerNode extends ServerNode {
 				}
 
 			}, 1000);
-										CCreateDirectory(newfilepath);
+			CCreateDirectory(newfilepath);
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
@@ -345,7 +345,7 @@ public class ClientServerNode extends ServerNode {
 		final int count = 1;
 		CCreateDirectory("1");
 		NamespaceMap.put("1", new NamespaceNode(nodeType.DIRECTORY));
-		
+
 		if (NumFolders > 1) {
 			timer.schedule(new TimerTask() {
 				@Override
@@ -364,8 +364,8 @@ public class ClientServerNode extends ServerNode {
 				}
 			},1000);
 		}
-		
-		
+
+
 	}
 
 	/**
@@ -387,7 +387,7 @@ public class ClientServerNode extends ServerNode {
 			}
 
 			CCreateDirectory(newfilepath);
-			
+
 
 			timer.schedule(new TimerTask() {
 				@Override
@@ -538,9 +538,9 @@ public class ClientServerNode extends ServerNode {
 			msg.sender = myType;
 			msg.senderInputPort = myInputPortNumber;
 			msg.senderIP = myIP;
-			
 
-			
+
+
 			System.out.println("Writing chunks to "+msg.chunkClass.listOfLocations.size()+" replica(s)");
 			for(int j=0;j<msg.chunkClass.listOfLocations.size();j++){
 				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
@@ -713,11 +713,14 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
+		byte[] byteArray = null;
 		Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 		m.type = msgType.APPENDTOTFSFILE;
 		m.filePath = filePath;
 		m.fileName = filePath.substring(index + 1);
 		m.localFilePath = localPath;
+		m.replicaCount = 3;
+		m.fileData = byteArray;
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}
