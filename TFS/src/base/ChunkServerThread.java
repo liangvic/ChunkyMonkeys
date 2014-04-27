@@ -257,10 +257,13 @@ public class ChunkServerThread extends ServerThread {
 		for (ChunkLocation a : chunkmeta.listOfLocations){
 			System.out.println("IP:" + a.chunkIP + " Port:" + a.chunkPort);
 			System.out.println("myIP:" + myIP + "myport:" + myInputPortNumber);
-			if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+			if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+				System.out.println("assigning chunk loc");
 				chunkloc = a;
 			}
 		}
+		System.out.println(chunkloc.byteOffset);
+		System.out.println(current.spaceOccupied);
 		
 		chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
 		//message.chunkClass.listOfLocations.get(0).byteOffset = current.spaceOccupied;
