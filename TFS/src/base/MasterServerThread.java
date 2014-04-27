@@ -745,51 +745,10 @@ public class MasterServerThread extends ServerThread {
 
 					NamespaceMap.get(filepath).children.add(newName);
 
-					/*ChunkMetadata newChunk = new ChunkMetadata(newName, index, 1, 0);
-
-					Random rand = new Random();
-					newChunk.filenumber = rand.nextInt(5); //only use one for now
-					newChunk.chunkHash = hashstring;*/
-					/*
-					//randomly selecting which 3 chunkservers to put it in
-					int numReplicas = 0, randomNum;
-					ServerData attemptServerData;
-					boolean validIP = false;
-					while(numReplicas < 1) //TODO: FIX boundary
-					{
-						validIP = true;
-						randomNum = rand.nextInt(1); //TODO: Change back to 4
-						attemptServerData = ServerMap.get(randomNum);
-						for(ChunkLocation location : newChunk.listOfLocations) //check if already given to that IP
-						{
-							if(attemptServerData.IP.equals(location.chunkIP) && attemptServerData.serverPort == location.chunkPort) //if already added chunk to that chunkserver already, then don't use it again
-							{
-								validIP = false;
-							}
-							
-						}		
-						if(validIP)
-						{
-							newChunk.listOfLocations.add(new ChunkLocation(attemptServerData.IP,attemptServerData.clientPort));
-							numReplicas++;
-						}
-					}
-					*/
-					//chunkServerMap.put(hashstring, newChunk);
-
 					message.type = msgType.CREATEFILE;
-					//message.sender = serverType.MASTER;
-					//message.senderIP = myIP;
-					//message.chunkClass = newChunk;
 					try {
 						SendMessageToClient(message);
-						/*for(ChunkLocation entry : message.chunkClass.listOfLocations)
-						{
-							message.receiverIP = entry.chunkIP;
-							message.receiverInputPort = entry.chunkPort;
-							SendMessageToChunkServer(message);
-						}*/
-	
+
 					} catch (Exception e) {
 						//TODO: deal with message failure
 						//newMessage.success = msgSuccess.REQUESTERROR;
@@ -806,26 +765,6 @@ public class MasterServerThread extends ServerThread {
 
 			} else {
 
-				SendErrorMessageToClient(message);
-				/*
-				 * ServerSocket serverSocket; try { serverSocket = new
-				 * ServerSocket(myPortNumber); Socket clientSocket =
-				 * serverSocket.accept(); ObjectInputStream input = new
-				 * ObjectInputStream( clientSocket.getInputStream()); File file = new
-				 * File(message.filePath); Message responseMsg; if (!file.exists()) {
-				 * file.mkdir(); // TODO: insert into map // TODO: assign chunk and
-				 * replicas to chunk servers ChunkMetadata chunkData = new
-				 * ChunkMetadata(); // TODO: set chunkData data responseMsg = new
-				 * Message(msgType.CREATEDIRECTORY, chunkData); responseMsg.success =
-				 * msgSuccess.SUCCESS; ObjectOutputStream out = new ObjectOutputStream(
-				 * clientSocket.getOutputStream()); out.writeObject(responseMsg); //
-				 * TODO: message chunk servers } else { responseMsg = new
-				 * Message(msgType.CREATEDIRECTORY); responseMsg.success =
-				 * msgSuccess.ERROR; ObjectOutputStream out = new ObjectOutputStream(
-				 * clientSocket.getOutputStream()); out.writeObject(responseMsg); } }
-				 * catch (IOException e) { // TODO Auto-generated catch block
-				 * e.printStackTrace(); }
-				 */
 			}
 		}
 	}
