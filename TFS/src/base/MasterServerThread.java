@@ -146,6 +146,7 @@ public class MasterServerThread extends ServerThread {
 		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
+				System.out.println("Starting test 6");
 				//should retrieve ip and port for chunkserver who has the filepath here
 				AppendToTFSFile(inputMessage, server.operationID);
 			}
@@ -676,7 +677,12 @@ public class MasterServerThread extends ServerThread {
 			newMetaData.filenumber = targetFileNumber;
 			newMetaData.listOfLocations = newLocations;
 			//			newMetaData.byteoffset = replicaListLargestOffset[i];
-			newMetaData.size = inputMessage.fileData.length;
+			if(inputMessage.fileData != null) {
+				newMetaData.size = inputMessage.fileData.length;
+			}
+			else {
+				newMetaData.size = 0;
+			}
 
 			chunkServerMap.put(hashstring, newMetaData);
 			inputMessage.chunkClass = newMetaData;
@@ -857,14 +863,17 @@ public class MasterServerThread extends ServerThread {
 				message.chunkClass = chunkData;
 				//TODO: FIX THIS
 				//SendMessageToChunkServer(message);
+				System.out.println("sendmessage to client");
 				SendMessageToClient(message); //sends chunkClass with list of chunk locations to client
 			}
 			else {
+				System.out.println("error1");
 				SendErrorMessageToClient(message);
 			}
 		}
 		else
 		{
+			System.out.println("error2");
 			SendErrorMessageToClient(message);
 		}
 	}
@@ -889,6 +898,7 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 			}
+			//get file and ip ffrom list of locations and for each, check space available and set byte array for every file and IP
 			System.out.println("INDEX: "+index);
 			System.out.println("HASHSTRING: "+hashString);
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
