@@ -601,28 +601,32 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 			}
+			//Make the location list
+			List<ChunkLocation> newLocations = new ArrayList<ChunkLocation>();
+			for(int j=0;j<replicaList.size();j++){
+				ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort);
+				location.fileNumber = targetFileNumber;
+				location.byteOffset = replicaListLargestOffset[j];
+				//add to position j
+				newLocations.add(location);
+			}
+			
+			ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
+			newMetaData.chunkHash = hashstring;
+			newMetaData.filenumber = targetFileNumber;
+			newMetaData.listOfLocations = newLocations;
+//			newMetaData.byteoffset = replicaListLargestOffset[i];
+			newMetaData.size = inputMessage.fileData.length;
+			
+			chunkServerMap.put(hashstring, newMetaData);
+			inputMessage.chunkClass = newMetaData;
+			inputMessage.addressedTo = serverType.CLIENT;
+			inputMessage.sender = serverType.MASTER;
+			SendMessageToClient(inputMessage);
+			
 			//Sending a create file for each replica
 			for(int i = 0;i<replicaList.size();i++){
-
-				ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
-				newMetaData.chunkHash = hashstring;
-				newMetaData.filenumber = targetFileNumber;
 				
-				newMetaData.byteoffset = replicaListLargestOffset[i];
-				newMetaData.size = inputMessage.fileData.length;
-				//populate location
-				List<ChunkLocation> newLocations = new ArrayList<ChunkLocation>();
-				for(int j=0;j<replicaList.size();j++){
-					ChunkLocation location = new ChunkLocation(replicaList.get(j).IP,replicaList.get(j).serverPort);
-					location.fileNumber = targetFileNumber;
-					location.byteOffset = replicaListLargestOffset[j];
-					newLocations.add(location);
-				}
-				chunkServerMap.put(hashstring, newMetaData);
-				inputMessage.chunkClass = newMetaData;
-				
-				SendMessageToClient(inputMessage);
-				System.out.println("Sent message to client!");
 			}
 			//create a new namespace node
 			//filename and get parent, add child.

@@ -2,7 +2,6 @@ package base;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,16 +49,17 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		System.out.println("Sending message "+message.type+ " to IP "+message.receiverIP);
+		System.out.println("Sending message: "+message.type+ " to "+message.receiverIP);
 		System.out.println("	Addressed to: "+message.addressedTo);
-		System.out.println("	Sender: "+message.sender);
-		System.out.println("	Reciever Ip "+message.receiverIP);
-		System.out.println("	Sender Ip "+message.senderIP);
-		System.out.println(message.receiverInputPort);
-		System.out.println(message.senderInputPort);
+		System.out.println("	sender: "+message.sender);
+		System.out.println("	sender ip: "+message.senderIP);
+		System.out.println("	receiverInputPort: "+message.receiverInputPort);
+		System.out.println("	senderInputPort: "+message.senderInputPort);
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
-			ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
-			out.writeObject(message);
+				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
+				out.writeObject(message);
+
+				out.flush();
 		}
 		catch (IOException e){
 			System.err.println("Unable to send Message from " + myIP + " to " + message.receiverIP);
