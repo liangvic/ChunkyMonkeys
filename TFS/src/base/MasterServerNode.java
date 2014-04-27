@@ -130,7 +130,6 @@ public class MasterServerNode extends ServerNode {
 				// REFERENCECOUNT
 				// FILENAME
 				// FILENUMBER
-				// BYTEOFFSET
 				// INDEX
 				// SIZE
 				String[] data = textLine.split("\t");
@@ -172,8 +171,8 @@ public class MasterServerNode extends ServerNode {
 				// fileNumber
 				int n_fileNumber = Integer.parseInt(data[newIndexCounter++]);
 
-				// byteoffset
-				int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
+				// byteoffset//TODO: FIX BECAUSE NOT NEEDED ANYMORE
+				//int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
 
 				// index
 				int n_index = Integer.parseInt(data[newIndexCounter++]);
@@ -188,7 +187,7 @@ public class MasterServerNode extends ServerNode {
 				newMetaData.chunkHash = n_fileName + n_index;
 
 				newMetaData.filenumber = n_fileNumber;
-				newMetaData.byteoffset = n_byteOffset;
+				//newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
 
 				chunkServerMap.put(key, newMetaData);
