@@ -28,7 +28,7 @@ public class MasterServerNode extends ServerNode {
 	int operationID = 0;
 	int chunksNeedToBeChecked = 0;
 	Map<String, ChunkMetadata> chunkServerMap = Collections.synchronizedMap(new HashMap<String, ChunkMetadata>());
-	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
+	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>(); //TODO: make synchronized
 	public static TFSLogger logger = new TFSLogger();
 	String myIP;
 
