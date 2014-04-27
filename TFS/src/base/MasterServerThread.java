@@ -26,6 +26,7 @@ import Utility.HeartBeat;
 import Utility.Message;
 import Utility.NamespaceNode;
 import Utility.SOSMessage;
+import Utility.SOSMessage.msgTypeToServer;
 import Utility.TFSLogger;
 import Utility.lockInfo;
 import Utility.HeartBeat.serverStatus;
@@ -63,7 +64,7 @@ public class MasterServerThread extends ServerThread {
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
-
+			
 		}
 		else if(inputMessage instanceof SOSMessage)
 		{
@@ -490,9 +491,16 @@ public class MasterServerThread extends ServerThread {
 			//Implement Later
 			int indexCounter = 1;
 			System.out.println("Master: trying to read "+inputMessage.filePath + indexCounter);
-			if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter)) {
+			if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter) && !NamespaceMap.containsKey(inputMessage.filePath + indexCounter)) {
 				System.out.println("Master: doesnt exist");
 				SendErrorMessageToClient(inputMessage);
+				return;
+			}
+			else if (!chunkServerMap.containsKey(inputMessage.filePath + indexCounter) && NamespaceMap.containsKey(inputMessage.filePath + indexCounter))
+			{
+				//if the file exists in the chunkservermap and not in the namespacemap, it means that hte file is empty
+				System.out.println("The file you desired is empty");
+				SendSuccessMessageToClient(inputMessage);
 				return;
 			}
 
@@ -735,6 +743,7 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 
+				//ClearNamespaceMapFile();
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
 				//WritePersistentChunkServerMap(hashstring,
 				//		chunkServerMap.get(hashstring));
@@ -805,7 +814,11 @@ public class MasterServerThread extends ServerThread {
 				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created directory " + filepath);
 
-				WritePersistentNamespaceMap(filepath, newNode);
+				ClearNamespaceMapFile();
+				for(Map.Entry<String, NamespaceNode> cmEntry : NamespaceMap.entrySet())
+				{
+					WritePersistentNamespaceMap(cmEntry.getKey(), cmEntry.getValue());
+				}
 				System.out.println("OPID " + opID + " Finished");
 			}
 			/*else
@@ -1096,21 +1109,6 @@ public class MasterServerThread extends ServerThread {
 
 	/////////////////////////////END OF PERSISTENT DATA FUNCTIONS//////////////////////////////
 	////////////////////////////START OF HEARTBEAT FUNCTIONS///////////////////////////////////
-	/**
-	 * 
-	 * @param HBMessage
-	 */
-	public void SetChunkServerDead(HeartBeat HBMessage)
-	{
-		String IPOfDownChunkServer = HBMessage.receiverIP;
-
-		if(ServerMap.containsKey(IPOfDownChunkServer))
-		{
-			ServerMap.get(IPOfDownChunkServer).status = serverStatus.DEAD;
-		}
-	}
-
-
 	public void TellOtherChunkServerToSendData(SOSMessage msg)
 	{
 		for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
@@ -1134,6 +1132,18 @@ public class MasterServerThread extends ServerThread {
 		{
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
+	}
+	
+	public void SetChunkServerOutdated(String IPaddress)
+	{
+		if(ServerMap.containsKey(IPaddress))
+		{
+			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
+		}
+		SOSMessage message = new SOSMessage(server.myIP, server.myType, server.myInputPortNumber, IPaddress, serverType.CHUNKSERVER, ServerMap.get(IPaddress).clientPort);
+		message.msgToServer = msgTypeToServer.TO_SOSSERVER;
+		//message.chunkClass = ServerMap.get(IPaddress).
+		SendMessageToChunkServer(message);
 	}
 
 }

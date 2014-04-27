@@ -338,6 +338,7 @@ public class ClientServerNode extends ServerNode {
 			Timer timer = new Timer();
 			final int count = 1;
 			CCreateDirectory("1");
+			NamespaceMap.put("1", new NamespaceNode(nodeType.DIRECTORY));
 			
 			if (NumFolders > 1) {
 				timer.schedule(new TimerTask() {
