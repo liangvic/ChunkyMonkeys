@@ -21,12 +21,14 @@ public class ClientServerNode extends ServerNode {
 	//public MasterServerNode master;
 	//public ChunkServerNode chunkServer;
 	//Semaphore action = new Semaphore(1, true);
+	Timer timer = new Timer();
+
 
 	public ClientServerNode(String ip, int inPort)
 	{
 
 		super(ip, inPort);
-
+		
 
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
@@ -222,15 +224,12 @@ public class ClientServerNode extends ServerNode {
 		CDeleteDirectory(filepath);
 	}
 
-
 	/**
 	 * @param m
 	 */
 	public void msgRequestAReadToChunkserver(Message m) {
 		SendMessageToChunkServer(m);
 	}
-
-
 
 
 	/**
@@ -286,7 +285,6 @@ public class ClientServerNode extends ServerNode {
 				}
 				queue.remove(queue.size()-1);
 			}
-
 
 			newfilepath = parentfilepath + "\\" + folderName;
 
@@ -368,7 +366,6 @@ public class ClientServerNode extends ServerNode {
 		
 	}
 
-
 	/**
 	 * @param parentfilepath
 	 * @param folderName
@@ -381,14 +378,14 @@ public class ClientServerNode extends ServerNode {
 
 			NamespaceNode nn = new NamespaceNode(nodeType.DIRECTORY);
 			NamespaceMap.put(newfilepath, nn);
-			System.out.println("Added " + newfilepath + "to the map");
+			System.out.println("Added " + newfilepath + " to the map");
 			if(NamespaceMap.containsKey(parentfilepath))
 			{
 				NamespaceMap.get(parentfilepath).children.add(newfilepath);
 			}
 
-			System.out.println("Added " + newfilepath + "to " + parentfilepath + "as child");
 			CCreateDirectory(newfilepath);
+			
 
 			timer.schedule(new TimerTask() {
 				@Override
