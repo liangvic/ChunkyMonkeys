@@ -88,8 +88,6 @@ public class ClientServerThread extends ServerThread {
 				server.msgPrintFileData(message);
 			} else if (message.type == msgType.APPENDTOTFSFILE) {
 				server.ReadLocalFile(message);
-			}else if (message.type == msgType.EXPECTEDNUMCHUNKREAD) {
-				server.ExpectChunkNumberForRead(message.expectNumChunkForRead);
 			} else if (message.type == msgType.WRITETONEWFILE) {
 				System.out.println("Got the return message from client!");
 				server.CWriteToNewFile2(message);

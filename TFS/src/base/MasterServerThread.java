@@ -104,18 +104,7 @@ public class MasterServerThread extends ServerThread {
 				}
 
 			}
-		} else if (inputMessage.type == msgType.READFILE) {
-			if(inputMessage.sender == serverType.CLIENT)
-			{
-				ReadFile(inputMessage, server.operationID);
-			}
-			else if (inputMessage.sender == serverType.CHUNKSERVER)
-			{
-				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
-			}
-		}
-
+		} 
 		else if (inputMessage.type == msgType.CREATEFILE) {
 			if (inputMessage.sender == serverType.CLIENT)
 				CreateFile(inputMessage, server.operationID);
@@ -550,12 +539,19 @@ public class MasterServerThread extends ServerThread {
 
 			Message expectMsg = inputMessage;
 			expectMsg.type = msgType.EXPECTEDNUMCHUNKREAD;
-
 			expectMsg.success = msgSuccess.REQUESTSUCCESS;
 			expectMsg.expectNumChunkForRead = indexCounter-1;
 			SendMessageToClient(expectMsg);
 			for(int i=1;i<indexCounter;i++){
 				ChunkMetadata cm = chunkServerMap.get(inputMessage.filePath+ i);
+				//alter the list location
+				synchronized(cm.listOfLocations){
+					for(ChunkLocation cl: cm.listOfLocations){
+						if(ServerMap.get(cl.chunkIP).status == HeartBeat.serverStatus.DEAD){
+							cm.listOfLocations.remove(cl);
+						}
+					}
+				}
 				System.out.println("Master: first chunkhash is "+cm.chunkHash);
 				Message returnMessage = inputMessage;
 				returnMessage.type = msgType.READFILE;
@@ -599,13 +595,15 @@ public class MasterServerThread extends ServerThread {
 			System.out.println("Target file number to input = "+targetFileNumber);
 			//Assigns a file number from 0 - 4
 			//do a check to see what the offset is
-			
+
 			//Get information about all chunkservers
 			System.out.println("Getting all ip");
 			for(String ip:ServerMap.keySet()){
 				allAvailableServerList.add(ServerMap.get(ip));
+
 				System.out.println("	Added "+ServerMap.get(ip).status);
 				
+
 			}
 			//Random replica assignment
 			int chunkServerAssignment = 0;
@@ -672,23 +670,23 @@ public class MasterServerThread extends ServerThread {
 				//add to position j
 				newLocations.add(location);
 			}
-			
+
 			ChunkMetadata newMetaData = new ChunkMetadata(inputMessage.fileName, 1,1,0);
 			newMetaData.chunkHash = hashstring;
 			newMetaData.filenumber = targetFileNumber;
 			newMetaData.listOfLocations = newLocations;
-//			newMetaData.byteoffset = replicaListLargestOffset[i];
+			//			newMetaData.byteoffset = replicaListLargestOffset[i];
 			newMetaData.size = inputMessage.fileData.length;
-			
+
 			chunkServerMap.put(hashstring, newMetaData);
 			inputMessage.chunkClass = newMetaData;
 			inputMessage.addressedTo = serverType.CLIENT;
 			inputMessage.sender = serverType.MASTER;
 			SendMessageToClient(inputMessage);
-			
+
 			//Sending a create file for each replica
 			for(int i = 0;i<replicaList.size();i++){
-				
+
 			}
 			//create a new namespace node
 			//filename and get parent, add child.
@@ -755,10 +753,10 @@ public class MasterServerThread extends ServerThread {
 					NamespaceMap.put(newName, new NamespaceNode(nodeType.FILE));
 
 					NamespaceMap.get(filepath).children.add(newName);
-
 					message.type = msgType.CREATEFILE;
 					try {
 						SendMessageToClient(message);
+
 
 					} catch (Exception e) {
 						//TODO: deal with message failure
@@ -815,12 +813,12 @@ public class MasterServerThread extends ServerThread {
 
 				NamespaceNode newNode = new NamespaceNode(nodeType.DIRECTORY);
 				NamespaceMap.put(filepath, newNode);
-				
+
 				SendSuccessMessageToClient(message);
 				tfsLogger.LogMsg("Created directory " + filepath);
 				//System.out.println("Creating direcotry " + filepath);
 				//WritePersistentNamespaceMap(filepath, newNode);
-				
+
 				System.out.println("OPID " + opID + " Finished");
 			}
 			/*else
@@ -832,7 +830,7 @@ public class MasterServerThread extends ServerThread {
 		{
 			SendErrorMessageToClient(message);
 		}
-		
+
 		synchronized(NamespaceMap)
 		{
 			ClearNamespaceMapFile();
@@ -842,7 +840,7 @@ public class MasterServerThread extends ServerThread {
 				System.out.println("Key: " + key);
 			}
 		}
-		
+
 	}
 
 	/**
@@ -1146,7 +1144,7 @@ public class MasterServerThread extends ServerThread {
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
-	
+
 	public void SetChunkServerOutdated(String IPaddress)
 	{
 		if(ServerMap.containsKey(IPaddress))
