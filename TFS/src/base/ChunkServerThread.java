@@ -258,7 +258,10 @@ public class ChunkServerThread extends ServerThread {
 			System.out.println("IP:" + a.chunkIP + " Port:" + a.chunkPort);
 			System.out.println("myIP:" + myIP + "myport:" + myInputPortNumber);
 			if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+<<<<<<< HEAD
 				System.out.println("assigning chunk loc");
+=======
+>>>>>>> master
 				chunkloc = a;
 			}
 		}
