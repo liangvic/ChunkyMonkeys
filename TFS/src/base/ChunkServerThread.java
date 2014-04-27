@@ -90,15 +90,6 @@ public class ChunkServerThread extends ServerThread {
 			AddNewBlankChunk(message);
 		} else if (message.type == msgType.READFILE) {
 			ReadChunks(message);
-		} else if (message.type == msgType.APPENDTOFILE) {
-			if (message.chunkClass == null) {
-				System.out.println("chunkClass is null");
-			}
-		}
-		else if (message.type == msgType.CREATEFILE) {
-			AddNewBlankChunk(message);
-		} else if (message.type == msgType.READFILE) {
-			ReadChunks(message);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
 			if(message.sender == serverType.MASTER) {
 				System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
@@ -144,7 +135,7 @@ public class ChunkServerThread extends ServerThread {
 			
 			ChunkMetadata current = message.chunkClass;
 			for (ChunkLocation a : current.listOfLocations){
-				if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+				if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
 					offSetIndex = a.byteOffset;
 				}
 			}
@@ -167,7 +158,21 @@ public class ChunkServerThread extends ServerThread {
 					}
 					Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myInputPortNumber, message.senderIP, serverType.CLIENT, message.senderInputPort);
 					//Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
+					
+					//backup for making a new message
+//					message.type = msgType.PRINTFILEDATA;
+//					message.receiverIP = message.senderIP;
+//					message.addressedTo = serverType.CLIENT;
+//					message.receiverInputPort = message.senderInputPort;
+//					message.senderIP = myIP;
+//					message.sender = myType;
+//					message.senderInputPort = myInputPortNumber;
+					
+					m.localFilePath = message.localFilePath;
+					m.filePath = message.filePath;
+					m.fileName = message.fileName;
 					m.fileData = dataINeed;
+					
 					SendMessageToClient(m);
 
 					break;
@@ -258,9 +263,14 @@ public class ChunkServerThread extends ServerThread {
 			System.out.println("IP:" + a.chunkIP + " Port:" + a.chunkPort);
 			System.out.println("myIP:" + myIP + "myport:" + myInputPortNumber);
 			if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+
+				System.out.println("assigning chunk loc");
+
 				chunkloc = a;
 			}
 		}
+		System.out.println(chunkloc.byteOffset);
+		System.out.println(current.spaceOccupied);
 		
 		chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
 		//message.chunkClass.listOfLocations.get(0).byteOffset = current.spaceOccupied;
@@ -297,13 +307,14 @@ public class ChunkServerThread extends ServerThread {
 	 * @param metadata
 	 */
 	public void DeleteChunk(ChunkMetadata metadata) {
+		System.out.println("Deleting chunk");
 		String chunkToDelete = null;
 		synchronized(chunkMap)
 		{
 			for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 			{
 				//System.out.println(entry.getValue().filename + " " + metadata.filename);
-				if(entry.getValue().chunkHash == metadata.chunkHash)
+				if(entry.getValue().chunkHash.equals(metadata.chunkHash))
 				{
 					synchronized(file_list)
 					{
@@ -333,10 +344,11 @@ public class ChunkServerThread extends ServerThread {
 
 		if (chunkToDelete != null) {
 			chunkMap.remove(chunkToDelete);
+			System.out.println("Actually removing chunk");
 
-			ClearChunkMap();
 			synchronized(chunkMap)
 			{
+				ClearChunkMap();
 				for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 				{
 					WritePersistentServerNodeMap(entry.getKey(),entry.getValue());

@@ -228,6 +228,12 @@ public class ClientServerNode extends ServerNode {
 	 * @param m
 	 */
 	public void msgRequestAReadToChunkserver(Message m) {
+		m.sender = myType;
+		m.senderIP = myIP;
+		m.addressedTo = serverType.CHUNKSERVER;
+		m.senderInputPort = myInputPortNumber;
+		m.receiverIP = m.chunkClass.listOfLocations.get(0).chunkIP;
+		m.receiverInputPort = m.chunkClass.listOfLocations.get(0).chunkPort;
 		SendMessageToChunkServer(m);
 	}
 
@@ -307,15 +313,11 @@ public class ClientServerNode extends ServerNode {
 				}
 
 			}, 1000);
-			//							CCreateDirectory(newfilepath);
+										CCreateDirectory(newfilepath);
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
 
-			//							CCreateDirectory(newfilepath);
-			System.out.println("Creating "+newfilepath);
-			queue.add(newfilepath);
-			folderName++;
 
 
 		}
@@ -775,11 +777,14 @@ public class ClientServerNode extends ServerNode {
 	}
 	public void printCommands(){
 		System.out.println("Format closely follows that of in the Assignment Page");
-		System.out.println("Test1 <numfolders>			i.e. Test1 7");
-		System.out.println("Test2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
-		System.out.println("Test3 <filepath> 			i.e. Test3 1\\3");
-		System.out.println("Test4 <local> <TFS filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
-		System.out.println("Test5 <filepath> <local>		i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		System.out.println("Test6 <local> <TFS filepath> 		i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
+		System.out.println("Test1 <numfolders>				i.e. Test1 7");
+		System.out.println("Unit1 <numfolders> <fanout>			i.e. Unit1 7 3");
+		System.out.println("Test2/Unit2 <filepath> <numfiles>		i.e. Test2 1\\2 3");
+		System.out.println("Test3/Unit3 <filepath> 				i.e. Unit3 1\\3");
+		System.out.println("Test4 <local> <remote filepath> 		i.e. Test4 C:\\MyDocuments\\Image.png 1\\File1.png");
+		System.out.println("Unit4 <local> <remote filepath> <num replicas>	i.e. Unit4 C:\\MyDocuments\\Image.png 1\\File1.png 2");
+		System.out.println("Test5 <remote filepath> <local>			i.e. Test5 1\\File1.png C:\\MyDocument\\Pic.png");		
+		System.out.println("Test6 <local> <TFS filepath> 			i.e. Test6 C:\\MyDocument\\Pic.png 1\\File1.png");
 		System.out.println("Test7 <TFSfile>(use .haystack entension) 	i.e. Test7 Picture.haystack");
 	}
 	public void ExpectChunkNumberForRead(int i) {
