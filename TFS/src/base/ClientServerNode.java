@@ -728,8 +728,11 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void AppendToAllReplicas(Message message)
 	{
+		System.out.println("Appendtoallreplicas");
 		for (ChunkLocation loc : message.chunkClass.listOfLocations)
-		{
+		{		
+			System.out.println("Tying to read local file on ip "+loc.chunkIP+ " on port "+loc.chunkPort);
+			
 			Message m = new Message(myIP, myType, myInputPortNumber, loc.chunkIP, serverType.CHUNKSERVER, loc.chunkPort);
 			m.type = msgType.APPENDTOTFSFILE;
 			m.filePath = message.filePath;
@@ -742,11 +745,13 @@ public class ClientServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void ReadLocalFile(Message message) {
+		System.out.println("ReadLocalFile");
 		FileInputStream fileInputStream = null;
 		File file = new File(message.localFilePath);
 		byte[] byteFile = new byte[(int) file.length()];
 
 		// convert file into array of bytes
+		System.out.println("convert file to array of bytes");
 		try {
 			fileInputStream = new FileInputStream(file);
 			fileInputStream.read(byteFile);
