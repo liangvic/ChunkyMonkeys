@@ -30,7 +30,7 @@ public class MasterServerNode extends ServerNode {
 	Map<String, ChunkMetadata> chunkServerMap = new HashMap<String, ChunkMetadata>();
 	Map<String, ServerData> ServerMap = new HashMap<String, ServerData>();
 	TFSLogger tfsLogger = new TFSLogger();
-
+	String myIP;
 
 	public class ServerData {
 		String IP;
@@ -51,7 +51,8 @@ public class MasterServerNode extends ServerNode {
 	public MasterServerNode(String ip, int inPort) {
 		super(ip, inPort);
 		myType = serverType.MASTER;
-
+		myIP = ip;
+		
 		LoadChunkServerMap();
 		LoadNamespaceMap();
 		LoadServerData();
@@ -351,7 +352,8 @@ public class MasterServerNode extends ServerNode {
 	}
 
 	public void LoadServerData() {
-		for (int i = 2; i <= 5; i++) {
+		//TODO: change back to 5 as last boundary. changed to 6 for testing purposes
+		for (int i = 2; i <= 6; i++) {
 			String IP = Config.prop.getProperty("IP" + i);
 			int clientPort = Integer.parseInt(Config.prop.getProperty("PORT"
 					+ i + "_CLIENT_INPORT"));

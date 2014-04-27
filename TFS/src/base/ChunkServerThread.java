@@ -21,6 +21,7 @@ import java.util.concurrent.Semaphore;
 import Utility.ChunkMetadata;
 import Utility.Config;
 import Utility.HeartBeat;
+import Utility.HeartBeat.serverStatus;
 import Utility.Message;
 import Utility.SOSMessage;
 import Utility.Message.msgSuccess;
@@ -54,6 +55,7 @@ public class ChunkServerThread extends ServerThread {
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
+		//PingMaster();
 	}
 
 	public void DealWithMessage(Message message) {
@@ -174,6 +176,7 @@ public class ChunkServerThread extends ServerThread {
 	public void AddNewBlankChunk(Message message) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
 		try{
+			System.out.println("Adding a new blank chunk");
 			chunkMap.put(message.chunkClass.chunkHash, message.chunkClass);
 			TFSFile current = file_list.get(1);
 			message.chunkClass.byteoffset = current.spaceOccupied;
@@ -220,7 +223,7 @@ public class ChunkServerThread extends ServerThread {
 		System.out.println("Available file byte size: "+(current.data.length-current.spaceOccupied));
 		System.out.println("File #: "+current.fileNumber);
 		System.out.println("Metadata correct file #: "+message.chunkClass.filenumber);
-		ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
+		//ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
 		byte[] fourBytesBefore = ByteBuffer.allocate(4).putInt(message.chunkClass.size).array();
 		for(int i=0;i<4;i++){
 			current.data[current.spaceOccupied] = fourBytesBefore[i];
@@ -514,9 +517,10 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * TODO: Sends ping to Master telling it it's still alive and kicking
+	 * @param message 
 	 */
-	public void PingMaster (HeartBeat ping){
-		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+	public void PingMaster (HeartBeat message){
+		HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
 		SendMessageToMaster(ping);
 		//master.DealWithMessage(ping);
 	}
