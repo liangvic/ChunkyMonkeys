@@ -1160,6 +1160,7 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(ServerMap.containsKey(IPaddress))
 		{
+			System.out.println("IP " + IPaddress + " is now alive!");
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
