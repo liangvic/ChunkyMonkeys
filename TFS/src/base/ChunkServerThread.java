@@ -304,7 +304,7 @@ public class ChunkServerThread extends ServerThread {
 			for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 			{
 				//System.out.println(entry.getValue().filename + " " + metadata.filename);
-				if(entry.getValue().chunkHash == metadata.chunkHash)
+				if(entry.getValue().chunkHash.equals(metadata.chunkHash))
 				{
 					synchronized(file_list)
 					{
