@@ -146,6 +146,7 @@ public class MasterServerThread extends ServerThread {
 		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
+				System.out.println("Starting test 6");
 				//should retrieve ip and port for chunkserver who has the filepath here
 				AppendToTFSFile(inputMessage, server.operationID);
 			}
@@ -613,13 +614,24 @@ public class MasterServerThread extends ServerThread {
 			synchronized(replicaList) {
 				while(replicaList.size()<inputMessage.replicaCount){
 					chunkServerAssignment = rand.nextInt(4);
-					if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
-						int serverIP = chunkServerAssignment + 2;
+					int serverIP = chunkServerAssignment + 2;
+					boolean foundIP = false;
+					for(int i=0; i< replicaList.size();i++)	{
+						if(replicaList.get(i).IP.equals(Config.prop.get(("IP"+Integer.toString(serverIP))))) {
+							foundIP = true;
+						}	
+					}
+					if(!foundIP) {
 						if(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))).status == serverStatus.ALIVE){
 							replicaList.add(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))));
 							System.out.println("	selected replica "+ Config.prop.get("IP" + Integer.toString(serverIP)));
 						}
 					}
+					
+					//if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
+						
+						
+					//}
 					/*currentAttemptNum++;
 				if(currentAttemptNum == maxAttempts)
 				{
@@ -665,7 +677,12 @@ public class MasterServerThread extends ServerThread {
 			newMetaData.filenumber = targetFileNumber;
 			newMetaData.listOfLocations = newLocations;
 			//			newMetaData.byteoffset = replicaListLargestOffset[i];
-			newMetaData.size = inputMessage.fileData.length;
+			if(inputMessage.fileData != null) {
+				newMetaData.size = inputMessage.fileData.length;
+			}
+			else {
+				newMetaData.size = 0;
+			}
 
 			chunkServerMap.put(hashstring, newMetaData);
 			inputMessage.chunkClass = newMetaData;
@@ -841,19 +858,22 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(AddExclusiveParentLocks(message.filePath, opID))
 		{
-			ChunkMetadata chunkData = GetTFSFile(message.filePath);
+			ChunkMetadata chunkData = GetTFSFile(message, opID);
 			if(chunkData != null) {
 				message.chunkClass = chunkData;
 				//TODO: FIX THIS
 				//SendMessageToChunkServer(message);
+				System.out.println("sendmessage to client");
 				SendMessageToClient(message); //sends chunkClass with list of chunk locations to client
 			}
 			else {
+				System.out.println("error1");
 				SendErrorMessageToClient(message);
 			}
 		}
 		else
 		{
+			System.out.println("error2");
 			SendErrorMessageToClient(message);
 		}
 	}
@@ -862,9 +882,10 @@ public class MasterServerThread extends ServerThread {
 	 * @param filepath
 	 * @return
 	 */
-	public ChunkMetadata GetTFSFile(String filepath)
+	public ChunkMetadata GetTFSFile(Message message, int opID)
 	{
 		int index = 1;
+		String filepath = message.filePath;
 		String hashString = filepath + index;
 		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
 		{
@@ -877,6 +898,7 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 			}
+			//get file and ip ffrom list of locations and for each, check space available and set byte array for every file and IP
 			System.out.println("INDEX: "+index);
 			System.out.println("HASHSTRING: "+hashString);
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
@@ -889,23 +911,15 @@ public class MasterServerThread extends ServerThread {
 		}
 		else
 		{
-			// create file
-			NamespaceMap.put(filepath, new NamespaceNode(nodeType.FILE));
-			File filePath = new File(filepath);
-			String parentPath = filePath.getParent();
-			String parent;
-			if (parentPath == null) {
-				System.out.println("Can not find parent path");
-				return null;
-			} else {
-				parent = parentPath;
-			}
-			NamespaceMap.get(parent).children.add(filepath);
+			CreateFile(message, opID);
+			AssignChunkServer(message, opID);
+			
+			/*//Random rand = new Random();
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
-			//Random rand = new Random();
 			newChunk.filenumber = 1; //only use one for now
 			newChunk.chunkHash = hashString;
-			chunkServerMap.put(hashString, newChunk);
+			chunkServerMap.put(hashString, newChunk);*/
+			ChunkMetadata newChunk = chunkServerMap.get(hashString);
 
 			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
 			WritePersistentChunkServerMap(hashString,

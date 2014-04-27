@@ -713,11 +713,14 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
+		byte[] byteArray = null;
 		Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 		m.type = msgType.APPENDTOTFSFILE;
 		m.filePath = filePath;
 		m.fileName = filePath.substring(index + 1);
 		m.localFilePath = localPath;
+		m.replicaCount = 3;
+		m.fileData = byteArray;
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}
