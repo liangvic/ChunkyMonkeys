@@ -90,15 +90,6 @@ public class ChunkServerThread extends ServerThread {
 			AddNewBlankChunk(message);
 		} else if (message.type == msgType.READFILE) {
 			ReadChunks(message);
-		} else if (message.type == msgType.APPENDTOFILE) {
-			if (message.chunkClass == null) {
-				System.out.println("chunkClass is null");
-			}
-		}
-		else if (message.type == msgType.CREATEFILE) {
-			AddNewBlankChunk(message);
-		} else if (message.type == msgType.READFILE) {
-			ReadChunks(message);
 		} else if (message.type == msgType.APPENDTOTFSFILE) {
 			if(message.sender == serverType.MASTER) {
 				System.out.println("Putting "+message.chunkClass.chunkHash+" into the map");
@@ -144,7 +135,7 @@ public class ChunkServerThread extends ServerThread {
 			
 			ChunkMetadata current = message.chunkClass;
 			for (ChunkLocation a : current.listOfLocations){
-				if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+				if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
 					offSetIndex = a.byteOffset;
 				}
 			}
@@ -167,7 +158,21 @@ public class ChunkServerThread extends ServerThread {
 					}
 					Message m = new Message(msgType.PRINTFILEDATA, myIP, myType, myInputPortNumber, message.senderIP, serverType.CLIENT, message.senderInputPort);
 					//Message message = new Message(msgType.PRINTFILEDATA, dataINeed);
+					
+					//backup for making a new message
+//					message.type = msgType.PRINTFILEDATA;
+//					message.receiverIP = message.senderIP;
+//					message.addressedTo = serverType.CLIENT;
+//					message.receiverInputPort = message.senderInputPort;
+//					message.senderIP = myIP;
+//					message.sender = myType;
+//					message.senderInputPort = myInputPortNumber;
+					
+					m.localFilePath = message.localFilePath;
+					m.filePath = message.filePath;
+					m.fileName = message.fileName;
 					m.fileData = dataINeed;
+					
 					SendMessageToClient(m);
 
 					break;
@@ -258,10 +263,9 @@ public class ChunkServerThread extends ServerThread {
 			System.out.println("IP:" + a.chunkIP + " Port:" + a.chunkPort);
 			System.out.println("myIP:" + myIP + "myport:" + myInputPortNumber);
 			if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
-<<<<<<< HEAD
+
 				System.out.println("assigning chunk loc");
-=======
->>>>>>> master
+
 				chunkloc = a;
 			}
 		}

@@ -228,6 +228,12 @@ public class ClientServerNode extends ServerNode {
 	 * @param m
 	 */
 	public void msgRequestAReadToChunkserver(Message m) {
+		m.sender = myType;
+		m.senderIP = myIP;
+		m.addressedTo = serverType.CHUNKSERVER;
+		m.senderInputPort = myInputPortNumber;
+		m.receiverIP = m.chunkClass.listOfLocations.get(0).chunkIP;
+		m.receiverInputPort = m.chunkClass.listOfLocations.get(0).chunkPort;
 		SendMessageToChunkServer(m);
 	}
 
@@ -307,15 +313,11 @@ public class ClientServerNode extends ServerNode {
 				}
 
 			}, 1000);
-			//							CCreateDirectory(newfilepath);
+										CCreateDirectory(newfilepath);
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
 
-			//							CCreateDirectory(newfilepath);
-			System.out.println("Creating "+newfilepath);
-			queue.add(newfilepath);
-			folderName++;
 
 
 		}
