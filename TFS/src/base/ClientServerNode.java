@@ -544,8 +544,8 @@ public class ClientServerNode extends ServerNode {
 //				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
 //				msg.receiverInputPort = msg.chunkClass.listOfLocations.get(j).chunkPort;
 				//Testing Hack
-				msg.receiverIP = "68.181.174.61";
-				msg.receiverInputPort =5060;
+				msg.receiverIP = "68.181.174.67";//"68.181.174.61";
+				msg.receiverInputPort =7070;//5060;
 				System.out.println("Sending message to ip: "+msg.receiverIP+" port: "+msg.receiverInputPort);
 				SendMessageToChunkServer(msg);
 			}
