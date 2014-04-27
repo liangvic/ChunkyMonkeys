@@ -297,6 +297,7 @@ public class ChunkServerThread extends ServerThread {
 	 * @param metadata
 	 */
 	public void DeleteChunk(ChunkMetadata metadata) {
+		System.out.println("Deleting chunk");
 		String chunkToDelete = null;
 		synchronized(chunkMap)
 		{
@@ -333,10 +334,11 @@ public class ChunkServerThread extends ServerThread {
 
 		if (chunkToDelete != null) {
 			chunkMap.remove(chunkToDelete);
+			System.out.println("Actually removing chunk");
 
-			ClearChunkMap();
 			synchronized(chunkMap)
 			{
+				ClearChunkMap();
 				for (Map.Entry<String, ChunkMetadata> entry : chunkMap.entrySet())
 				{
 					WritePersistentServerNodeMap(entry.getKey(),entry.getValue());

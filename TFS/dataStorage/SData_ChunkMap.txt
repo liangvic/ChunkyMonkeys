@@ -1,1 +1,1 @@
-1\efdsa.txt1	1	2	68.181.174.61	7070	0	0	68.181.174.75	7070	4	0	1\efdsa.txt1	0	efdsa.txt	
+1\3\omGGGG.txt1	1	1	68.181.174.75	7070	4	4	1\3\omGGGG.txt1	0	omGGGG.txt	
