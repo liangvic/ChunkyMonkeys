@@ -252,7 +252,15 @@ public class ChunkServerThread extends ServerThread {
 		System.out.println("occupied length: "+current.spaceOccupied);
 		System.out.println("add length: "+message.fileData.length);
 
-		message.chunkClass.byteOffset = current.spaceOccupied;
+		ChunkMetadata chunkmeta = message.chunkClass;
+		ChunkLocation chunkloc = null;
+		for (ChunkLocation a : chunkmeta.listOfLocations){
+			if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+				chunkloc = a;
+			}
+		}
+		
+		chunkloc.byteOffset = current.spaceOccupied;
 		message.chunkClass.size = message.fileData.length;
 
 
@@ -301,10 +309,10 @@ public class ChunkServerThread extends ServerThread {
 							//System.out.println(entry.getValue().filenumber + " " + f.fileNumber);
 							if(f.fileNumber == entry.getValue().filenumber)
 							{
-								for(int i=0;i<entry.getValue().size;i++)
+								/*for(int i=0;i<entry.getValue().size;i++)
 								{
-									f.data[i+entry.getValue().byteOffset] = 0; //TODO:need to change later
-								}
+									f.data[i+entry.getValue().byteOffset] = 0; //TODO:Need to change the information when there is nothing
+								}*/
 								f.spaceOccupied -= entry.getValue().size;
 							}
 						}
@@ -405,7 +413,15 @@ public class ChunkServerThread extends ServerThread {
 				current.spaceOccupied++;
 			}
 
-			metadata.byteOffset = current.spaceOccupied;
+			ChunkMetadata chunkmeta = message.chunkClass;
+			ChunkLocation chunkloc = null;
+			for (ChunkLocation a : chunkmeta.listOfLocations){
+				if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+					chunkloc = a;
+				}
+			}
+			
+			chunkloc.byteOffset = current.spaceOccupied;
 			metadata.size = byteArray.length;
 
 			for(int i=0;i<byteArray.length;i++){
@@ -481,8 +497,8 @@ public class ChunkServerThread extends ServerThread {
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
-			out.write(chunkmd.filenumber + "\t" + chunkmd.byteOffset + "\t"
-					+ chunkmd.index + "\t" + chunkmd.size);
+			/*out.write(chunkmd.filenumber + "\t" + chunkmd.byteOffset + "\t"
+					+ chunkmd.index + "\t" + chunkmd.size);*/
 			out.newLine();
 		}
 		catch (IOException e)
@@ -582,7 +598,14 @@ public class ChunkServerThread extends ServerThread {
 					//TODO: fix later with change in byteoffset variable
 					for(int i=0; i<msg.chunkClass.size; i++)
 					{
-						msg.fileData[i] = file.data[msg.chunkClass.byteOffset + i];
+						ChunkMetadata chunkmeta = msg.chunkClass;
+						ChunkLocation chunkloc = null;
+						for (ChunkLocation a : chunkmeta.listOfLocations){
+							if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+								chunkloc = a;
+							}
+						}
+						msg.fileData[i] = file.data[chunkloc.byteOffset + i];
 					}
 					msg.receiverIP = msg.SOSserver;
 					msg.msgToServer = msgTypeToServer.RECEIVINGDATA;
@@ -612,9 +635,16 @@ public class ChunkServerThread extends ServerThread {
 						{
 							if(file.fileNumber == msg.chunkClass.filenumber)
 							{
+								ChunkMetadata chunkmeta = msg.chunkClass;
+								ChunkLocation chunkloc = null;
+								for (ChunkLocation a : chunkmeta.listOfLocations){
+									if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+										chunkloc = a;
+									}
+								}
 								for(int i=0;i<msg.chunkClass.size;i++)
 								{
-									file.data[msg.chunkClass.byteOffset+i] = msg.fileData[i];
+									file.data[chunkloc.byteOffset+i] = msg.fileData[i];
 								}
 								file.spaceOccupied -= msg.chunkClass.size;
 
@@ -627,15 +657,15 @@ public class ChunkServerThread extends ServerThread {
 
 									for (int i=0; i<4;i++)
 									{
-										testData[msg.chunkClass.byteOffset - 4 + i] = ByteBuffer.allocate(4).putInt(msg.chunkClass.size).array()[i];	
+										testData[chunkloc.byteOffset - 4 + i] = ByteBuffer.allocate(4).putInt(msg.chunkClass.size).array()[i];	
 									}
 									for (int i=0;i<msg.chunkClass.size;i++)
 									{
-										testData[msg.chunkClass.byteOffset + i] = file.data[msg.chunkClass.byteOffset + i];
+										testData[chunkloc.byteOffset + i] = file.data[chunkloc.byteOffset + i];
 									}
 									for (int i=0; i<4;i++)
 									{
-										testData[msg.chunkClass.byteOffset + msg.chunkClass.size + i] = ByteBuffer.allocate(4).putInt(msg.chunkClass.size).array()[i];	
+										testData[chunkloc.byteOffset + msg.chunkClass.size + i] = ByteBuffer.allocate(4).putInt(msg.chunkClass.size).array()[i];	
 									}
 
 									os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
