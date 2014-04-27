@@ -228,7 +228,8 @@ public class ChunkServerNode extends ServerNode {
 				newMetaData.chunkHash = n_fileName + n_index;
 
 				newMetaData.filenumber = n_fileNumber;
-				newMetaData.byteoffset = n_byteOffset;
+				
+				//newMetaData.byteoffset = n_byteOffset;
 				newMetaData.size = n_size;
 				chunkMap.put(key, newMetaData);
 			}
@@ -267,15 +268,25 @@ public class ChunkServerNode extends ServerNode {
 					byte[] testData = new byte[entry.getValue().size+8];
 					testData = Files.readAllBytes(path1);
 					byte[] fileSize = new byte[4];
+					
+					ChunkMetadata chunkmeta = entry.getValue();
+					ChunkLocation chunkloc = null;
+					for (ChunkLocation a : chunkmeta.listOfLocations){
+						if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+							chunkloc = a;
+						}
+					}
 					for(int i = 0; i<4;i++)
 					{
-						fileSize[i] = testData[entry.getValue().byteoffset + i];
+						//fileSize[i] = testData[entry.getValue().byteoffset + i];
+						fileSize[i] = testData[chunkloc.byteOffset + i];
 					}
 					fileToStoreInto.spaceOccupied = java.nio.ByteBuffer.wrap(fileSize).getInt();
 					byte[] data = new byte[entry.getValue().size];
 					for(int i = 4; i<entry.getValue().size-4;i++)
 					{
-						data[i-4] = testData[entry.getValue().byteoffset+i];
+						//data[i-4] = testData[entry.getValue().byteoffset+i];
+						data[i-4] = testData[chunkloc.byteOffset + i];
 					}
 					fileToStoreInto.data = data;
 
