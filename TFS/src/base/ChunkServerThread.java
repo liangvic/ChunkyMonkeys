@@ -53,10 +53,12 @@ public class ChunkServerThread extends ServerThread {
 		file_list = server.file_list;
 		chunkMap = server.chunkMap;
 		myIP = server.myIP;
+		myInputPortNumber = server.myInputPortNumber;
 		myType = serverType.CHUNKSERVER;
 		masterIP = Config.prop.getProperty("MASTERIP");
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
-		//PingMaster();
+		HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+		PingMaster(ping);
 	}
 
 	public void DealWithMessage(Message message) {
@@ -255,12 +257,15 @@ public class ChunkServerThread extends ServerThread {
 		ChunkMetadata chunkmeta = message.chunkClass;
 		ChunkLocation chunkloc = null;
 		for (ChunkLocation a : chunkmeta.listOfLocations){
+			System.out.println("IP:" + a.chunkIP + " Port:" + a.chunkPort);
+			System.out.println("myIP:" + myIP + "myport:" + myInputPortNumber);
 			if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
 				chunkloc = a;
 			}
 		}
 		
-		chunkloc.byteOffset = current.spaceOccupied;
+		chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
+		//message.chunkClass.listOfLocations.get(0).byteOffset = current.spaceOccupied;
 		message.chunkClass.size = message.fileData.length;
 
 
@@ -556,8 +561,8 @@ public class ChunkServerThread extends ServerThread {
 	 * @param message 
 	 */
 	public void PingMaster (HeartBeat message){
-		HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
-		SendMessageToMaster(ping);
+		//HeartBeat ping = new HeartBeat(myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort, serverStatus.ALIVE);
+		SendMessageToMaster(message);
 		//master.DealWithMessage(ping);
 	}
 	////////PROCEDURE FOR BRINGING A CHUNKSERVER BACK UP ////////////////////////////////////

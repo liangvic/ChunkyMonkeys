@@ -64,7 +64,7 @@ public class MasterServerThread extends ServerThread {
 		System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
-			
+			SetChunkServerAlive(inputMessage.senderIP);
 		}
 		else if(inputMessage instanceof SOSMessage)
 		{
@@ -552,7 +552,7 @@ public class MasterServerThread extends ServerThread {
 		//TODO: NEED TO ADD IN THE LOCK CHECKING
 		if(AddExclusiveParentLocks(inputMessage.filePath, opID))
 		{
-			List<ServerData> replicaList = new ArrayList<ServerData>();
+			List<ServerData> replicaList = Collections.synchronizedList(new ArrayList<ServerData>());
 			List<ServerData> allAvailableServerList = new ArrayList<ServerData>();
 			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
 
@@ -582,15 +582,25 @@ public class MasterServerThread extends ServerThread {
 			}
 			//Random replica assignment
 			int chunkServerAssignment = 0;
+			int maxAttempts = 3; //TODO: DETERMINE IF NEED
+			int currentAttemptNum = 0;
 			System.out.println("Selecting "+inputMessage.replicaCount+" replicas");
-			while(replicaList.size()<inputMessage.replicaCount){
-				chunkServerAssignment = rand.nextInt(4);
-				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
-					int serverIP = chunkServerAssignment + 2;
-					if(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))).status == serverStatus.ALIVE){
-						replicaList.add(allAvailableServerList.get(chunkServerAssignment));
-						System.out.println("	selected replica "+allAvailableServerList.get(chunkServerAssignment).IP);
+			synchronized(replicaList) {
+				while(replicaList.size()<inputMessage.replicaCount){
+					chunkServerAssignment = rand.nextInt(4);
+					if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
+						int serverIP = chunkServerAssignment + 2;
+						if(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))).status == serverStatus.ALIVE){
+							replicaList.add(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))));
+							System.out.println("	selected replica "+ Config.prop.get("IP" + Integer.toString(serverIP)));
+						}
 					}
+					/*currentAttemptNum++;
+				if(currentAttemptNum == maxAttempts)
+				{
+					System.out.println("Could only create " + replicaList.size() + " instead of " + inputMessage.replicaCount);
+					break;
+				}*/
 				}
 			}
 			int[] replicaListLargestOffset = new int[replicaList.size()];
@@ -646,7 +656,10 @@ public class MasterServerThread extends ServerThread {
 			//============================Name Space Issues=========================================
 
 			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
-			NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+			if(NamespaceMap.containsKey(inputMessage.filePath)) {
+				NamespaceMap.get(inputMessage.filePath).children.add(inputMessage.filePath + "\\" + inputMessage.fileName);
+			}
+
 			//System.out.println("Got to the file");
 			NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
 
@@ -1151,6 +1164,7 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(ServerMap.containsKey(IPaddress))
 		{
+			System.out.println("IP Address: "+IPaddress);
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
