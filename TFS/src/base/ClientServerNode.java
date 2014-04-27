@@ -143,7 +143,7 @@ public class ClientServerNode extends ServerNode {
 		 * @param filepath
 		 * @param nFiles
 		 */
-		public void test2(String filepath, int nFiles) {
+		public void test2(final String filepath, int nFiles) {
 			if (NamespaceMap.get(filepath) != null) {
 				if (NamespaceMap.get(filepath).children.size() > 0) {
 					System.out.println("Finding the children!");
@@ -152,11 +152,21 @@ public class ClientServerNode extends ServerNode {
 						test2helper(childs.get(a), nFiles);
 					}
 				}
+				
 			}
 
 			for (int i = 1; i <= nFiles; i++) {
 				try {
-					CCreateFile(filepath, (String) ("File" + i));
+					Timer timer = new Timer();
+					final String filename = "File" + i;
+					timer.schedule(new TimerTask() {
+						@Override
+						public void run() {
+							CCreateFile(filepath, filename);
+						}
+						
+					}, 500);
+				
 				} catch (Exception e) {
 					System.out.println("Unable to create files");
 				}
@@ -204,7 +214,7 @@ public class ClientServerNode extends ServerNode {
 			message.fileName = fileName;
 			message.addressedTo = serverType.MASTER;
 			message.sender = serverType.CLIENT;
-			System.out.println("Sending message to create file");
+			System.out.println("Sending message to create file " + fileName + " in " + folderFilepath);
 			try {
 				SendMessageToMaster(message);
 			} catch (Exception e) {

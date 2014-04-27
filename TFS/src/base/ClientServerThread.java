@@ -42,14 +42,10 @@ public class ClientServerThread extends ServerThread {
 			}
 			else if (message.type == msgType.CREATEFILE) {
 				if(message.success == msgSuccess.REQUESTSUCCESS) {
-					System.out.println("Successfully created file "+message.filePath);
-					/*NamespaceNode nn = new NamespaceNode(nodeType.FILE);
-					server.NamespaceMap.put(message.filePath, nn);
-					File file = new File(message.filePath);
-					server.NamespaceMap.get(file.getParent()).children.add(message.filePath);*/
+					System.out.println("Successfully created file " + message.fileName + " in " + message.filePath);
 				}
-				else {
-					System.out.println("Failed to create file "+message.filePath);
+				else if (message.success == msgSuccess.REQUESTERROR) {
+					System.out.println("Failed to create file " + message.filePath);
 				}
 			}
 			else if(message.type == msgType.READFILE)
