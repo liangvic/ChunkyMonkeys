@@ -571,12 +571,8 @@ public class MasterServerThread extends ServerThread {
 
 			System.out.println("Target file number to input = "+targetFileNumber);
 			//Assigns a file number from 0 - 4
-
-
-
 			//do a check to see what the offset is
-
-
+			
 			//Get information about all chunkservers
 			System.out.println("Getting all ip");
 			for(String ip:ServerMap.keySet()){
@@ -589,9 +585,12 @@ public class MasterServerThread extends ServerThread {
 			System.out.println("Selecting "+inputMessage.replicaCount+" replicas");
 			while(replicaList.size()<inputMessage.replicaCount){
 				chunkServerAssignment = rand.nextInt(4);
-				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))){
-					replicaList.add(allAvailableServerList.get(chunkServerAssignment));
-					System.out.println("	selected replica "+allAvailableServerList.get(chunkServerAssignment).IP);
+				if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
+					int serverIP = chunkServerAssignment + 2;
+					if(ServerMap.get(Config.prop.get("IP" + Integer.toString(serverIP))).status == serverStatus.ALIVE){
+						replicaList.add(allAvailableServerList.get(chunkServerAssignment));
+						System.out.println("	selected replica "+allAvailableServerList.get(chunkServerAssignment).IP);
+					}
 				}
 			}
 			int[] replicaListLargestOffset = new int[replicaList.size()];
