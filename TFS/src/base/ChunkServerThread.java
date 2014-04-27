@@ -253,8 +253,8 @@ public class ChunkServerThread extends ServerThread {
 //		m.success = msgSuccess.REQUESTSUCCESS;
 //
 //		//appending on
-//		WritePersistentServerNodeMap(message.chunkClass.chunkHash,message.chunkClass);
-//		WriteDataToFile(current, current.data);
+		WritePersistentServerNodeMap(message.chunkClass.chunkHash,message.chunkClass);
+		WriteDataToFile(current, current.data);
 //		SendMessageToMaster(m);
 		//master.DealWithMessage(newMessage);
 	}
