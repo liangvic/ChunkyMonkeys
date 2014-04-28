@@ -16,6 +16,13 @@ import java.util.Timer;
 
 public class launch {
 
+	/**
+	 * @param args
+	 * @throws Exception
+	 * Creates either MasterServerNode, ClientServerNode, or ChunkServerNode instance based on console input
+	 * and passes in IP and port number based on matching config file value
+	 * Calls proper main() method in either Master, Client, or Chunk Server
+	 */
 	public static void main(String args[]) throws Exception {
 
 		/*Timer timer = new Timer();

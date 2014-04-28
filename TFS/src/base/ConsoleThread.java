@@ -18,6 +18,9 @@ public class ConsoleThread extends Thread{
 		a = sa;
 	}
 
+	/**
+	 * Prints prompt and take input from console
+	 */
 	public void run(){
 		runConsole = true;
 		while(true)
@@ -31,6 +34,7 @@ public class ConsoleThread extends Thread{
 	}
 	/**
 	 * @throws Exception
+	 * Calls on proper unit/test based on console input
 	 */
 	protected void TestInterface(String input){
 

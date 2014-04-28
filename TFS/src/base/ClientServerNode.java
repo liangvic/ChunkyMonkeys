@@ -18,17 +18,12 @@ import base.ServerNode;
 
 public class ClientServerNode extends ServerNode {
 
-	//public MasterServerNode master;
-	//public ChunkServerNode chunkServer;
-	//Semaphore action = new Semaphore(1, true);
 	Timer timer = new Timer();
 
 
 	public ClientServerNode(String ip, int inPort)
 	{
-
 		super(ip, inPort);
-
 
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
@@ -45,6 +40,8 @@ public class ClientServerNode extends ServerNode {
 
 	/**
 	 * @throws Exception
+	 * Start thread for ConsoleThread to allow for console input to start Tests/Units
+	 * If connection is established, start new thread to deal with message
 	 */
 	public void main() throws Exception {	
 		toString();
@@ -102,9 +99,9 @@ public class ClientServerNode extends ServerNode {
 
 	/**
 	 * @param dataMessage
+	 * Print byte array data to local file 
 	 */
 	public void msgPrintFileData(Message dataMessage) {
-		System.out.println("    Get message to print file data");
 		chunkReadsRecieved++;
 		//hard coded
 		//		chunkCountToExpect = 2;
@@ -242,25 +239,6 @@ public class ClientServerNode extends ServerNode {
 	 * @param filepath
 	 */
 	public void CDeleteDirectory(String filepath) {
-		// SENDING FILEPATH TO THE MASTER
-		/*
-		 * Properties prop = new Properties(); try { prop.load(new
-		 * FileInputStream("config/config.properties")); } catch
-		 * (FileNotFoundException e) { // TODO Auto-generated catch block
-		 * e.printStackTrace(); } catch (IOException e) { // TODO Auto-generated
-		 * catch block e.printStackTrace(); }
-		 * System.out.println(prop.getProperty("IP1"));
-		 * 
-		 * try { Socket masterSocket = new Socket(prop.getProperty("IP1"),
-		 * Integer.parseInt(prop.getProperty("PORT1"))); ObjectOutputStream out
-		 * = new ObjectOutputStream(masterSocket.getOutputStream()); Message
-		 * message = new Message(msgType.DELETEDIRECTORY);
-		 * out.writeObject(message); out.close(); masterSocket.close(); } catch
-		 * (NumberFormatException e) { // TODO Auto-generated catch block
-		 * e.printStackTrace(); } catch (UnknownHostException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } catch (IOException
-		 * e) { // TODO Auto-generated catch block e.printStackTrace(); }
-		 */
 		Message message = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 		message.type = msgType.DELETEDIRECTORY;
 		message.filePath = filepath;
@@ -401,6 +379,12 @@ public class ClientServerNode extends ServerNode {
 
 	}
 
+	/**
+	 * @param parentfilepath
+	 * @param folderName
+	 * @param NumMaxFolders
+	 * @param NumSubdirectories
+	 */
 	public void unit1helper(String parentfilepath, int folderName, int NumMaxFolders, int NumSubdirectories){
 		if(folderName<=NumMaxFolders){
 			for(int i=1;i<=NumSubdirectories;i++){

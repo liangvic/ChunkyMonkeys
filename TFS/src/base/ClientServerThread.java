@@ -18,6 +18,9 @@ public class ClientServerThread extends ServerThread {
 		server = sn;
 	}
 
+	/**
+	 * Schedules proper action for Client Server according message 
+	 */
 	public void DealWithMessage(Message message) {
 		System.out.println("YOU GOT MESSAGE. Type = "+message.type.toString());
 //		if(!messageList.isEmpty()) {
