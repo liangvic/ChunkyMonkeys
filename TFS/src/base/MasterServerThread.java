@@ -61,10 +61,16 @@ public class MasterServerThread extends ServerThread {
 
 	public void DealWithMessage(Message inputMessage) {
 		server.operationID++; //used to differentiate operations
-		System.out.println("inputMessagetype "+ inputMessage.type);
+		//System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
 			SetChunkServerAlive(inputMessage.senderIP);
+			/*if(ServerMap.get(inputMessage.senderIP).status == serverStatus.DEAD)
+			{
+				SetChunkServerOutdated(inputMessage.senderIP);
+				
+			}*/
+			
 		}
 		else if(inputMessage instanceof SOSMessage)
 		{
@@ -75,7 +81,8 @@ public class MasterServerThread extends ServerThread {
 			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
 			{
 				//TODO: finished with the sending of data -- release semaphore-kind of thing?
-
+				System.out.println("ServerIP " + inputMessage.senderIP + " is now ALIVE");
+				ServerMap.get(inputMessage.senderIP).status = serverStatus.ALIVE;
 			}
 		}
 		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
@@ -941,11 +948,30 @@ public class MasterServerThread extends ServerThread {
 					chunkServerMap.get(hashString));
 			return newChunk;
 		}
-		else //create new file if ti doesnt exist in the namespace already
+		else //create new file if it doesn't exist in the namespace already
 		{
+<<<<<<< HEAD
 			System.out.println("YOLO");
 			CreateFile(message, opID);
 			
+=======
+			File path = new File(filepath);
+			String parentPath = path.getParent();
+			String parent;
+			if (parentPath == null) {
+				parent = filepath;
+			} else {
+				parent = parentPath;
+			}
+			Message m = new Message(server.myIP, server.myType, server.myInputPortNumber,server.myIP, server.myType, server.myInputPortNumber);
+			m.type = msgType.CREATEFILE;
+			m.filePath = parent;
+			m.chunkindex = 1;
+			m.fileName = message.fileName;
+
+			CreateFile(m, opID);
+			message.filePath = parent;
+>>>>>>> master
 			AssignChunkServer(message, opID);
 
 			/*//Random rand = new Random();
@@ -954,8 +980,18 @@ public class MasterServerThread extends ServerThread {
 			newChunk.chunkHash = hashString;
 			chunkServerMap.put(hashString, newChunk);*/
 			ChunkMetadata newChunk = chunkServerMap.get(hashString);
-
-			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
+			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+			NamespaceMap.put(filepath, nn);
+			System.out.println("NamespaceNode: "+NamespaceMap.get(filepath));
+			System.out.println("ChunkMetadata: "+chunkServerMap.get(hashString));
+			ClearNamespaceMapFile();
+			synchronized (NamespaceMap) {
+				for(String key : NamespaceMap.keySet())
+				{
+					WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+				}
+			}
+			
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			tfsLogger.LogMsg("Created file " + filepath);
@@ -1168,17 +1204,22 @@ public class MasterServerThread extends ServerThread {
 		synchronized(chunkServerMap) {
 			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
 			{
-				for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+				if(cmEntry.getValue().chunkHash.equals(msg.chunkClass.chunkHash))
 				{
-					if(location.chunkIP != msg.senderIP)
+					for(ChunkLocation location: cmEntry.getValue().listOfLocations)
 					{
-						msg.receiverIP = location.chunkIP;
-						msg.msgToMaster = msgTypeToMaster.DONESENDING;
-						SendMessageToChunkServer(msg);
+						if(location.chunkIP != msg.senderIP)
+						{
+							msg.receiverIP = location.chunkIP;
+							msg.msgToMaster = msgTypeToMaster.DONESENDING;
+							SendMessageToChunkServer(msg);
+							return;
+						}
 					}
 				}
 			}
 		}
+		System.out.println("Could not find another replica to send.");
 	}
 
 
@@ -1186,7 +1227,7 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(ServerMap.containsKey(IPaddress))
 		{
-			System.out.println("IP Address: "+IPaddress);
+			//System.out.println("IP Address: "+IPaddress);
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
@@ -1197,10 +1238,39 @@ public class MasterServerThread extends ServerThread {
 		{
 			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
 		}
-		SOSMessage message = new SOSMessage(server.myIP, server.myType, server.myInputPortNumber, IPaddress, serverType.CHUNKSERVER, ServerMap.get(IPaddress).clientPort);
+
+		if(chunkServerMap.size()==0)
+		{
+			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
+			return;
+		}
+		
+		SOSMessage message = new SOSMessage(server.myIP, server.myType, server.myInputPortNumber, IPaddress, serverType.CHUNKSERVER, ServerMap.get(IPaddress).serverPort);
 		message.msgToServer = msgTypeToServer.TO_SOSSERVER;
+		synchronized(chunkServerMap)
+		{
+			
+			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+			{
+				for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+				{
+					if(location.chunkIP.equals(IPaddress))
+					{
+						if(cmEntry.getValue().listOfLocations.size() == 1)
+						{
+							System.out.println("Found only version that matches. Cannot give updated information...");
+							return;
+						}
+						System.out.println("Found IP that matches");
+						message.chunkClass = cmEntry.getValue();
+						SendMessageToChunkServer(message);
+					}
+				}
+			}
+		}
+		
 		//message.chunkClass = ServerMap.get(IPaddress).
-		SendMessageToChunkServer(message);
+		//SendMessageToChunkServer(message);
 	}
 
 }

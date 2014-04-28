@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import Utility.HeartBeat;
 import Utility.Message;
 import Utility.NamespaceNode;
 import Utility.Message.serverType;
@@ -50,12 +51,16 @@ public class ServerNode {
 			message.receiverInputPort = message.senderInputPort;
 			message.senderInputPort = myInputPortNumber;
 		}
-		System.out.println("Sending message: "+message.type+ " to "+message.receiverIP);
-		System.out.println("	Addressed to: "+message.addressedTo);
-		System.out.println("	sender: "+message.sender);
-		System.out.println("	sender ip: "+message.senderIP);
-		System.out.println("	receiverInputPort: "+message.receiverInputPort);
-		System.out.println("	senderInputPort: "+message.senderInputPort);
+		if(!(message instanceof HeartBeat))
+		{
+			System.out.println("Sending message: "+message.type+ " to "+message.receiverIP);
+			System.out.println("	Addressed to: "+message.addressedTo);
+			System.out.println("	sender: "+message.sender);
+			System.out.println("	sender ip: "+message.senderIP);
+			System.out.println("	receiverInputPort: "+message.receiverInputPort);
+			System.out.println("	senderInputPort: "+message.senderInputPort);
+		}
+		
 		try(Socket outSocket =  new Socket(message.receiverIP, message.receiverInputPort );){
 				ObjectOutputStream out = new ObjectOutputStream(outSocket.getOutputStream());
 				out.writeObject(message);
