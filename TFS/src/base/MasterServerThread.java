@@ -132,8 +132,10 @@ public class MasterServerThread extends ServerThread {
 		}
 		else if(inputMessage.type == msgType.APPENDTOFILE)
 		{
-			if(inputMessage.sender == serverType.CLIENT)
-				AssignChunkServer(inputMessage, server.operationID);//, operationID);
+			if(inputMessage.sender == serverType.CLIENT){
+				System.out.println("Getting a message from client. SHOULD NOT HAPPEN");
+//				AssignChunkServer(inputMessage, server.operationID);//, operationID);
+			}
 			else if (inputMessage.sender == serverType.CHUNKSERVER){
 				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
 				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
@@ -158,6 +160,7 @@ public class MasterServerThread extends ServerThread {
 			}
 		}else if(inputMessage.type == msgType.WRITETONEWFILE) // Test 4 & Unit 4
 		{
+			System.out.println("recieved a writetonewfile");
 			AssignChunkServer(inputMessage, server.operationID);
 		}	
 		/*
@@ -688,6 +691,7 @@ public class MasterServerThread extends ServerThread {
 			inputMessage.chunkClass = newMetaData;
 			inputMessage.addressedTo = serverType.CLIENT;
 			inputMessage.sender = serverType.MASTER;
+			System.out.println("Sending  message to clent 3");
 			SendMessageToClient(inputMessage);
 
 
@@ -744,9 +748,8 @@ public class MasterServerThread extends ServerThread {
 		String hashstring = newfilename + message.chunkindex;
 		System.out.println("CREATING FILE " + newfilename);
 		// if folder doesn't exist or file already exists
-		if (NamespaceMap.get(filepath) == null
-				|| chunkServerMap.get(hashstring) != null
-				|| NamespaceMap.get(filepath).type == nodeType.FILE) {
+		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null || NamespaceMap.get(filepath).type == nodeType.FILE) {
+			System.out.println("Sending error message to clent 1");
 			SendErrorMessageToClient(message);
 		} else {
 			if(AddExclusiveParentLocks(filepath, opID))
@@ -758,6 +761,7 @@ public class MasterServerThread extends ServerThread {
 					NamespaceMap.get(filepath).children.add(newName);
 					message.type = msgType.CREATEFILE;
 					try {
+						System.out.println("Sending  message to clent 2");
 						SendMessageToClient(message);
 
 
@@ -853,8 +857,10 @@ public class MasterServerThread extends ServerThread {
 	 */
 	public void AppendToTFSFile(Message message, int opID)
 	{
+		System.out.println("APPENDING TO TFS FILE");
 		if(AddExclusiveParentLocks(message.filePath, opID))
 		{
+			System.out.println("NAICE");
 			ChunkMetadata chunkData = GetTFSFile(message, opID);
 			if(chunkData != null) {
 				message.chunkClass = chunkData;
@@ -884,6 +890,7 @@ public class MasterServerThread extends ServerThread {
 		int index = 1;
 		String filepath = message.filePath;
 		String hashString = filepath + index;
+		System.out.println("GETTING TFS FILE");
 		if(NamespaceMap.containsKey(filepath)) // return existing ChunkMetadata
 		{
 			synchronized(chunkServerMap) {
@@ -938,8 +945,17 @@ public class MasterServerThread extends ServerThread {
 					chunkServerMap.get(hashString));
 			return newChunk;
 		}
-		else //create new file if ti doesnt exist in the namespace already
+		else //create new file if it doesn't exist in the namespace already
 		{
+			File path = new File(filepath);
+			String parentPath = path.getParent();
+			String parent;
+			if (parentPath == null) {
+				parent = filepath;
+			} else {
+				parent = parentPath;
+			}
+			message.filePath = parent;
 			CreateFile(message, opID);
 			AssignChunkServer(message, opID);
 
@@ -949,8 +965,16 @@ public class MasterServerThread extends ServerThread {
 			newChunk.chunkHash = hashString;
 			chunkServerMap.put(hashString, newChunk);*/
 			ChunkMetadata newChunk = chunkServerMap.get(hashString);
-
-			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
+			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+			NamespaceMap.put(filepath, nn);
+			System.out.println("NamespaceNode: "+NamespaceMap.get(filepath));
+			System.out.println("ChunkMetadata: "+chunkServerMap.get(hashString));
+			ClearNamespaceMapFile();
+			for(String key : NamespaceMap.keySet())
+			{
+				WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+			}
+			
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			tfsLogger.LogMsg("Created file " + filepath);
