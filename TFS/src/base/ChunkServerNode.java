@@ -116,7 +116,8 @@ public class ChunkServerNode extends ServerNode {
 				public void run() {
 						HeartBeat HBMessage = new HeartBeat(myIP, myType, myInputPortNumber, 
 								masterIP,serverType.MASTER, masterPort,serverStatus.ALIVE);
-//						SendMessage(HBMessage);
+						//SendMessage(HBMessage);
+						PingMaster(HBMessage);
 				}
 			}, 10000, 10000);
 			

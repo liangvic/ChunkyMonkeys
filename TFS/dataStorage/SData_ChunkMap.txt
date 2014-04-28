@@ -1,2 +1,1 @@
-1\2\test.txt1	1	1	68.181.174.61	7070	4	0	1\2\test.txt1	0	test.txt	
-1\2\test.txt1	1	1	68.181.174.61	7070	4	4	1\2\test.txt1	0	test.txt	
+1\a.txt1	1	1	68.181.174.75	7070	4	2	1\a.txt1	0	a.txt	2	1	81

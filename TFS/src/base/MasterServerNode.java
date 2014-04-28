@@ -86,10 +86,9 @@ public class MasterServerNode extends ServerNode {
 					for (Map.Entry<String, ServerData> entry : ServerMap.entrySet())
 					{
 						ServerData temp = entry.getValue();
-						/*ServerData temp = entry.getValue();
 						temp.TTL+=1;
 						if (temp.TTL >= 10 && temp.status == serverStatus.ALIVE)
-							temp.status = serverStatus.DEAD;*/
+							temp.status = serverStatus.DEAD;
 
 					}
 				}
@@ -98,7 +97,7 @@ public class MasterServerNode extends ServerNode {
 			while(true) { 
 				Socket otherSocket = serverSocket.accept();
 
-				System.out.println("Recieved Message from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
+				//System.out.println("Recieved Message from " + otherSocket.getInetAddress() + " Port " + otherSocket.getLocalPort());
 
 				ServerThread st = new MasterServerThread(this, otherSocket);
 				st.start();
@@ -292,7 +291,7 @@ public class MasterServerNode extends ServerNode {
 				addingNode.type = type;
 				addingNode.lockList = tempLockList;
 
-				System.out.println("Adding " + key + " with children size " + addingNode.children.size());
+				//System.out.println("Adding " + key + " with children size " + addingNode.children.size());
 				NamespaceMap.put(key, addingNode);
 
 			}
