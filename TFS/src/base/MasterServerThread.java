@@ -960,8 +960,14 @@ public class MasterServerThread extends ServerThread {
 			} else {
 				parent = parentPath;
 			}
+			Message m = new Message(server.myIP, server.myType, server.myInputPortNumber,server.myIP, server.myType, server.myInputPortNumber);
+			m.type = msgType.CREATEFILE;
+			m.filePath = parent;
+			m.chunkindex = 1;
+			m.fileName = message.fileName;
+
+			CreateFile(m, opID);
 			message.filePath = parent;
-			CreateFile(message, opID);
 			AssignChunkServer(message, opID);
 
 			/*//Random rand = new Random();
@@ -975,9 +981,11 @@ public class MasterServerThread extends ServerThread {
 			System.out.println("NamespaceNode: "+NamespaceMap.get(filepath));
 			System.out.println("ChunkMetadata: "+chunkServerMap.get(hashString));
 			ClearNamespaceMapFile();
-			for(String key : NamespaceMap.keySet())
-			{
-				WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+			synchronized (NamespaceMap) {
+				for(String key : NamespaceMap.keySet())
+				{
+					WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+				}
 			}
 			
 			WritePersistentChunkServerMap(hashString,
