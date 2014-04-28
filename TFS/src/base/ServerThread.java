@@ -10,16 +10,27 @@ import java.util.List;
 
 import Utility.Message;
 
+/**
+ * Abstract base class with subclasses MasterServerThread, ClientServerThread, and ChunkServerThread
+ *
+ */
 public abstract class ServerThread extends Thread {
 	ServerNode server;
 	Socket socket;
 	
+	/**
+	 * @param sn reference to the ServerNode
+	 * @param s reference to the Socket returned by the accept() method in the ServerNode main() method
+	 */
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
 		socket = s; 
 		System.out.println("socket port:"+s.getPort());
 	}
 	
+	/**
+	 * Reads Message from input stream and calls on the DealWithMessage method in the proper subclass
+	 */
 	public void run() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
@@ -43,6 +54,9 @@ public abstract class ServerThread extends Thread {
 		}
 	}
 	
+	/**
+	 * @param message Implemented in subclasses
+	 */
 	public abstract void DealWithMessage(Message message);
 
 }

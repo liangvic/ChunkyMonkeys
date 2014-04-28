@@ -55,6 +55,11 @@ public class ChunkServerNode extends ServerNode {
 	Map<String, ChunkMetadata> chunkMap = Collections.synchronizedMap(new HashMap<String, ChunkMetadata>());
 	
 	
+	/**
+	 * @param ip
+	 * @param inPort
+	 * populate file_list with 5 TFSFile instances and load persistent file data into class data structures
+	 */
 	public ChunkServerNode(String ip, int inPort) {
 		super(ip, inPort);
 		
@@ -75,27 +80,10 @@ public class ChunkServerNode extends ServerNode {
 	String masterIP = null;
 	int masterPort = 0;
 
-	/*
-	 * public static void main(String argv[]) throws Exception
-	 * 
-	 * {
-	 * 
-	 * ServerSocket welcomeSocket = new ServerSocket(6789);
-	 * 
-	 * while(true) { Socket connectionSocket = welcomeSocket.accept();
-	 * BufferedReader inFromClient = new BufferedReader(new
-	 * InputStreamReader(connectionSocket.getInputStream())); DataOutputStream
-	 * outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-	 * clientSentence = inFromClient.readLine(); System.out.println("Received: "
-	 * + clientSentence); capitalizedSentence = clientSentence.toUpperCase() +
-	 * '\n'; outToClient.writeBytes(capitalizedSentence); }
-	 * 
-	 *  //TODO:Timer that send out pings at regular intervals
-	 * }
-	 */
-
 	/**
 	 * @throws Exception
+	 * Send heartbeat to Master every 10 sec and listen for connection over socket
+	 * If connection is established, start new thread to deal with message
 	 */
 	public void main() throws Exception {	
 		toString();
@@ -151,7 +139,7 @@ public class ChunkServerNode extends ServerNode {
 	
 
 	/**
-	 * 
+	 * Load persistent data from txt file into chunkMap 
 	 */
 	public void LoadServerNodeMap() {
 		String path = "dataStorage/SData_ChunkMap.txt";
@@ -256,7 +244,7 @@ public class ChunkServerNode extends ServerNode {
 	}
 
 	/**
-	 * 
+	 * Write data from chunkMap into File0 - File4
 	 */
 	public void LoadFileData()
 	{

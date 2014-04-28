@@ -47,6 +47,10 @@ public class ChunkServerThread extends ServerThread {
 	Semaphore chunkMapSemaphore = new Semaphore(1,true);
 	Semaphore appendToFileSemaphore = new Semaphore(1,true);
 
+	/**
+	 * @param sn
+	 * @param s
+	 */
 	public ChunkServerThread(ChunkServerNode sn, Socket s) {
 		super(sn, s);
 		server = sn;
@@ -59,6 +63,9 @@ public class ChunkServerThread extends ServerThread {
 		masterPort = Integer.parseInt(Config.prop.getProperty("MASTER_INPORT"));
 	}
 
+	/**
+	 * Schedules proper action for Chunk Server according message 
+	 */
 	public void DealWithMessage(Message message) {
 		//if(!messageList.isEmpty()) {
 		//	Message message = messageList.get(0);
@@ -118,6 +125,8 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * @param message
+	 * Reads in chunk data from TFS file into byte array and messages client 
+	 * Unit 5
 	 */
 	public void ReadChunks(Message message){
 		//		List<List<Byte>> fileMetaData = new ArrayList<List<Byte>>();
@@ -133,26 +142,33 @@ public class ChunkServerThread extends ServerThread {
 		{
 			int offSetIndex = -1;
 			
-			ChunkMetadata current = message.chunkClass;
-			for (ChunkLocation a : current.listOfLocations){
-				if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
-					offSetIndex = a.byteOffset;
-				}
-			}
+			ChunkMetadata current = chunkMap.get(message.chunkClass.chunkHash);
+			
+			//offSetIndex = 4;
 			
 			for(TFSFile fileData:file_list){
 				System.out.println("ChunkServer: Looking at file "+fileData.fileNumber + " looking for file " + message.chunkClass.filenumber);
 				if(message.chunkClass.filenumber == fileData.fileNumber){
+					for (ChunkLocation a : current.listOfLocations){
+						System.out.println("myIP:" + myIP + " myPort:" + myInputPortNumber);
+						System.out.println("chunkIP:" + a.chunkIP + " chunkPort:" + a.chunkPort);
+						if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+							System.out.println("Fixing the byteoffset to be " + a.byteOffset);
+							offSetIndex = a.byteOffset;
+						}
+					}
+					
+					
 					System.out.println("ChunkServer: Available free byte size: "+(fileData.data.length-fileData.spaceOccupied));
 					System.out.println("ChunkServer: Reading from file number "+message.chunkClass.filenumber);
 					System.out.println("ChunkServer: Reading array size is "+message.chunkClass.size +" with byteoffset: "+ offSetIndex);
 					System.out.println("ChunkServer: File data occupied space: "+fileData.spaceOccupied);
 
 
-					byte[] dataINeed = new byte[message.chunkClass.size+4];
+					byte[] dataINeed = new byte[fileData.spaceOccupied-8];//message.chunkClass.size];
 					// check byte offset
 					
-					for (int i = 0; i < message.chunkClass.size; i++) {
+					for (int i = 0; i < fileData.spaceOccupied-8; i++) {
 						dataINeed[i] = fileData.data[offSetIndex];
 						offSetIndex++;
 					}
@@ -172,6 +188,7 @@ public class ChunkServerThread extends ServerThread {
 					m.filePath = message.filePath;
 					m.fileName = message.fileName;
 					m.fileData = dataINeed;
+			
 					
 					SendMessageToClient(m);
 
@@ -187,6 +204,8 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * @param metadata
+	 * Add empty chunk to chunkMap when creating file
+	 * Unit 2
 	 */
 	public void AddNewBlankChunk(Message message) {
 		// TODO: have to create new Chunkmetadata and copy over metadata
@@ -234,6 +253,11 @@ public class ChunkServerThread extends ServerThread {
 
 	}
 
+	/**
+	 * @param message
+	 * Write message byte array data to corresponding TFSFile
+	 * Unit 4
+	 */
 	public void WriteToNewFile(Message message) {
 
 		TFSFile current = new TFSFile(message.chunkClass.filenumber);
@@ -266,13 +290,15 @@ public class ChunkServerThread extends ServerThread {
 
 				System.out.println("assigning chunk loc");
 
-				chunkloc = a;
+				//chunkloc = a;
+				a.byteOffset = current.spaceOccupied;
 			}
 		}
-		System.out.println(chunkloc.byteOffset);
+		
 		System.out.println(current.spaceOccupied);
 		
-		chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
+		//chunkloc.byteOffset =current.spaceOccupied; //TODO: CHANGE THIS BACK LATER!
+		//System.out.println("byteOffset: " + chunkloc.byteOffset);
 		//message.chunkClass.listOfLocations.get(0).byteOffset = current.spaceOccupied;
 		message.chunkClass.size = message.fileData.length;
 
@@ -305,6 +331,8 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * @param metadata
+	 * Unit 3
+	 * Deletes matching chunk from chunkMap and fixes spaceOccupied in matching TFSFile
 	 */
 	public void DeleteChunk(ChunkMetadata metadata) {
 		System.out.println("Deleting chunk");
@@ -359,6 +387,8 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * @param metadata
+	 * Count number of distinct files in one TFSFile
+	 * Unit 7
 	 */
 	public void CountNumInFile(ChunkMetadata metadata)
 	{
@@ -411,8 +441,10 @@ public class ChunkServerThread extends ServerThread {
 
 	/**
 	 * @param message
+	 * Append byte array data to TFSFile
+	 * Unit 6
 	 */
-	void AppendToTFSFile(Message message) { // Test 6
+	void AppendToTFSFile(Message message) { 
 		appendToFileSemaphore.tryAcquire();
 		try {
 			ChunkMetadata metadata = message.chunkClass;
@@ -449,8 +481,6 @@ public class ChunkServerThread extends ServerThread {
 				current.data[current.spaceOccupied] = fourBytesAfter[i];
 				current.spaceOccupied++;
 			}			
-			System.out.println("occupied length: "+current.spaceOccupied);
-			System.out.println("add length: "+byteArray.length);
 			chunkMap.put(metadata.chunkHash, metadata);
 
 			Message m = new Message(msgType.APPENDTOTFSFILE, myIP, myType, myInputPortNumber, masterIP, serverType.MASTER, masterPort);
@@ -477,6 +507,7 @@ public class ChunkServerThread extends ServerThread {
 	/**
 	 * @param key
 	 * @param chunkmd
+	 * Write chunkMap data to persistent data file 
 	 */
 	public void WritePersistentServerNodeMap(String key, ChunkMetadata chunkmd)
 	{
@@ -536,6 +567,7 @@ public class ChunkServerThread extends ServerThread {
 	/**
 	 * @param file
 	 * @param data
+	 * Write byte array data to corresponding file (File0 - File4)
 	 */
 	public void WriteDataToFile(TFSFile file, byte[] data)
 	{
@@ -573,10 +605,10 @@ public class ChunkServerThread extends ServerThread {
 	//Other chunkserver sends data over to this chunkserver.
 
 	/**
-	 * 
 	 * @param msg
+	 * Check version number based on message sent from Master
 	 */
-	public void CheckVersionAfterStarting(SOSMessage msg) //MESSAGE THAT COMES FROM MASTER TO CHECK VERSION NUMBER
+	public void CheckVersionAfterStarting(SOSMessage msg) 
 	{ 
 		synchronized(chunkMap)
 		{
@@ -594,6 +626,10 @@ public class ChunkServerThread extends ServerThread {
 		}
 	}
 
+	/**
+	 * @param msg
+	 * Send data to chunk servers that share the replicas after current chunk server has gone down
+	 */
 	public void SendingDataToUpdateChunkServer(SOSMessage msg)
 	{
 		synchronized(file_list)
@@ -623,7 +659,11 @@ public class ChunkServerThread extends ServerThread {
 
 	}
 
-	public void ReplacingData(SOSMessage msg) //MESSAGE THAT COMES FROM CHUNKSERVER TO GIVE DATA
+	/**
+	 * @param msg
+	 * Update chunkserver with data from its dead replica chunkserver 
+	 */
+	public void ReplacingData(SOSMessage msg) 
 	{
 		synchronized(chunkMap)
 		{
@@ -705,7 +745,7 @@ public class ChunkServerThread extends ServerThread {
 	}
 
 	/**
-	 * 
+	 * Clear persistent data file holding chunkMap data when deleting chunks
 	 */
 	public void ClearChunkMap() {
 		BufferedWriter out = null;

@@ -843,7 +843,7 @@ public class MasterServerThread extends ServerThread {
 			for(String key : NamespaceMap.keySet())
 			{
 				WritePersistentNamespaceMap(key, NamespaceMap.get(key));
-				System.out.println("Key: " + key);
+				//System.out.println("Key: " + key);
 			}
 		}
 

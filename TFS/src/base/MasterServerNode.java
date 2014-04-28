@@ -32,6 +32,10 @@ public class MasterServerNode extends ServerNode {
 	public static TFSLogger logger = new TFSLogger();
 	String myIP;
 
+	/**
+	 * Inner class holding IP, port, ping/heartbeat, and serverStatus (DEAD or ALIVE) data
+	 * Used in ServerMap
+	 */
 	public class ServerData {
 		String IP;
 		int clientPort;
@@ -59,9 +63,10 @@ public class MasterServerNode extends ServerNode {
 
 	}
 
-	// Don't call on this for now; using monolith structure
 	/**
 	 * @throws Exception
+	 * Regularly check status of Chunk Servers (ALIVE or DEAD)
+	 * If connection is established, start new thread to deal with message
 	 */
 	public void main() throws Exception {	
 		toString();
