@@ -61,10 +61,14 @@ public class MasterServerThread extends ServerThread {
 
 	public void DealWithMessage(Message inputMessage) {
 		server.operationID++; //used to differentiate operations
-		System.out.println("inputMessagetype "+ inputMessage.type);
+		//System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
-			SetChunkServerAlive(inputMessage.senderIP);
+			if(ServerMap.get(inputMessage.senderIP).status == serverStatus.DEAD)
+			{
+				SetChunkServerOutdated(inputMessage.senderIP);
+			}
+			
 		}
 		else if(inputMessage instanceof SOSMessage)
 		{
@@ -75,7 +79,8 @@ public class MasterServerThread extends ServerThread {
 			else if(((SOSMessage)inputMessage).msgToMaster == msgTypeToMaster.DONESENDING)
 			{
 				//TODO: finished with the sending of data -- release semaphore-kind of thing?
-
+				System.out.println("ServerIP " + inputMessage.senderIP + " is now ALIVE");
+				ServerMap.get(inputMessage.senderIP).status = serverStatus.ALIVE;
 			}
 		}
 		else if (inputMessage.type == msgType.DELETEDIRECTORY && inputMessage.sender == serverType.CLIENT) {
@@ -1169,17 +1174,22 @@ public class MasterServerThread extends ServerThread {
 		synchronized(chunkServerMap) {
 			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
 			{
-				for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+				if(cmEntry.getValue().chunkHash.equals(msg.chunkClass.chunkHash))
 				{
-					if(location.chunkIP != msg.senderIP)
+					for(ChunkLocation location: cmEntry.getValue().listOfLocations)
 					{
-						msg.receiverIP = location.chunkIP;
-						msg.msgToMaster = msgTypeToMaster.DONESENDING;
-						SendMessageToChunkServer(msg);
+						if(location.chunkIP != msg.senderIP)
+						{
+							msg.receiverIP = location.chunkIP;
+							msg.msgToMaster = msgTypeToMaster.DONESENDING;
+							SendMessageToChunkServer(msg);
+							return;
+						}
 					}
 				}
 			}
 		}
+		System.out.println("Could not find another replica to send.");
 	}
 
 
@@ -1198,10 +1208,39 @@ public class MasterServerThread extends ServerThread {
 		{
 			ServerMap.get(IPaddress).status = serverStatus.OUTDATED;
 		}
-		SOSMessage message = new SOSMessage(server.myIP, server.myType, server.myInputPortNumber, IPaddress, serverType.CHUNKSERVER, ServerMap.get(IPaddress).clientPort);
+
+		if(chunkServerMap.size()==0)
+		{
+			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
+			return;
+		}
+		
+		SOSMessage message = new SOSMessage(server.myIP, server.myType, server.myInputPortNumber, IPaddress, serverType.CHUNKSERVER, ServerMap.get(IPaddress).serverPort);
 		message.msgToServer = msgTypeToServer.TO_SOSSERVER;
+		synchronized(chunkServerMap)
+		{
+			
+			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
+			{
+				for(ChunkLocation location: cmEntry.getValue().listOfLocations)
+				{
+					if(location.chunkIP.equals(IPaddress))
+					{
+						if(cmEntry.getValue().listOfLocations.size() == 1)
+						{
+							System.out.println("Found only version that matches. Cannot give updated information...");
+							return;
+						}
+						System.out.println("Found IP that matches");
+						message.chunkClass = cmEntry.getValue();
+						SendMessageToChunkServer(message);
+					}
+				}
+			}
+		}
+		
 		//message.chunkClass = ServerMap.get(IPaddress).
-		SendMessageToChunkServer(message);
+		//SendMessageToChunkServer(message);
 	}
 
 }
