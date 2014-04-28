@@ -952,10 +952,24 @@ public class MasterServerThread extends ServerThread {
 					chunkServerMap.get(hashString));
 			return newChunk;
 		}
-		else //create new file if ti doesnt exist in the namespace already
+		else //create new file if it doesn't exist in the namespace already
 		{
-			System.out.println("YOLO");
-			CreateFile(message, opID);
+			File path = new File(filepath);
+			String parentPath = path.getParent();
+			String parent;
+			if (parentPath == null) {
+				parent = filepath;
+			} else {
+				parent = parentPath;
+			}
+			Message m = new Message(server.myIP, server.myType, server.myInputPortNumber,server.myIP, server.myType, server.myInputPortNumber);
+			m.type = msgType.CREATEFILE;
+			m.filePath = parent;
+			m.chunkindex = 1;
+			m.fileName = message.fileName;
+
+			CreateFile(m, opID);
+			message.filePath = parent;
 			AssignChunkServer(message, opID);
 
 			/*//Random rand = new Random();
@@ -964,8 +978,18 @@ public class MasterServerThread extends ServerThread {
 			newChunk.chunkHash = hashString;
 			chunkServerMap.put(hashString, newChunk);*/
 			ChunkMetadata newChunk = chunkServerMap.get(hashString);
-
-			WritePersistentNamespaceMap(filepath, NamespaceMap.get(filepath));
+			NamespaceNode nn = new NamespaceNode(nodeType.FILE);
+			NamespaceMap.put(filepath, nn);
+			System.out.println("NamespaceNode: "+NamespaceMap.get(filepath));
+			System.out.println("ChunkMetadata: "+chunkServerMap.get(hashString));
+			ClearNamespaceMapFile();
+			synchronized (NamespaceMap) {
+				for(String key : NamespaceMap.keySet())
+				{
+					WritePersistentNamespaceMap(key, NamespaceMap.get(key));
+				}
+			}
+			
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			tfsLogger.LogMsg("Created file " + filepath);
