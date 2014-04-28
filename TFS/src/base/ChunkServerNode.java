@@ -69,7 +69,15 @@ public class ChunkServerNode extends ServerNode {
 		}
 		
 		LoadServerNodeMap();
-		LoadFileData();
+		if(chunkMap.size()>0)
+		{
+			LoadFileData();
+		}
+		else
+		{
+			ClearFiles();
+		}
+		
 	}
 
 	String masterIP = null;
@@ -171,7 +179,6 @@ public class ChunkServerNode extends ServerNode {
 				// REFERENCECOUNT
 				// FILENAME
 				// FILENUMBER
-				// BYTEOFFSET
 				// INDEX
 				// SIZE
 				String[] data = textLine.split("\t");
@@ -186,7 +193,7 @@ public class ChunkServerNode extends ServerNode {
 				// location
 				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = Integer.parseInt(data[2]);
-				int newIndexCounter = 3 + (locationSize / 2);
+				int newIndexCounter = 3 + (locationSize * 4);
 				for (int i = 3; i < newIndexCounter; i = i + 4) {
 					locations.add(new ChunkLocation(data[i], Integer
 							.parseInt(data[i + 1]),Integer.parseInt(data[i+2]),
@@ -215,8 +222,6 @@ public class ChunkServerNode extends ServerNode {
 				// fileNumber
 				int n_fileNumber = Integer.parseInt(data[newIndexCounter++]);
 
-				// byteoffset
-				int n_byteOffset = Integer.parseInt(data[newIndexCounter++]);
 
 				// index
 				int n_index = Integer.parseInt(data[newIndexCounter++]);
@@ -275,14 +280,14 @@ public class ChunkServerNode extends ServerNode {
 					ChunkMetadata chunkmeta = entry.getValue();
 					ChunkLocation chunkloc = null;
 					for (ChunkLocation a : chunkmeta.listOfLocations){
-						if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+						if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
 							chunkloc = a;
 						}
 					}
 					for(int i = 0; i<4;i++)
 					{
 						//fileSize[i] = testData[entry.getValue().byteoffset + i];
-						fileSize[i] = testData[chunkloc.byteOffset + i];
+						fileSize[i] = testData[i];
 					}
 					fileToStoreInto.spaceOccupied = java.nio.ByteBuffer.wrap(fileSize).getInt();
 					byte[] data = new byte[entry.getValue().size];
@@ -303,6 +308,37 @@ public class ChunkServerNode extends ServerNode {
 				}
 			}
 		}
+	}
+	
+	public void ClearFiles()
+	{
+		String path = null;
+		BufferedWriter out = null;
+		File file = null;
+		FileWriter fstream = null;
+		for(int filenumber = 0; filenumber < 5; filenumber++)
+		{
+			try {
+				path = "dataStorage/File" + filenumber;	
+				file = new File(path);
+				fstream = new FileWriter(file.getAbsoluteFile(), false);
+				out = new BufferedWriter(fstream);
+				out.write("");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			finally	{
+				try {
+					fstream.close();
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+			
+		}
+		
 	}
 
 	

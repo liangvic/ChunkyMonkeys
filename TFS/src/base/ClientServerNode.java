@@ -28,7 +28,7 @@ public class ClientServerNode extends ServerNode {
 	{
 
 		super(ip, inPort);
-		
+
 
 		myType = serverType.CLIENT;
 		masterIP = Config.prop.getProperty("MASTERIP");
@@ -65,7 +65,7 @@ public class ClientServerNode extends ServerNode {
 
 				ServerThread st = new ClientServerThread(this, otherSocket);
 				st.start();
-//				TestInterface();
+				//				TestInterface();
 
 
 
@@ -126,7 +126,7 @@ public class ClientServerNode extends ServerNode {
 				file.createNewFile();
 				//FileOutputStream fileOuputStream = new FileOutputStream(localPathToCreateFile);
 				FileOutputStream fileOuputStream = new FileOutputStream(dataMessage.localFilePath);
-				fileOuputStream.write(finalByteArray);
+				fileOuputStream.write(dataMessage.fileData);//finalByteArray);
 				fileOuputStream.close();
 
 				System.out.println("Done");
@@ -313,7 +313,7 @@ public class ClientServerNode extends ServerNode {
 				}
 
 			}, 1000);
-										CCreateDirectory(newfilepath);
+			CCreateDirectory(newfilepath);
 			System.out.println("Creating "+newfilepath);
 			queue.add(newfilepath);
 			folderName++;
@@ -345,7 +345,7 @@ public class ClientServerNode extends ServerNode {
 		final int count = 1;
 		CCreateDirectory("1");
 		NamespaceMap.put("1", new NamespaceNode(nodeType.DIRECTORY));
-		
+
 		if (NumFolders > 1) {
 			timer.schedule(new TimerTask() {
 				@Override
@@ -364,8 +364,8 @@ public class ClientServerNode extends ServerNode {
 				}
 			},1000);
 		}
-		
-		
+
+
 	}
 
 	/**
@@ -387,7 +387,7 @@ public class ClientServerNode extends ServerNode {
 			}
 
 			CCreateDirectory(newfilepath);
-			
+
 
 			timer.schedule(new TimerTask() {
 				@Override
@@ -538,9 +538,9 @@ public class ClientServerNode extends ServerNode {
 			msg.sender = myType;
 			msg.senderInputPort = myInputPortNumber;
 			msg.senderIP = myIP;
-			
 
-			
+
+
 			System.out.println("Writing chunks to "+msg.chunkClass.listOfLocations.size()+" replica(s)");
 			for(int j=0;j<msg.chunkClass.listOfLocations.size();j++){
 				msg.receiverIP = msg.chunkClass.listOfLocations.get(j).chunkIP;
@@ -713,14 +713,14 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
-		byte[] byteArray = null;
+		byte[] byteArray = null; //WTF IS THIS SHIT
 		Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 		m.type = msgType.APPENDTOTFSFILE;
 		m.filePath = filePath;
 		m.fileName = filePath.substring(index + 1);
 		m.localFilePath = localPath;
 		m.replicaCount = 3;
-		m.fileData = byteArray;
+		m.fileData = byteArray; //WHY ASSIGN NULL GODDAM IT
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}
@@ -731,12 +731,21 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void AppendToAllReplicas(Message message)
 	{
+		System.out.println("Appendtoallreplicas");
 		for (ChunkLocation loc : message.chunkClass.listOfLocations)
-		{
+		{		
+			System.out.println("Tying to read local file on ip "+loc.chunkIP+ " on port "+loc.chunkPort);
+			
 			Message m = new Message(myIP, myType, myInputPortNumber, loc.chunkIP, serverType.CHUNKSERVER, loc.chunkPort);
 			m.type = msgType.APPENDTOTFSFILE;
 			m.filePath = message.filePath;
 			m.fileName = message.fileName;
+			m.localFilePath = message.localFilePath;
+			m.chunkClass = message.chunkClass;
+			System.out.println("Printing byte offsets");
+			for(ChunkLocation cl:message.chunkClass.listOfLocations){
+				System.out.println(cl.byteOffset);
+			}
 			ReadLocalFile(m); //this should send to individual chunkserver
 		}
 	}
@@ -745,11 +754,13 @@ public class ClientServerNode extends ServerNode {
 	 * @param message
 	 */
 	public void ReadLocalFile(Message message) {
+		System.out.println("ReadLocalFile");
 		FileInputStream fileInputStream = null;
 		File file = new File(message.localFilePath);
 		byte[] byteFile = new byte[(int) file.length()];
 
 		// convert file into array of bytes
+		System.out.println("convert file to array of bytes");
 		try {
 			fileInputStream = new FileInputStream(file);
 			fileInputStream.read(byteFile);
@@ -757,7 +768,7 @@ public class ClientServerNode extends ServerNode {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ChunkMetadata cm = message.chunkClass;	
+//		ChunkMetadata cm = message.chunkClass;	
 		String decodedString = "string";
 		try {
 			decodedString = new String(byteFile, "UTF-8");
@@ -774,7 +785,9 @@ public class ClientServerNode extends ServerNode {
 		message.fileData = byteFile;
 		message.addressedTo = serverType.CHUNKSERVER;
 		message.sender = serverType.CLIENT;
-		message.chunkClass = cm;
+//		message.chunkClass = cm;
+		System.out.println(message.localFilePath);
+		System.out.println(message.chunkClass.size);
 		message.chunkClass.size = (int) file.length();
 		SendMessageToChunkServer(message);
 	}

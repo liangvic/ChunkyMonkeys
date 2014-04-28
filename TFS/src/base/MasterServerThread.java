@@ -399,7 +399,7 @@ public class MasterServerThread extends ServerThread {
 
 				// finally delete directory wanted to delete
 				NamespaceMap.remove(filePath);
-				
+
 
 				tfsLogger.LogMsg("Deleted directory and all directories/files below " + filePath);
 
@@ -459,8 +459,8 @@ public class MasterServerThread extends ServerThread {
 								message.chunkClass = chunkServerMap.get(chunkServerKey);
 								SendMessageToChunkServer(message);
 							}
-							
-							
+
+
 							// delete the file from master's chunk server map
 							chunkServerMap.remove(chunkServerKey);
 
@@ -471,10 +471,10 @@ public class MasterServerThread extends ServerThread {
 									index++;
 									chunkServerMapKey = filePath + index;*/
 
-									
+
 							//	}
 							//}
-							
+
 							// increment for checking if there are more chunks
 							chunkIndex++;
 							chunkServerKey = startingNodeFilePath + chunkIndex;
@@ -603,12 +603,12 @@ public class MasterServerThread extends ServerThread {
 				allAvailableServerList.add(ServerMap.get(ip));
 
 				System.out.println("	Added "+ServerMap.get(ip).status);
-				
+
 
 			}
 			//Random replica assignment
 			int chunkServerAssignment = 0;
-			int maxAttempts = 3; //TODO: DETERMINE IF NEED
+			int maxAttempts = 20; //TODO: DETERMINE IF NEED
 			int currentAttemptNum = 0;
 			System.out.println("Selecting "+inputMessage.replicaCount+" replicas");
 			synchronized(replicaList) {
@@ -627,17 +627,17 @@ public class MasterServerThread extends ServerThread {
 							System.out.println("	selected replica "+ Config.prop.get("IP" + Integer.toString(serverIP)));
 						}
 					}
-					
+
 					//if(!replicaList.contains(allAvailableServerList.get(chunkServerAssignment))) {
-						
-						
+
+
 					//}
-					/*currentAttemptNum++;
-				if(currentAttemptNum == maxAttempts)
-				{
-					System.out.println("Could only create " + replicaList.size() + " instead of " + inputMessage.replicaCount);
-					break;
-				}*/
+					currentAttemptNum++;
+					if(currentAttemptNum == maxAttempts)
+					{
+						System.out.println("Could only create " + replicaList.size() + " instead of " + inputMessage.replicaCount);
+						break;
+					}
 				}
 			}
 			int[] replicaListLargestOffset = new int[replicaList.size()];
@@ -690,12 +690,7 @@ public class MasterServerThread extends ServerThread {
 			inputMessage.sender = serverType.MASTER;
 			SendMessageToClient(inputMessage);
 
-			//Sending a create file for each replica
-			for(int i = 0;i<replicaList.size();i++){
 
-			}
-			//create a new namespace node
-			//filename and get parent, add child.
 
 			//============================Name Space Issues=========================================
 
@@ -709,9 +704,11 @@ public class MasterServerThread extends ServerThread {
 
 			ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
 			//need to update children to, so have to clear and write again
-			for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
-			{
-				WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+			synchronized(NamespaceMap){
+				for (Map.Entry<String, NamespaceNode> entry : NamespaceMap.entrySet())
+				{
+					WritePersistentNamespaceMap(entry.getKey(),entry.getValue());
+				}
 			}
 			//only appending on
 			WritePersistentChunkServerMap(hashstring,
@@ -843,7 +840,7 @@ public class MasterServerThread extends ServerThread {
 			for(String key : NamespaceMap.keySet())
 			{
 				WritePersistentNamespaceMap(key, NamespaceMap.get(key));
-				System.out.println("Key: " + key);
+				//System.out.println("Key: " + key);
 			}
 		}
 
@@ -898,22 +895,54 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 			}
-			//get file and ip ffrom list of locations and for each, check space available and set byte array for every file and IP
+			//get file num and ip from list of locations and for each file, check space available and set byte array
 			System.out.println("INDEX: "+index);
 			System.out.println("HASHSTRING: "+hashString);
+			
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, index, 1, 0);
-			newChunk.filenumber = 0; //only use one for now
+			ChunkMetadata oldChunk = chunkServerMap.get(filepath+(index-1));
+			newChunk.filenumber = oldChunk.filenumber; //only use one for now
 			newChunk.chunkHash = hashString;
+			newChunk.index = index;
+			newChunk.listOfLocations = oldChunk.listOfLocations;
+			System.out.println("Unit6 create the new chunk metadata. size = "+newChunk.size);
+//			newChunk.size = message.fileData.length;
+			
+			//get the next largest byte offsetfor each location
+			System.out.println("new chunk will have this many locations: "+newChunk.listOfLocations);
+			for(ChunkLocation cl: newChunk.listOfLocations){//this is list of locations you want the new chunk to be on, we just need the offset
+				synchronized(chunkServerMap) {
+					for(String key: chunkServerMap.keySet()){
+						for(ChunkLocation loc: chunkServerMap.get(key).listOfLocations){ //browsing all chunkserver locations
+							if(loc.fileNumber == cl.fileNumber){ //Same fileNumber
+								
+								System.out.println("see that file "+loc.fileNumber+" has byteoffset"+loc.byteOffset);
+								//After finding correct filenumber, see if byteoffset is largest
+								 //Browsing all chosen replica servers for match
+									if(loc.chunkIP == cl.chunkIP){ //Same chunk server match with index n
+										//							check if the same index n in largest byte array is actually the largest
+										if(loc.byteOffset>cl.byteOffset){
+											System.out.println("Byte offset for file "+loc.fileNumber+ " ip "+loc.chunkIP+ " is "+loc.byteOffset+chunkServerMap.get(key).size+4);
+											cl.byteOffset = 4+loc.byteOffset+chunkServerMap.get(key).size+4;
+										}
+									}
+								
+							}
+						}
+					}
+				}
+			}
+			
 			chunkServerMap.put(hashString, newChunk);
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
 			return newChunk;
 		}
-		else
+		else //create new file if ti doesnt exist in the namespace already
 		{
 			CreateFile(message, opID);
 			AssignChunkServer(message, opID);
-			
+
 			/*//Random rand = new Random();
 			ChunkMetadata newChunk = new ChunkMetadata(filepath, 1, 1, 0);
 			newChunk.filenumber = 1; //only use one for now
@@ -1060,8 +1089,8 @@ public class MasterServerThread extends ServerThread {
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
-			/*out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t"
-					+ chunkmd.index + "\t" + chunkmd.size);*/
+			out.write(chunkmd.filenumber + "\t" /*+ chunkmd.byteoffset + "\t"*/
+					+ chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());

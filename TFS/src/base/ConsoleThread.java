@@ -93,6 +93,12 @@ public class ConsoleThread extends Thread{
 				else
 					throw new Exception();
 			break;
+			case ("Unit6"):
+				if (tokens.length == 3)
+					server.unit6(tokens[1].toString(), tokens[2].toString());
+				else
+					throw new Exception();
+			break;
 			case ("Test7"):
 			case("Unit7"):
 				if (tokens.length == 2)

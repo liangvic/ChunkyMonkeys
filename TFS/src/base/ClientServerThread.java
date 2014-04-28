@@ -73,11 +73,13 @@ public class ClientServerThread extends ServerThread {
 				{
 					if(message.success == msgSuccess.REQUESTERROR)
 					{
+						System.out.println("Message request error");
 						//server.CWriteToNewFile(server.localPathToReadFile, message.filePath, 3);
 						server.CWriteToNewFile(message.localFilePath, message.filePath, 3);
 					}
 					else
 					{
+						System.out.println("Message request success");
 						server.AppendToAllReplicas(message);
 					}
 				}
@@ -86,8 +88,6 @@ public class ClientServerThread extends ServerThread {
 				server.ExpectChunkNumberForRead(message.expectNumChunkForRead);
 			} else if (message.type == msgType.PRINTFILEDATA) {
 				server.msgPrintFileData(message);
-			} else if (message.type == msgType.APPENDTOTFSFILE) {
-				server.ReadLocalFile(message);
 			} else if (message.type == msgType.WRITETONEWFILE) {
 				System.out.println("Got the return message from client!");
 				server.CWriteToNewFile2(message);
