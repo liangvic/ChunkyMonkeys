@@ -28,6 +28,7 @@ import Utility.SOSMessage;
 import Utility.Message.msgSuccess;
 import Utility.Message.msgType;
 import Utility.Message.serverType;
+import Utility.SOSMessage.msgTypeToMaster;
 import Utility.SOSMessage.msgTypeToServer;
 import Utility.TFSFile;
 
@@ -46,6 +47,8 @@ public class ChunkServerThread extends ServerThread {
 	Semaphore fileWriteSemaphore = new Semaphore(1,true);
 	Semaphore chunkMapSemaphore = new Semaphore(1,true);
 	Semaphore appendToFileSemaphore = new Semaphore(1,true);
+	int chunksChecking = 0;
+	int numChunksDone = 0;
 
 	/**
 	 * @param sn
@@ -69,7 +72,7 @@ public class ChunkServerThread extends ServerThread {
 	public void DealWithMessage(Message message) {
 		//if(!messageList.isEmpty()) {
 		//	Message message = messageList.get(0);
-		System.out.println("Chunkserve: I GOT MESSAGE. Type = "+message.type.toString());
+		//System.out.println("Chunkserve: I GOT MESSAGE. Type = "+message.type.toString());
 		if(message instanceof HeartBeat)
 		{
 			server.PingMaster((HeartBeat)message);
@@ -610,20 +613,24 @@ public class ChunkServerThread extends ServerThread {
 	 */
 	public void CheckVersionAfterStarting(SOSMessage msg) 
 	{ 
-		synchronized(chunkMap)
-		{
-			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
-			{
-				if(cmEntry.getValue().chunkHash == msg.chunkClass.chunkHash && 
-						cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
+		//synchronized(chunkMap)
+		//{
+		//	for(Map.Entry<String, ChunkMetadata> cmEntry : chunkMap.entrySet())
+		//	{
+				if(!chunkMap.containsKey(msg.chunkClass.chunkHash))
 				{
 					//TODO: Message to Master to get new data
+					chunksChecking++;
 					msg.msgToServer = msgTypeToServer.TO_OTHERSERVER;
+					msg.msgToMaster = msgTypeToMaster.REQUESTINGDATA;
+					msg.SOSserver = myIP;
+					System.out.println("Found outdated information");
 					server.SendMessageToMaster(msg);
 					return;
 				}
-			}
-		}
+			//}
+		//}
+		numChunksDone++;
 	}
 
 	/**
@@ -638,20 +645,23 @@ public class ChunkServerThread extends ServerThread {
 			{
 				if(file.fileNumber == msg.chunkClass.filenumber)
 				{
+					ChunkMetadata chunkmeta = msg.chunkClass;
+					ChunkLocation chunkloc = null;
+					for (ChunkLocation a : chunkmeta.listOfLocations){
+						if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
+							chunkloc = a;
+						}
+					}
 					//TODO: fix later with change in byteoffset variable
 					for(int i=0; i<msg.chunkClass.size; i++)
 					{
-						ChunkMetadata chunkmeta = msg.chunkClass;
-						ChunkLocation chunkloc = null;
-						for (ChunkLocation a : chunkmeta.listOfLocations){
-							if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
-								chunkloc = a;
-							}
-						}
-						msg.fileData[i] = file.data[chunkloc.byteOffset + i];
+						
+						msg.fileData[i] = 1;//file.data[chunkloc.byteOffset + i];
 					}
 					msg.receiverIP = msg.SOSserver;
+					msg.senderIP = myIP;
 					msg.msgToServer = msgTypeToServer.RECEIVINGDATA;
+					System.out.println("Sending data from " + myIP + " to " + msg.receiverIP);
 					SendMessageToChunkServer(msg);
 				}
 			}
@@ -673,7 +683,7 @@ public class ChunkServerThread extends ServerThread {
 						cmEntry.getValue().versionNumber < msg.chunkClass.versionNumber)
 				{
 					//removing from the chunkmap and adding in the correct information
-					chunkMap.remove(cmEntry.getKey());
+					//chunkMap.remove(cmEntry.getKey());
 					chunkMap.put(msg.chunkClass.chunkHash, msg.chunkClass);
 
 					synchronized(file_list)
@@ -685,7 +695,7 @@ public class ChunkServerThread extends ServerThread {
 								ChunkMetadata chunkmeta = msg.chunkClass;
 								ChunkLocation chunkloc = null;
 								for (ChunkLocation a : chunkmeta.listOfLocations){
-									if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+									if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
 										chunkloc = a;
 									}
 								}
@@ -717,6 +727,7 @@ public class ChunkServerThread extends ServerThread {
 
 									os = new FileOutputStream(new File("dataStorage/File" + file.fileNumber));//"dataStorage/File"+file.fileNumber+".txt"));
 									os.write(testData);
+									System.out.println("Updated successfully!");
 								}
 								catch (IOException e)
 								{
@@ -734,7 +745,13 @@ public class ChunkServerThread extends ServerThread {
 
 							}
 						}
-						server.SendMessageToMaster(msg);
+						numChunksDone++;
+						if(chunksChecking == numChunksDone)
+						{
+							msg.msgToMaster = msgTypeToMaster.DONESENDING;
+							server.SendMessageToMaster(msg);
+						}
+						
 						return;
 					}
 				}

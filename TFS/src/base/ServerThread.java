@@ -25,7 +25,7 @@ public abstract class ServerThread extends Thread {
 	public ServerThread(ServerNode sn, Socket s) {
 		server = sn;
 		socket = s; 
-		System.out.println("socket port:"+s.getPort());
+		//System.out.println("socket port:"+s.getPort());
 	}
 	
 	/**
