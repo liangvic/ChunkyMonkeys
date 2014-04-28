@@ -64,10 +64,12 @@ public class MasterServerThread extends ServerThread {
 		//System.out.println("inputMessagetype "+ inputMessage.type);
 		if(inputMessage instanceof HeartBeat)
 		{
-			if(ServerMap.get(inputMessage.senderIP).status == serverStatus.DEAD)
+			SetChunkServerAlive(inputMessage.senderIP);
+			/*if(ServerMap.get(inputMessage.senderIP).status == serverStatus.DEAD)
 			{
 				SetChunkServerOutdated(inputMessage.senderIP);
-			}
+				
+			}*/
 			
 		}
 		else if(inputMessage instanceof SOSMessage)
@@ -1197,7 +1199,7 @@ public class MasterServerThread extends ServerThread {
 	{
 		if(ServerMap.containsKey(IPaddress))
 		{
-			System.out.println("IP Address: "+IPaddress);
+			//System.out.println("IP Address: "+IPaddress);
 			ServerMap.get(IPaddress).status = serverStatus.ALIVE;
 		}
 	}
