@@ -130,21 +130,6 @@ public class MasterServerThread extends ServerThread {
 				//TODO: NEED TO ADD IN FURTHER IF STATEMENTS
 			}
 		}
-		else if(inputMessage.type == msgType.APPENDTOFILE)
-		{
-			if(inputMessage.sender == serverType.CLIENT){
-				System.out.println("Getting a message from client. SHOULD NOT HAPPEN");
-//				AssignChunkServer(inputMessage, server.operationID);//, operationID);
-			}
-			else if (inputMessage.sender == serverType.CHUNKSERVER){
-				RemoveParentLocks(inputMessage.filePath, inputMessage.opID);
-				if(inputMessage.success == msgSuccess.REQUESTSUCCESS){
-					System.out.println("File "+ inputMessage.chunkClass.filename + " creation successful");
-				}
-				else if (inputMessage.success == msgSuccess.REQUESTERROR)
-					System.out.println("File " + inputMessage.chunkClass.filename + " creation failed");
-			}
-		}
 		else if(inputMessage.type == msgType.APPENDTOTFSFILE) // Test 6
 		{
 			if(inputMessage.sender == serverType.CLIENT) {
@@ -581,8 +566,9 @@ public class MasterServerThread extends ServerThread {
 		{
 			List<ServerData> replicaList = Collections.synchronizedList(new ArrayList<ServerData>());
 			List<ServerData> allAvailableServerList = new ArrayList<ServerData>();
-			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
-
+//			String hashstring = inputMessage.filePath + "\\" + inputMessage.fileName + 1;
+			String hashstring = inputMessage.filePath + 1;
+			System.out.println("Assigning hash string "+hashstring);
 			if(inputMessage.type == msgType.WRITETONEWFILE)
 			{
 				ChunkMetadata testExistence = chunkServerMap.get(hashstring);
@@ -679,6 +665,7 @@ public class MasterServerThread extends ServerThread {
 			newMetaData.chunkHash = hashstring;
 			newMetaData.filenumber = targetFileNumber;
 			newMetaData.listOfLocations = newLocations;
+			newMetaData.versionNumber = 1;
 			//			newMetaData.byteoffset = replicaListLargestOffset[i];
 			if(inputMessage.fileData != null) {
 				newMetaData.size = inputMessage.fileData.length;
@@ -692,6 +679,9 @@ public class MasterServerThread extends ServerThread {
 			inputMessage.addressedTo = serverType.CLIENT;
 			inputMessage.sender = serverType.MASTER;
 			System.out.println("Sending  message to clent 3");
+			System.out.println("AssignChunkserver");
+			System.out.println("	Type: "+inputMessage.type);
+			System.out.println("	Hashstring: "+hashstring);
 			SendMessageToClient(inputMessage);
 
 
@@ -704,8 +694,9 @@ public class MasterServerThread extends ServerThread {
 			}
 
 			//System.out.println("Got to the file");
-			NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
-
+			System.out.println("Putting "+inputMessage.filePath+" into the namespace map");
+//			NamespaceMap.put(inputMessage.filePath + "\\" + inputMessage.fileName, nn);
+			NamespaceMap.put(inputMessage.filePath, nn);
 			ClearNamespaceMapFile(); //need to clear so that correctly adds as child to parent directory
 			//need to update children to, so have to clear and write again
 			synchronized(NamespaceMap){
@@ -750,6 +741,8 @@ public class MasterServerThread extends ServerThread {
 		// if folder doesn't exist or file already exists
 		if (NamespaceMap.get(filepath) == null || chunkServerMap.get(hashstring) != null || NamespaceMap.get(filepath).type == nodeType.FILE) {
 			System.out.println("Sending error message to clent 1");
+			System.out.println("CreateFile");
+			System.out.println("	Type: "+message.type);
 			SendErrorMessageToClient(message);
 		} else {
 			if(AddExclusiveParentLocks(filepath, opID))
@@ -773,6 +766,8 @@ public class MasterServerThread extends ServerThread {
 				}
 
 				//ClearNamespaceMapFile();
+//				NamespaceNode newNode = new NamespaceNode(nodeType.FILE);
+//				NamespaceMap.put(newName, newNode);
 				WritePersistentNamespaceMap(newName, NamespaceMap.get(newName));
 				//WritePersistentChunkServerMap(hashstring,
 				//		chunkServerMap.get(hashstring));
@@ -867,7 +862,7 @@ public class MasterServerThread extends ServerThread {
 				//TODO: FIX THIS
 				//SendMessageToChunkServer(message);
 				System.out.println("sendmessage to client");
-				SendMessageToClient(message); //sends chunkClass with list of chunk locations to client
+//				SendMessageToClient(message); //sends chunkClass with list of chunk locations to client
 			}
 			else {
 				System.out.println("error1");
@@ -911,6 +906,7 @@ public class MasterServerThread extends ServerThread {
 			newChunk.filenumber = oldChunk.filenumber; //only use one for now
 			newChunk.chunkHash = hashString;
 			newChunk.index = index;
+			newChunk.versionNumber = index;
 			newChunk.listOfLocations = oldChunk.listOfLocations;
 			System.out.println("Unit6 create the new chunk metadata. size = "+newChunk.size);
 //			newChunk.size = message.fileData.length;
@@ -939,7 +935,7 @@ public class MasterServerThread extends ServerThread {
 					}
 				}
 			}
-			
+			System.out.println("	Putting Hashstring: "+hashString);
 			chunkServerMap.put(hashString, newChunk);
 			WritePersistentChunkServerMap(hashString,
 					chunkServerMap.get(hashString));
@@ -949,6 +945,7 @@ public class MasterServerThread extends ServerThread {
 		{
 			System.out.println("YOLO");
 			CreateFile(message, opID);
+			
 			AssignChunkServer(message, opID);
 
 			/*//Random rand = new Random();
@@ -1087,6 +1084,8 @@ public class MasterServerThread extends ServerThread {
 			// append
 			// data.
 			out = new BufferedWriter(ofstream);
+			System.out.println(key);
+			System.out.println(chunkmd.versionNumber);
 			out.write(key + "\t" + chunkmd.versionNumber + "\t"
 					+ chunkmd.listOfLocations.size() + "\t");
 			for (int i = 0; i < chunkmd.listOfLocations.size(); i++) {
