@@ -53,9 +53,19 @@ public class MasterServerNode extends ServerNode {
 		myType = serverType.MASTER;
 		myIP = ip;
 		
-		LoadChunkServerMap();
 		LoadNamespaceMap();
 		LoadServerData();
+		if(NamespaceMap.size()>0)
+		{
+			LoadChunkServerMap();
+		}
+		else
+		{
+			//TODO: COMMENT OUT!
+			System.out.println("NamespaceMap is empty so clearing out chunkserverMap just in case...");
+			ClearChunkServerMapFile();
+		}
+		
 
 	}
 
@@ -145,7 +155,7 @@ public class MasterServerNode extends ServerNode {
 				// location
 				List<ChunkLocation> locations = new ArrayList<ChunkLocation>();
 				int locationSize = Integer.parseInt(data[2]);
-				int newIndexCounter = 3 + (locationSize / 2);
+				int newIndexCounter = 3 + (locationSize*4);
 				for (int i = 3; i < newIndexCounter; i = i + 4) {
 					locations.add(new ChunkLocation(data[i], Integer
 							.parseInt(data[i + 1]),Integer.parseInt(data[i+2]),
@@ -276,13 +286,14 @@ public class MasterServerNode extends ServerNode {
 							tempLockList.add(new lockInfo(lType,opID));
 						}
 					}
-					NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
-					addingNode.children = children;
-					addingNode.type = type;
-					addingNode.lockList = tempLockList;
-
-					NamespaceMap.put(key, addingNode);
 				}
+				NamespaceNode addingNode = new NamespaceNode(nodeType.DIRECTORY);
+				addingNode.children = children;
+				addingNode.type = type;
+				addingNode.lockList = tempLockList;
+
+				System.out.println("Adding " + key + " with children size " + addingNode.children.size());
+				NamespaceMap.put(key, addingNode);
 
 			}
 

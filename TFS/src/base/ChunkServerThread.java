@@ -522,8 +522,8 @@ public class ChunkServerThread extends ServerThread {
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
-			/*out.write(chunkmd.filenumber + "\t" + chunkmd.byteOffset + "\t"
-					+ chunkmd.index + "\t" + chunkmd.size);*/
+			out.write(chunkmd.filenumber + "\t" /*+ chunkmd.byteOffset + "\t"*/
+					+ chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
 		}
 		catch (IOException e)

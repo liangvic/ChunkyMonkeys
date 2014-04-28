@@ -1060,8 +1060,8 @@ public class MasterServerThread extends ServerThread {
 			}
 			out.write(chunkmd.chunkHash + "\t" + chunkmd.referenceCount + "\t"
 					+ chunkmd.filename + "\t");
-			/*out.write(chunkmd.filenumber + "\t" + chunkmd.byteoffset + "\t"
-					+ chunkmd.index + "\t" + chunkmd.size);*/
+			out.write(chunkmd.filenumber + "\t" /*+ chunkmd.byteoffset + "\t"*/
+					+ chunkmd.index + "\t" + chunkmd.size);
 			out.newLine();
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
