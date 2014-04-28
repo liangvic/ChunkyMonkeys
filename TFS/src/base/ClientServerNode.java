@@ -713,14 +713,14 @@ public class ClientServerNode extends ServerNode {
 	 */
 	public void CAppendToTFSFile(String localPath, String filePath){
 		int index = filePath.lastIndexOf('\\');
-		byte[] byteArray = null;
+		byte[] byteArray = null; //WTF IS THIS SHIT
 		Message m = new Message(myIP,myType,myInputPortNumber,masterIP,serverType.MASTER,masterPort);
 		m.type = msgType.APPENDTOTFSFILE;
 		m.filePath = filePath;
 		m.fileName = filePath.substring(index + 1);
 		m.localFilePath = localPath;
 		m.replicaCount = 3;
-		m.fileData = byteArray;
+		m.fileData = byteArray; //WHY ASSIGN NULL GODDAM IT
 		m.sender = serverType.CLIENT;
 		SendMessageToMaster(m);
 	}
@@ -740,6 +740,12 @@ public class ClientServerNode extends ServerNode {
 			m.type = msgType.APPENDTOTFSFILE;
 			m.filePath = message.filePath;
 			m.fileName = message.fileName;
+			m.localFilePath = message.localFilePath;
+			m.chunkClass = message.chunkClass;
+			System.out.println("Printing byte offsets");
+			for(ChunkLocation cl:message.chunkClass.listOfLocations){
+				System.out.println(cl.byteOffset);
+			}
 			ReadLocalFile(m); //this should send to individual chunkserver
 		}
 	}
@@ -762,7 +768,7 @@ public class ClientServerNode extends ServerNode {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ChunkMetadata cm = message.chunkClass;	
+//		ChunkMetadata cm = message.chunkClass;	
 		String decodedString = "string";
 		try {
 			decodedString = new String(byteFile, "UTF-8");
@@ -779,7 +785,9 @@ public class ClientServerNode extends ServerNode {
 		message.fileData = byteFile;
 		message.addressedTo = serverType.CHUNKSERVER;
 		message.sender = serverType.CLIENT;
-		message.chunkClass = cm;
+//		message.chunkClass = cm;
+		System.out.println(message.localFilePath);
+		System.out.println(message.chunkClass.size);
 		message.chunkClass.size = (int) file.length();
 		SendMessageToChunkServer(message);
 	}

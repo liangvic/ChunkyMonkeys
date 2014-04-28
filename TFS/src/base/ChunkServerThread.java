@@ -441,7 +441,7 @@ public class ChunkServerThread extends ServerThread {
 			ChunkMetadata chunkmeta = message.chunkClass;
 			ChunkLocation chunkloc = null;
 			for (ChunkLocation a : chunkmeta.listOfLocations){
-				if (a.chunkIP == myIP && a.chunkPort == myInputPortNumber){
+				if (a.chunkIP.equals(myIP) && a.chunkPort == myInputPortNumber){
 					chunkloc = a;
 				}
 			}

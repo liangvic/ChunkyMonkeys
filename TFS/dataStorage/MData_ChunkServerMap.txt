@@ -1,0 +1,4 @@
+1\2\test.txt\test.txt1	1	1	68.181.174.61	7070	0	3	1\2\test.txt\test.txt1	0	test.txt	
+1\2\test.txt1	1	1	68.181.174.61	7070	0	0	1\2\test.txt1	0	test.txt	
+1\2\test.txt1	1	1	68.181.174.61	7070	0	0	1\2\test.txt1	0	test.txt	
+1\2\test.txt1	1	1	68.181.174.61	7070	0	0	1\2\test.txt1	0	test.txt	
