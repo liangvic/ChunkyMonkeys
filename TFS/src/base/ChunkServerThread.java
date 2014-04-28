@@ -656,7 +656,7 @@ public class ChunkServerThread extends ServerThread {
 					for(int i=0; i<msg.chunkClass.size; i++)
 					{
 						
-						msg.fileData[i] = file.data[chunkloc.byteOffset + i];
+						msg.fileData[i] = 1;//file.data[chunkloc.byteOffset + i];
 					}
 					msg.receiverIP = msg.SOSserver;
 					msg.senderIP = myIP;
