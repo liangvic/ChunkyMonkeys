@@ -1166,7 +1166,7 @@ public class MasterServerThread extends ServerThread {
 		synchronized(chunkServerMap) {
 			for(Map.Entry<String, ChunkMetadata> cmEntry : chunkServerMap.entrySet())
 			{
-				if(cmEntry.getValue().equals(msg.chunkClass))
+				if(cmEntry.getValue().chunkHash.equals(msg.chunkClass.chunkHash))
 				{
 					for(ChunkLocation location: cmEntry.getValue().listOfLocations)
 					{
